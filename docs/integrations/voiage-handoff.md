@@ -2,6 +2,10 @@
 
 Date: 8 November 2026. Status: planning only; implementation and qualification pending.
 
+The [Conductor scientific-contract refinements](../../conductor/refinements/scientific-contracts-20261108.md)
+map the approved acceptance tests into existing T17 leaves. Read them alongside
+this handoff; they do not create a second status ledger or take over source transfer.
+
 ## Canonical ownership
 
 The maintainer has identified `edithatogo/paignia` as the reusable Rust game-library
@@ -74,18 +78,18 @@ must not copy Voiage's information-value arithmetic.
 - [ ] Map historical T17 obligations to actual Paignia source and qualified artifacts; preserve unsupported-method and incomplete-catalogue dispositions.
 - [ ] Freeze a field-level mapping to Voiage's paired-outcome and finite signed-information contracts; no universal schema or public API is introduced by this note.
 - [ ] Verify an installed Rust consumer outside the provider checkout and a static dependency closure without Kairos/Voiage.
-- [ ] Reuse the eight SI-V01–SI-V08 cases in Voiage PR #1288, including ordinary-VOI reduction, equilibrium selection, information leakage, signed values and explicit failures; advanced cases apply only when those capabilities are claimed.
+- [ ] Reuse the eight SI-V01-SI-V08 cases in Voiage PR #1288, including ordinary-VOI reduction, equilibrium selection, information leakage, signed values and explicit failures; advanced cases apply only when those capabilities are claimed.
 - [ ] Qualify one reimbursement evidence/pricing pilot, then a distinct Innovate application where appropriate. Forecast fit alone is not causal implementation evidence.
 - [ ] Pin accepted artifact hashes and record actual tests before changing any consumer dependency. Preserve a lawful historical source route until migration is accepted; do not maintain two independently evolving solver authorities.
 
-None of this work blocks Voiage's ordinary Q01–Q09 programme, initial software paper,
+None of this work blocks Voiage's ordinary Q01-Q09 programme, initial software paper,
 Innovate's native-runtime acceptance, Kairos' core release or the CareOps ED MVP.
 No solver implementation, package rename, provider pin, scientific promotion,
 external publication or repository merge occurs in this planning change.
 
 ## Existing coordinated proposals
 
-- [Voiage #1288](https://github.com/edithatogo/voiage/pull/1288): SI01–SI04 and the eight verification cases.
+- [Voiage #1288](https://github.com/edithatogo/voiage/pull/1288): SI01-SI04 and the eight verification cases.
 - [Reimbursement #103](https://github.com/edithatogo/new-drug-reimbursement-game/pull/103): historical T17 obligations and the application pilot.
 - [Innovate #574](https://github.com/edithatogo/innovate/pull/574): adoption/incentive producer boundary.
 - [Kairos #383](https://github.com/edithatogo/kairos/pull/383): lawful observations and optional native replay.
