@@ -80,10 +80,14 @@
     "repository_exists": true,
     "packages_published": false,
     "package_publish_enabled": false,
-    "consumer_pin_switch": "application-owned; awaiting actual provider commit"
+    "consumer_pin_switch": "Exact provider revision is available; application acceptance remains consumer-owned",
+    "status": "merged",
+    "provider_revision": "12b22ce7571b9c590405bf53c2c1c5862b49cd64",
+    "source_tree": "f438caa902e07a7ec5b7be3020c94d5b7e4868e8",
+    "pull_request": "https://github.com/edithatogo/paignia/pull/2"
   },
   "verification": {
-    "status": "local_rust_1_75_native_checks_passed_stable_hosted_pending",
+    "status": "local_rust_1_75_and_hosted_stable_msrv_native_checks_passed",
     "source_parity": "Both Rust library source files byte-identical to prepared incubator seed",
     "native_profiles": [
       "stable",
@@ -100,7 +104,7 @@
       "local Markdown links",
       "git diff --check"
     ],
-    "native_attempt": "Actual native checks completed on Rust 1.75 after the initial unavailable-tool attempt; stable profile remains for hosted CI",
+    "native_attempt": "Initial missing-tool attempt and isolated Rust 1.75 validation are retained below; hosted stable and MSRV checks subsequently passed on the merged source.",
     "native_results": {
       "toolchain": "cargo 1.75.0 / rustc 1.75.0",
       "cargo fmt --all -- --check": "passed",
@@ -115,6 +119,34 @@
       "Focused metadata regression distinguishes package version 0.1.0 from rust-version 1.75; the actual outside-workspace native smoke subsequently passed."
     ],
     "independent_review": "Source/smoke/CI review found no blocker; original Rust source hashes and Apache notices confirmed; external14+3 ownership partition and analytic smoke checked. The T17.01 historical T02 prerequisite was changed to explicit provenance.",
-    "qualification_limits": "Only current 1.75 static source profile executed locally. Stable hosted CI, .crate release artifacts, two real application receipts, optional adapter and S01-S04 remain open."
+    "qualification_limits": "Current static development baseline passes both hosted profiles; .crate release artifacts, full real-model consumer acceptance, the second application, optional adapters and S01-S04 remain open.",
+    "hosted_merged_source": {
+      "revision": "12b22ce7571b9c590405bf53c2c1c5862b49cd64",
+      "run_id": 42421109771,
+      "url": "https://github.com/edithatogo/paignia/actions/runs/42421109771",
+      "profiles": [
+        "stable",
+        "1.75.0"
+      ],
+      "conclusion": "success",
+      "tests_per_profile": {
+        "library": 15,
+        "extracted_source_consumer": 2
+      },
+      "checks": [
+        "format",
+        "Clippy with warnings denied",
+        "native library tests",
+        "source boundary",
+        "outside-workspace native source consumer",
+        "Rust API documentation"
+      ],
+      "observed_at_utc": "2026-11-07T22:43:08Z"
+    },
+    "independent_followup_review": "Reviewed five-file status/scope follow-up; exact merged-source hosted jobs independently confirmed. Clarified conditional .08 dependency on static .13 to avoid an adapter/converter cycle; all task statuses and provider/external ownership preserved."
+  },
+  "semantic_conversion_scope": {
+    "T17.13_static": "Depends on T17.01; versioned neutral records and semantic mapping in core, no Kairos imports",
+    "T17.13_native": "Native generational-handle/lifetime/causal binding is owned by T17.08, which requires the qualified static T17.13 converter when used; no reciprocal dependency or native acceptance from static DTO tests"
   }
 }

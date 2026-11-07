@@ -18,8 +18,8 @@ The historical receiving handoff is [issue 100](https://github.com/edithatogo/ne
 coordinated with [Innovate PR 570, G01–G04](https://github.com/edithatogo/innovate/pull/570).
 Kairos `K01.games` supplies `conductor/contracts/game-extraction-map.md`;
 `K01.port` supplies `conductor/contracts/game-execution-port.md`. Their contracts
-are proposed in [Kairos PR 382](https://github.com/edithatogo/kairos/pull/382);
-they are contract inputs, not scientific or adapter acceptance evidence.
+are recorded in merged [Kairos PR 382](https://github.com/edithatogo/kairos/pull/382);
+they are merged contract inputs, not scientific or adapter acceptance evidence.
 
 Dependency lines control execution; phase headings group related work. The
 bounded static path is T17.01–T17.03, two selected real consumer cases in
@@ -95,15 +95,19 @@ seed rename and source-level consumer slices without adding competing leaves.
   profile against the declared MSRV rather than assuming Kairos's 1.99 and this
   workspace's 1.75 declarations are interchangeable. Record artifact hashes;
   no publication or repository extraction is part of this leaf.
-- Seed progress (2026-11-08): source packages are named `paignia-core` and
+- Seed progress: source packages are named `paignia-core` and
   `paignia-solve`; the solver declares a versioned local core dependency. Native
-  hosted checks and all clean artifact-consumption requirements remain pending.
+  development checks pass locally and on hosted stable/MSRV profiles; clean
+  artifact-consumption requirements remain pending.
   Paignia now passes isolated extracted-source consumption with two native
   oracle tests on Rust 1.75. The first smoke found a manifest inheritance
   substring collision; anchored assignments and parsed-field checks fixed it,
   and the actual native smoke passed. This does not establish published .crate
-  artifacts, stable-profile hosted CI, full future feature coverage or real
+  artifacts, full future feature coverage or real
   consumer receipts. Transfer does not complete this leaf.
+  [Merged-source hosted CI](https://github.com/edithatogo/paignia/actions/runs/42421109771)
+  at `12b22ce7571b9c590405bf53c2c1c5862b49cd64` passed both profiles with
+  15 library tests and two extracted-source consumer tests each.
 
 ## Phase B — inherited numerical methods
 
@@ -187,7 +191,10 @@ oracle and result contract. Exclusion is not scientific completion.
   Kairos events for one selected policy/chance path.
 - Depends on: T17.01–T17.03, T17.14 and accepted `K01.port`/Kairos provider
   contracts under the deferred scientific-consumer track; pin qualification
-  remains separate. This is not a static package prerequisite.
+  remains separate. If the adapter uses T17.13's mapping, its static converter
+  must already be qualified. Native handle/lifetime checks stay in this .08
+  leaf; .13 static completion does not wait for them. This is not a static
+  package prerequisite.
 - Execution: specialist, public execution contract.
 - Files (5): `Cargo.toml`, `Cargo.lock`,
   `crates/paignia-kairos/Cargo.toml` (future),
@@ -205,23 +212,31 @@ oracle and result contract. Exclusion is not scientific completion.
   stochastic stream isolation or checkpoint resume. The adapter depends on game
   core and Kairos; static solving stays independent and still passes T17.02.
 
-### [ ] T17.13 — reject semantically lossy Kairos/game conversions
+### [ ] T17.13 — reject semantically lossy game-profile conversions
 
-- Behavior: convert the supported game/runtime representation without silently
+- Behavior: convert the supported versioned game representation without silently
   losing identity or changing the declared game semantics.
-- Depends on: T17.01 and T17.08; the source map supplies the exact legacy surface.
+- Depends on: T17.01 for static semantics/identity; the source map supplies the
+  exact legacy surface. Completion of .13 covers the declared static profile.
+  Actual native-handle/lifetime/causal binding belongs to T17.08, not a reciprocal
+  prerequisite for .13. Static semantic acceptance does not wait for it.
 - Execution: specialist, public conversion and compatibility contract.
-- Files (4): `crates/paignia-kairos/src/lib.rs`,
-  `crates/paignia-kairos/src/conversion.rs` (future),
-  `crates/paignia-kairos/tests/semantic_conversion.rs` (future),
+- Files (4): `crates/paignia-core/src/lib.rs`,
+  `crates/paignia-core/src/conversion.rs` (future),
+  `crates/paignia-core/tests/semantic_conversion.rs` (future),
   `docs/architecture/game-semantic-conversion-v1.md` (future).
-- Check: `cargo test --locked -p paignia-kairos --test semantic_conversion`
-  (future target). Preserve specification/instance/session/trace namespaces and
-  full generational entity/event handles; reject collisions, unknown identities
-  and stale generations. Round-trip the supported profile and reject unmapped
+- Check: `cargo test --locked -p paignia-core --test semantic_conversion`
+  (future target). Preserve specification/instance/session/trace namespaces,
+  full UOGTO and legacy Kairos IRIs, and versioned neutral identity records;
+  reject collisions, unknown identities and unsupported mappings. Core accepts
+  explicit DTOs, never Kairos types or runtime references. Round-trip the
+  supported static profile and reject unmapped
   chance-zero, payoff-completeness or tie-selection semantics. Never silently
   discard information sets. A deliberate semantic change requires a new profile
   and consumer decision. Only consumers using this conversion require its receipt.
+  The T17.08 adapter reuses this converter and separately tests real generational
+  handles, stale native lifetimes and causal dispatch against Kairos; those checks
+  must not be represented as completed by a static DTO round trip.
 
 ### [ ] T17.14 — expose only the declared player observation to a live policy
 
