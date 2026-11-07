@@ -5,20 +5,22 @@ Date: 8 November 2026. Status: planning only; implementation and qualification p
 The [Conductor scientific-contract refinements](../../conductor/refinements/scientific-contracts-20261108.md)
 map the approved acceptance tests into existing T17 leaves. Read them alongside
 this handoff; they do not create a second status ledger or take over source transfer.
+The [parallel-plan reconciliation](parallel-plan-reconciliation-20261108.md) records
+current provider evidence, owner PRs and independently scoped acceptance paths.
 
 ## Canonical ownership
 
 The maintainer has identified `edithatogo/paignia` as the reusable Rust game-library
 repository. `new-drug-reimbursement-game` is the historical source incubator and a
 reimbursement application/consumer, not the permanent home of generic solvers.
-This corrects the repository allocation in the earlier strategic-information plans;
-it does not assert that source extraction, native CI, a package release or consumer
-qualification has completed.
 
-The inspected Paignia main revision was `0e28f1bf33ed8c7be5fa1d63b8cc40517b61d22c`.
-Its README described source transfer and qualification as pending. Keep that
-observation separate from later implementation evidence. This handoff does not
-take over or replace the initial source-transfer work.
+The bootstrap observation at `0e28f1bf33ed8c7be5fa1d63b8cc40517b61d22c` is historical.
+Paignia PR #2 has merged the bounded native seed as
+`12b22ce7571b9c590405bf53c2c1c5862b49cd64`, containing `paignia-core` and
+`paignia-solve` v0.1.0 with publishing disabled. Source transfer and reported
+extracted-source smoke are not registry publication, general solver validity or
+two-real-application acceptance. The linked reconciliation distinguishes those
+states; this handoff does not rerun or certify the provider's native checks.
 
 | Owner | Responsibility |
 | --- | --- |
@@ -31,8 +33,8 @@ take over or replace the initial source-transfer work.
 Static Paignia solving must not depend directly or transitively on Kairos or Voiage.
 Default Voiage must not depend on Paignia or Kairos. Composition belongs in an
 optional adapter or versioned artifact exchange. Runtime callbacks do not justify
-a Cargo dependency cycle. Names of eventual crates, features and public types must
-be confirmed against the extracted implementation rather than inferred here.
+a Cargo dependency cycle. The two core/solve names are observed source identities,
+not released registry identities. Future adapters/types still need source qualification.
 
 ## Historical T17 evidence and migration
 
@@ -43,6 +45,11 @@ A completed legacy task does not establish acceptance of a renamed/extracted cra
 a repository's existence does not establish an installed consumer or solver claim.
 Do not invent Paignia task IDs or silently translate historical package names into
 released package identities.
+
+The accepted source map preserves seventeen IDs: Paignia owns T17.01-T17.08 and
+T17.12-T17.17; reimbursement owns T17.09/T17.11; the selected second application
+owns T17.10, currently Innovate G01-G04. Incubator references are historical or
+external handoffs, not another provider status ledger.
 
 The two-real-application rule belongs to static package/consumer qualification,
 not permission to create the already existing Paignia repository. Reimbursement
