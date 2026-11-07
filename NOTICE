@@ -1,0 +1,24 @@
+Paignia retains the following notice from its source incubator,
+edithatogo/new-drug-reimbursement-game, prepared source commit
+9ee388502bfe5f71d22b363dbb9c74f032a07ad4. References to "this repository" in
+that retained notice describe the original source. The native code is now
+maintained in edithatogo/paignia; the original attribution remains in force.
+
+New Drug Reimbursement Game
+Copyright 2026 the contributors.
+
+This is an independent clean-room implementation inspired by concepts and
+published equations in Brita A. K. Pekarsky (2015), The New Drug Reimbursement
+Game, Springer, DOI 10.1007/978-3-319-08903-4. The book itself is not included.
+
+UOGTO ontology terms are referenced under UOGTO's stated CC-BY-4.0 licensing
+for ontology/documentation. Software integrations remain subject to the
+licences of their respective repositories. See ecosystem.lock.toml and
+DEPENDENCY_MIGRATION_PLAN.md.
+
+Paignia's paignia-core and paignia-solve packages are the renamed generic Rust
+seed formerly called uogto-game-core and uogto-game-solve in this repository.
+Their original Apache-2.0 contributor attribution is retained. Source revision,
+paths and rename provenance are recorded in extraction-manifest.json. No Kairos
+or UOGTO implementation or ontology asset is copied by this rename; a later
+transfer must preserve the applicable source licence and attribution separately.

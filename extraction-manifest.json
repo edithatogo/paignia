@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "crates": [
+    "crates/paignia-core",
+    "crates/paignia-solve"
+  ],
+  "allowed_internal_dependencies": {
+    "paignia-core": [],
+    "paignia-solve": [
+      "paignia-core"
+    ]
+  },
+  "forbidden_vocabulary": [
+    "drug",
+    "hta",
+    "manufacturer",
+    "payer",
+    "qaly",
+    "reimbursement"
+  ],
+  "external_gate": "T17.03 artifact qualification and T17.09/T17.10 consumer qualification before T17.12 release eligibility; repository existence alone qualifies no capability",
+  "library_name": "Paignia",
+  "stage": "pre-release",
+  "standalone_repository_created": true,
+  "packages_published": false,
+  "incubator_repository": "https://github.com/edithatogo/new-drug-reimbursement-game",
+  "source_provenance": {
+    "paignia-core": {
+      "current_path": "crates/paignia-core",
+      "previous_package": "uogto-game-core",
+      "source_repository": "https://github.com/edithatogo/new-drug-reimbursement-game",
+      "source_revision": "f6c1c87b6b00875b33c1e19401c1de09481913ce",
+      "source_path": "crates/uogto-game-core",
+      "license_spdx": "Apache-2.0",
+      "license_notice_paths": [
+        "crates/paignia-core/LICENSE",
+        "crates/paignia-core/NOTICE"
+      ],
+      "change": "Package/path rename; solver imports updated; no algorithm change"
+    },
+    "paignia-solve": {
+      "current_path": "crates/paignia-solve",
+      "previous_package": "uogto-game-solve",
+      "source_repository": "https://github.com/edithatogo/new-drug-reimbursement-game",
+      "source_revision": "f6c1c87b6b00875b33c1e19401c1de09481913ce",
+      "source_path": "crates/uogto-game-solve",
+      "license_spdx": "Apache-2.0",
+      "license_notice_paths": [
+        "crates/paignia-solve/LICENSE",
+        "crates/paignia-solve/NOTICE"
+      ],
+      "change": "Package/path rename; solver imports updated; no algorithm change"
+    }
+  },
+  "repository": "https://github.com/edithatogo/paignia",
+  "prepared_source_revision": "9ee388502bfe5f71d22b363dbb9c74f032a07ad4",
+  "bootstrap_revision": "0e28f1bf33ed8c7be5fa1d63b8cc40517b61d22c"
+}
