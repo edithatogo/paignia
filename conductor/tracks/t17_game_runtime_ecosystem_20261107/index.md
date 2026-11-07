@@ -1,7 +1,8 @@
 # T17 Paignia native library and ecosystem handoff
 
-Status: source transfer and smoke harness in progress; native validation,
-scientific methods and package/consumer release qualification remain open.
+Status: source transfer merged at `12b22ce7571b9c590405bf53c2c1c5862b49cd64`;
+[stable/MSRV native checks passed](https://github.com/edithatogo/paignia/actions/runs/42421109771).
+Scientific methods and package/consumer release qualification remain open.
 
 - [Specification](spec.md)
 - [Provider implementation plan and external owner entries](plan.md)

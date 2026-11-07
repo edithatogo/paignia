@@ -12,6 +12,14 @@ qualification. The initial CI tests both stable Rust and the declared Rust 1.75
 minimum. Registry publication is disabled in the package manifests; no published
 package or qualified general solver suite is claimed.
 
+The initial source transfer is merged in [PR #2](https://github.com/edithatogo/paignia/pull/2)
+at `12b22ce7571b9c590405bf53c2c1c5862b49cd64`.
+[Native CI for that revision](https://github.com/edithatogo/paignia/actions/runs/42421109771)
+passed on stable Rust and Rust 1.75: formatting, Clippy, 15 library tests,
+documentation and the two-test extracted-source consumer described below.
+Those results qualify this development baseline, not the pending package or
+scientific-method release claims.
+
 ## Packages and current implementation
 
 | Package | Current implementation | Dependencies |

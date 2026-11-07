@@ -30,9 +30,17 @@ then transfers them into Paignia while preserving algorithms and provenance.
 The reimbursement application adds its own `paignia_static_game` test, which
 constructs a finite application game and calls the native solver. This
 supersedes the earlier observation of unused manifest declarations for that
-source-level test only. Hosted Rust execution, packaged-artifact qualification
-and real-consumer release acceptance remain open. The PR #101 naming supplement
+source-level test only. Consumer hosted execution, packaged-artifact qualification
+and real-consumer release acceptance remain separate. The PR #101 naming supplement
 is reconciled with PR #102's seventeen leaves; PN01–PN04 are task aliases.
+
+The independent provider source is merged in [Paignia PR #2](https://github.com/edithatogo/paignia/pull/2)
+at `12b22ce7571b9c590405bf53c2c1c5862b49cd64`.
+[Its hosted native run](https://github.com/edithatogo/paignia/actions/runs/42421109771)
+passed on stable and Rust 1.75, including 15 library tests and two native tests
+from an extracted-source consumer outside the provider workspace. This updates
+the transfer/development status without closing any T17 leaf or accepting a
+registry artifact, second application or unfinished numerical method.
 
 ## Ownership and dependency direction
 
@@ -170,8 +178,12 @@ semantic/serialization tooling out of the minimal representation closure.
 
 The existing deferred scientific-consumer track still controls provider/pin
 qualification. Static package work can proceed independently; native adapter
-qualification waits for `K01.port` and the accepted Kairos contract. T17.13–T17.16
-cover conversion, permitted observations, RNG isolation and replay; T17.17 adds
+qualification waits for `K01.port` and the accepted Kairos contract. T17.13's
+static semantic/identity conversion depends on T17.01, without a Kairos runtime
+dependency. Actual native-handle/lifetime/causal binding is T17.08's additional
+acceptance; where it uses the static converter, .08 follows .13 without a
+reciprocal dependency. T17.14–T17.16 cover permitted observations, RNG
+isolation and replay; T17.17 adds
 the currently missing independent information-set representation. Only the
 capabilities actually claimed make those receipts mandatory; a bounded
 perfect-information static release does not wait for that representation.
