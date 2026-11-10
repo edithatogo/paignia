@@ -1,0 +1,29 @@
+{
+  "track_id": "t18_illicit_enforcement_inspection_games_20261110",
+  "registry_id": "T18",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-11-10T00:00:00Z",
+  "updated_at": "2026-11-10T00:00:00Z",
+  "description": "Neutral Stackelberg/inspection game primitives in Paignia and external consumer handoff for tobac illicit-supply partial identification (M2a).",
+  "dependencies": [
+    "t17_game_runtime_ecosystem_20261107"
+  ],
+  "provider_owned_leaves": [
+    "T18.01",
+    "T18.02"
+  ],
+  "external_owned_leaves": {
+    "T18.03": {
+      "owner": "edithatogo/tobac",
+      "scope": "Illicit-supply border/retail enforcement game adapter feeding partial-identification bounds (M2a, F03)"
+    }
+  },
+  "capability_status": "planned",
+  "verification": {
+    "status": "planning_only",
+    "commands": [
+      "python3 scripts/validate_extraction.py"
+    ]
+  }
+}
