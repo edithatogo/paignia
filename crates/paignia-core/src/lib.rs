@@ -5,7 +5,7 @@
 //! UOGTO.
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::fmt;
+use thiserror::Error;
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct PlayerId(pub String);
@@ -59,29 +59,33 @@ pub struct GameSpecification {
     pub game: Game,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Error)]
 pub enum ValidationError {
+    #[error("empty identifier at {path}")]
     EmptyIdentifier { path: String },
+    #[error("unsupported schema version {value} at {path}")]
     UnsupportedSchemaVersion { path: String, value: String },
+    #[error("missing root node {0:?}")]
     MissingRoot(NodeId),
+    #[error("missing target {target:?} referenced by {from:?}")]
     MissingTarget { from: NodeId, target: NodeId },
+    #[error("decision node {0:?} has no actions")]
     EmptyDecision(NodeId),
+    #[error("duplicate action {action:?} at decision node {node:?}")]
     DuplicateAction { node: NodeId, action: ActionId },
+    #[error("chance node {0:?} has no outcomes")]
     EmptyChance(NodeId),
+    #[error("invalid probability at node {0:?}")]
     InvalidProbability(NodeId),
+    #[error("probability mass does not equal one at node {0:?}")]
     ProbabilityMass(NodeId),
+    #[error("invalid payoff for player {player:?} at node {node:?}")]
     InvalidPayoff { node: NodeId, player: PlayerId },
+    #[error("cycle detected at node {0:?}")]
     Cycle(NodeId),
+    #[error("unreachable node {0:?}")]
     UnreachableNode(NodeId),
 }
-
-impl fmt::Display for ValidationError {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(formatter, "{self:?}")
-    }
-}
-
-impl std::error::Error for ValidationError {}
 
 impl ValidationError {
     #[must_use]
@@ -435,5 +439,23 @@ mod tests {
         let error = invalid.validate().unwrap_err();
         assert_eq!(error.code(), "unsupported_schema_version");
         assert_eq!(error.path(), "schema_version");
+    }
+
+    #[test]
+    fn validation_errors_explain_location_without_debug_only_display() {
+        let empty = ValidationError::EmptyIdentifier {
+            path: "game.id".into(),
+        };
+        assert_eq!(empty.code(), "empty_identifier");
+        assert_eq!(empty.path(), "game.id");
+        assert_eq!(empty.to_string(), "empty identifier at game.id");
+
+        let wrong_schema = ValidationError::UnsupportedSchemaVersion {
+            path: "schema_version".into(),
+            value: "2.0.0".into(),
+        };
+        assert_eq!(wrong_schema.code(), "unsupported_schema_version");
+        assert!(wrong_schema.to_string().contains("2.0.0"));
+        assert!(wrong_schema.to_string().contains("schema_version"));
     }
 }
