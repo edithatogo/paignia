@@ -813,3 +813,22 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+mod error_display_contract_tests {
+    use super::*;
+
+    #[test]
+    fn solver_error_messages_identify_failing_context() {
+        let error = SolveError::InvalidTolerance(f64::NAN);
+        assert!(error.to_string().starts_with("invalid solver tolerance"));
+
+        let error = SolveError::ProfileLimitExceeded {
+            profiles: 17,
+            limit: 16,
+        };
+        let text = error.to_string();
+        assert!(text.contains("17"));
+        assert!(text.contains("16"));
+    }
+}
