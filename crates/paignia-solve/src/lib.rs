@@ -93,20 +93,11 @@ pub enum SolveError {
         strategy: ActionId,
     },
     #[error("strategy profile count {profiles} exceeds limit {limit}")]
-    ProfileLimitExceeded {
-        profiles: usize,
-        limit: usize,
-    },
+    ProfileLimitExceeded { profiles: usize, limit: usize },
     #[error("solver depth {depth} exceeds limit {limit}")]
-    DepthLimitExceeded {
-        depth: usize,
-        limit: usize,
-    },
+    DepthLimitExceeded { depth: usize, limit: usize },
     #[error("visited node count {visited} exceeds limit {limit}")]
-    VisitedNodeLimitExceeded {
-        visited: usize,
-        limit: usize,
-    },
+    VisitedNodeLimitExceeded { visited: usize, limit: usize },
     #[error("missing normal-form strategy profile {0:?}")]
     MissingProfile(StrategyProfile),
     #[error("invalid normal-form payoff for player {player:?} at profile {profile:?}")]
