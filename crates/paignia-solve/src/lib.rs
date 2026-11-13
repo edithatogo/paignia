@@ -1,7 +1,7 @@
 //! Backward induction for finite, acyclic, perfect-information games.
 
 use std::collections::BTreeMap;
-use std::fmt;
+use thiserror::Error;
 
 use paignia_core::{ActionId, Game, Node, NodeId, PayoffVector, PlayerId, ValidationError};
 
@@ -75,43 +75,46 @@ pub struct Solution {
     pub trace: Vec<TraceStep>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Error)]
 pub enum SolveError {
-    InvalidGame(ValidationError),
+    #[error("invalid game: {0}")]
+    InvalidGame(#[source] ValidationError),
+    #[error("invalid solver tolerance {0}")]
     InvalidTolerance(f64),
+    #[error("missing node {0:?}")]
     MissingNode(NodeId),
+    #[error("duplicate player {0:?}")]
     DuplicatePlayer(PlayerId),
+    #[error("player {0:?} has no strategies")]
     MissingStrategies(PlayerId),
+    #[error("duplicate strategy {strategy:?} for player {player:?}")]
     DuplicateStrategy {
         player: PlayerId,
         strategy: ActionId,
     },
+    #[error("strategy profile count {profiles} exceeds limit {limit}")]
     ProfileLimitExceeded {
         profiles: usize,
         limit: usize,
     },
+    #[error("solver depth {depth} exceeds limit {limit}")]
     DepthLimitExceeded {
         depth: usize,
         limit: usize,
     },
+    #[error("visited node count {visited} exceeds limit {limit}")]
     VisitedNodeLimitExceeded {
         visited: usize,
         limit: usize,
     },
+    #[error("missing normal-form strategy profile {0:?}")]
     MissingProfile(StrategyProfile),
+    #[error("invalid normal-form payoff for player {player:?} at profile {profile:?}")]
     InvalidNormalFormPayoff {
         profile: StrategyProfile,
         player: PlayerId,
     },
 }
-
-impl fmt::Display for SolveError {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(formatter, "{self:?}")
-    }
-}
-
-impl std::error::Error for SolveError {}
 
 /// Solve a validated finite, acyclic, perfect-information game.
 ///
