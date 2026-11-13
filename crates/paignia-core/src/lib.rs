@@ -436,4 +436,22 @@ mod tests {
         assert_eq!(error.code(), "unsupported_schema_version");
         assert_eq!(error.path(), "schema_version");
     }
+
+    #[test]
+    fn validation_errors_explain_location_without_debug_only_display() {
+        let empty = ValidationError::EmptyIdentifier {
+            path: "game.id".into(),
+        };
+        assert_eq!(empty.code(), "empty_identifier");
+        assert_eq!(empty.path(), "game.id");
+        assert_eq!(empty.to_string(), "empty identifier at game.id");
+
+        let wrong_schema = ValidationError::UnsupportedSchemaVersion {
+            path: "schema_version".into(),
+            value: "2.0.0".into(),
+        };
+        assert_eq!(wrong_schema.code(), "unsupported_schema_version");
+        assert!(wrong_schema.to_string().contains("2.0.0"));
+        assert!(wrong_schema.to_string().contains("schema_version"));
+    }
 }
