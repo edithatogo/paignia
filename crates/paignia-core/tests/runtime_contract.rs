@@ -1,4 +1,4 @@
-//! T17.01.profile: native admission controls for the existing static input model.
+//! T17.01 component admission: static input and role-specific result identities.
 
 mod result_identities {
     use std::error::Error;

@@ -132,6 +132,20 @@ seed rename and source-level consumer slices without adding competing leaves.
   identity-to-source binding, conversion or numerical qualification. Full
   result/status/algorithm/selection/diagnostic/catalogue/serialization obligations
   remain; T17.13 and T18 native-comparison prerequisites stay held.
+- Implementation candidate in [PR21](https://github.com/edithatogo/paignia/pull/21):
+  `ResultIdentityRecord`, six distinct identity types and a separate structured
+  admission error; exact identity component schema `1.0.0`. No existing core
+  bytes, solver, manifest/lock or workflow change.
+- Red evidence at `733ec013ea1b3cd7eee23a18b45f56c906143f6d`: the explicit
+  no-check prototype runs all 35 contract tests, with 30 passes and five failures
+  (exit 101), including an unknown-schema assertion. This is a development
+  control, not an inherited production defect. The implemented validator passes
+  all 35 contract tests, 52 workspace tests, three role-confusion compile-fail
+  doctests and two extracted-source consumer tests on Rust 1.75.0; format,
+  warnings-denied Clippy, extraction guard and warnings-denied rustdoc pass.
+  The final exact-head hosted receipt is recorded on PR21. **Fresh independent
+  public-contract review is still missing; this candidate is not accepted/pinned
+  for conversion or consumers.**
 
 ### [ ] T17.02 — reject Kairos in the static package dependency closure
 

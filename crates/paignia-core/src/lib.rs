@@ -158,7 +158,33 @@ impl ResultIdentityRecord {
     /// Returns [`ResultIdentityValidationError`] for an unsupported schema,
     /// checked first, or a blank identifier in declaration order.
     pub fn validate(&self) -> Result<(), ResultIdentityValidationError> {
-        // Red-stage prototype: the contract tests must reject missing admission.
+        if self.schema_version != RESULT_IDENTITY_SCHEMA_VERSION {
+            return Err(ResultIdentityValidationError::UnsupportedSchemaVersion {
+                value: self.schema_version.clone(),
+            });
+        }
+        let identities = [
+            ("specification_id", Some(self.specification_id.0.as_str())),
+            ("game_instance_id", Some(self.game_instance_id.0.as_str())),
+            ("solver_run_id", Some(self.solver_run_id.0.as_str())),
+            (
+                "session_id",
+                self.session_id.as_ref().map(|id| id.0.as_str()),
+            ),
+            (
+                "policy_artifact_id",
+                self.policy_artifact_id.as_ref().map(|id| id.0.as_str()),
+            ),
+            (
+                "solver_trace_id",
+                self.solver_trace_id.as_ref().map(|id| id.0.as_str()),
+            ),
+        ];
+        for (path, value) in identities {
+            if value.is_some_and(|id| id.trim().is_empty()) {
+                return Err(ResultIdentityValidationError::EmptyIdentifier { path });
+            }
+        }
         Ok(())
     }
 }

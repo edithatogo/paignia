@@ -467,3 +467,48 @@ but do not execute this harness. The bounded authoring packet is accepted;
 no residual authoring fix is assigned. Independent T18 numerical review,
 hosted harness execution and native contract/method acceptance remain separate.
 No parent T18 status is closed, and the worker's source ownership is retained.
+
+### Identity component and serial inspection-CI handoff
+
+The identity claim/map commit `2fbf2f0c65d2e345581936fbb86c84c298565aa8` and
+[draft PR21](https://github.com/edithatogo/paignia/pull/21) preceded implementation.
+Tests/prototype commit `733ec013ea1b3cd7eee23a18b45f56c906143f6d` executes 35
+contract tests: 30 pass, five fail because admission is deliberately absent
+(exit 101; one direct unknown-schema assertion and four expected-error failures).
+The final validator checks exact schema `1.0.0`, then required and optional
+supplied IDs in declaration order without changing their strings/options.
+
+Candidate local Rust 1.75.0 evidence: 35 focused / 52 full native tests, three
+compile-fail identity-role doctests and two isolated source-consumer tests pass;
+format, warnings-denied Clippy, extraction, warnings-denied rustdoc and
+whitespace pass. Removing the one additive identity block reproduces every
+parent core byte; solver/manifests/lock/CI are unchanged. Candidate SHA-256:
+core `c8a507a3da7e9d9b87659f18dd8b2aa23bf1edbc80ce1f6df7a9585193749613`,
+tests `e746b9ca190d761f11fae4930ee8149b8cf9d5a2abe45e22950796d10273ce7d`.
+The final exact commit/tree and hosted results are on PR21, avoiding a
+self-referential source hash. **Fresh independent public-contract review of
+this new interface is pending.** No completed worker receives that assignment.
+This component is not the complete result envelope, a wire format, resolved
+source binding, conversion or numerical acceptance; the full holds above apply.
+
+[Draft PR22](https://github.com/edithatogo/paignia/pull/22) integrates the exact
+four PR19 blobs plus its single new CI job, on fixed PR17. Head
+`077806073ad30e6339ce6086bc7b86ddb371aeb8` and actual temporary merge
+`167c97a52fc94a55a27bd3aa8764323b465217f9` have equal tree
+`49fd5a2e1e29a3559ec2a63c921930551c017484`.
+The [inspected hosted receipt](https://github.com/edithatogo/paignia/pull/22#issuecomment-6896536614)
+confirms CPython 3.12.14 executes 28 inspection and 39 numerical tests, both with
+plain OK and all source hashes retained. Stable/MSRV each pass 17 native plus
+two source-consumer tests, and privacy passes. Existing jobs and top-level
+workflow configuration are unchanged. All five changed paths are within the
+claim; no fixture byte is authored anew. This is an unmerged proposal, not
+installation of either harness on main or production numerical qualification.
+
+Current residual specialist gates are independent **PR21 interface review** and
+**PR19 T18 numerical review** (PR22 uses those identical fixture blobs). PR14's
+input and PR15's numerical reviews are accepted at their original heads. Both
+new worker handoffs have been accepted with no residual assignment and may be
+archived; the coordinator's role remains active. T17.13, the full result
+envelope, T18 native/interval/consumer and other scientific/package/real-consumer
+gates remain. PR18/20 proposals are not adopted; no merge, activation or
+publication decision is made.

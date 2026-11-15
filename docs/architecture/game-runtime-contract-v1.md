@@ -1,9 +1,11 @@
-# Static game input profile v1 — T17.01.profile
+# Static input and result identity components — T17.01
 
-Status: bounded candidate input contract. The complete T17.01 result, identity
-and conversion contract remains pending. This document records the one behavior
-implemented by the five-file slice in the [T17 plan](../../conductor/tracks/t17_game_runtime_ecosystem_20261107/plan.md),
-under the [current ownership map](../integrations/parallel-plan-reconciliation-20261108.md#scoped-ownership-update--15-november-2026).
+Status: bounded candidate components. The input profile and separate result
+identity-record admission have distinct leaves and exact-head review gates.
+The complete T17.01 result envelope, identity-to-source binding and conversion
+contract remain pending. Their bounded increments are in the
+[T17 plan](../../conductor/tracks/t17_game_runtime_ecosystem_20261107/plan.md),
+under the [current ownership map](../integrations/parallel-plan-reconciliation-20261108.md#continued-bounded-work--16-november-2026).
 It is not a release or downstream conversion receipt.
 
 ## Exact admission boundary
@@ -122,3 +124,70 @@ An independent specialist public-contract review and required hosted stable/Rust
 1.75 native checks are merge gates. Author review is not that independent gate.
 Actual results, exact revisions and remaining holds belong to the T17 plan and
 ownership-map receipt; this command list alone is not evidence of execution.
+
+## Result identity record v1 — T17.01.identities
+
+`ResultIdentityRecord::validate()` admits an explicit **identity component** for
+a future result envelope. `RESULT_IDENTITY_SCHEMA_VERSION` is exactly `1.0.0`;
+the component's `schema_version` must match the entire literal. Input schema and
+semantic-profile admission remain separate. No result payload, algorithm,
+solution concept, status, residual or catalogue is admitted by this method.
+This new public interface requires its own independent exact-head review.
+
+| Field | Native type | Meaning and presence |
+| --- | --- | --- |
+| `specification_id` | `GameSpecificationId` | Required specification identity; existing `GameSpecification.id` is unchanged |
+| `game_instance_id` | `GameInstanceId` | Required instantiated-model identity; not an array position or specification alias |
+| `solver_run_id` | `SolverRunId` | Required solver invocation identity; not a session, policy, uncertainty draw or simulation replicate |
+| `session_id` | `Option<GameSessionId>` | Optional caller-supplied game-session context; no session is created |
+| `policy_artifact_id` | `Option<PolicyArtifactId>` | Optional policy artifact reference; not live policy state |
+| `solver_trace_id` | `Option<SolverDiagnosticTraceId>` | Optional diagnostic traversal reference; never a realized causal play trace |
+
+These are different Rust types, with no implicit cross-role conversion. Their
+compile-fail API examples reject specification-to-instance, solver-run-to-session
+and policy-to-trace assignment. The role and complete string together identify
+the reference. Equal lexical strings in different roles are legal and are not
+silently equated; a global uniqueness or entity-equivalence rule would require a
+separate namespace/source contract. This component does not resolve any ID,
+prove an artifact exists, establish a binding to the supplied game, certify
+UOGTO vocabulary or validate a conversion. Explicit tuple construction can
+assign a string to a role; callers remain responsible for its truthful meaning.
+
+Validation checks the component version first, then identifiers in the table's
+order. A required ID, or an ID supplied inside `Some`, must contain a character
+other than Unicode whitespace. `None` is accepted for optional context;
+`Some` containing an empty ID rejects. Admission borrows the record and leaves
+every string and option unchanged. It does not trim, normalize Unicode, shorten full namespaces,
+resolve legacy IRIs, allocate runtime handles or generate an identifier.
+Nonblank opaque strings may include surrounding spaces or NUL, as in the
+existing string identity boundary; they are not thereby certified as RDF IRIs.
+
+| Failure | Structured variant | Code / path |
+| --- | --- | --- |
+| Any other version, including future patch versions, whitespace, suffixes or lookalikes | `ResultIdentityValidationError::UnsupportedSchemaVersion { value }` | `unsupported_result_identity_schema` / `schema_version` |
+| Blank supplied identity | `ResultIdentityValidationError::EmptyIdentifier { path }` | `empty_result_identity` / the exact field name in the table |
+
+The separate error enum preserves all legacy `ValidationError` variants and
+input-profile errors. No field is added to an existing game or solver struct;
+no legacy solver automatically creates this record. There is no serialization
+format, native adapter or causal trace API in this increment.
+
+The existing `runtime_contract` target adds ten cases for exact schema admission,
+unknown-version precedence, each required/optional blank role, stable error
+codes/paths, non-mutating string preservation and absent static context. Three
+compile-fail doctests distinguish native identity roles:
+
+```bash
+cargo test --locked -p paignia-core --test runtime_contract
+cargo test --locked -p paignia-core --doc
+```
+
+Full T17.01 still needs the versioned result envelope and wire representation,
+supported game/information/algorithm/solution semantics, unsupported versus
+proved absence versus nonconvergence, finite residual/exploitability diagnostics
+and justified tolerances, versioned tie/selection with reorder controls, and
+evidence-backed catalogue coverage with multiplicity-preserving serialization.
+Source binding and semantic conversion also remain unqualified. **T17.13 source
+work remains held**; T18 native comparisons retain their separate information,
+method and result prerequisites. Static and optional dynamic acceptance remain
+independent. This component grants no capability or downstream activation.
