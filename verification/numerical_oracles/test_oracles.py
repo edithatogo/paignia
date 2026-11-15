@@ -279,5 +279,128 @@ class ReplicatorOracleTests(unittest.TestCase):
                      lambda t, p: (Q(1), Q(0)))
 
 
+def rational(value):
+    raise NotImplementedError("T17.05.oracle tests-first baseline")
+
+
+def nash_certificate(a, b, p, q):
+    """Check an existing witness, never search for or enumerate equilibria."""
+    raise NotImplementedError("T17.05.oracle tests-first baseline")
+
+
+def require_nash(a, b, p, q):
+    raise NotImplementedError("T17.05.oracle tests-first baseline")
+
+
+class NashOracleTests(unittest.TestCase):
+    def setUp(self):
+        self.data = fixture("mixed_nash_v1.json", "paignia.test-oracle.mixed-nash/1")
+        self.games = {game["id"]: game for game in self.data["games"]}
+
+    def test_inventory_and_scope(self):
+        self.assertEqual(set(self.games), {"source_derived_strict_dominance", "matching_pennies",
+                         "coordination_three_equilibria", "asymmetric_interior", "rectangular_2x3",
+                         "rectangular_3x2", "degenerate_zero_continuum", "signed_single_action"})
+        self.assertEqual(len(self.data["games"]), len(self.games))
+        self.assertEqual(sum(len(g["witnesses"]) for g in self.games.values()), 12)
+        self.assertEqual(sum(len(g["negative_candidates"]) for g in self.games.values()), 5)
+        self.assertEqual(self.games["degenerate_zero_continuum"]["coverage"], "continuum_samples_only")
+        self.assertIs(self.data["provenance"]["external_software_executed"], False)
+
+    def test_all_exact_equilibrium_witnesses(self):
+        for game in self.games.values():
+            for witness in game["witnesses"]:
+                with self.subTest(game=game["id"], witness=witness):
+                    result = require_nash(game["A"], game["B"], witness["p"], witness["q"])
+                    self.assertEqual(result["utilities"], tuple(map(Q, witness["utilities"])))
+                    self.assertEqual(result["gains"], (Q(0), Q(0)))
+                    self.assertEqual(result["sum_gain"], 0)
+                    self.assertEqual(result["max_gain"], 0)
+
+    def test_false_candidates_have_pinned_positive_gains(self):
+        for game in self.games.values():
+            for candidate in game["negative_candidates"]:
+                with self.subTest(game=game["id"]):
+                    args = (game["A"], game["B"], candidate["p"], candidate["q"])
+                    result = nash_certificate(*args)
+                    expected = tuple(map(Q, candidate["gains"]))
+                    self.assertEqual(result["utilities"], tuple(map(Q, candidate["utilities"])))
+                    self.assertEqual(result["gains"], expected)
+                    self.assertEqual(result["sum_gain"], sum(expected))
+                    self.assertEqual(result["max_gain"], max(expected))
+                    self.assertGreater(result["max_gain"], 0)
+                    with self.assertRaises(ValueError):
+                        require_nash(*args)
+
+    def test_source_derived_dominant_action_counterexample(self):
+        game = self.games["source_derived_strict_dominance"]
+        a, b = [[list(map(Q, row)) for row in game[key]] for key in ("A", "B")]
+        self.assertEqual((b[0][0] - b[0][1]) - (b[1][0] - b[1][1]), 0)
+        self.assertEqual((a[0][0] - a[1][0]) - (a[0][1] - a[1][1]), 0)
+        result = nash_certificate(a, b, [Q(1, 2)] * 2, [Q(1, 2)] * 2)
+        self.assertEqual(result["gains"], (Q(1, 2), Q(1, 2)))
+        self.assertEqual(result["sum_gain"], 1)
+
+    def test_coordination_multiplicity_is_preserved(self):
+        witnesses = self.games["coordination_three_equilibria"]["witnesses"]
+        self.assertEqual(len({(tuple(w["p"]), tuple(w["q"])) for w in witnesses}), 3)
+        self.assertEqual(witnesses[2]["p"], ["2/3", "1/3"])
+        self.assertEqual(witnesses[2]["q"], ["1/3", "2/3"])
+
+    def test_degenerate_family_beyond_listed_samples(self):
+        game = self.games["degenerate_zero_continuum"]
+        for p in [Q(0), Q(1, 7), Q(1, 2), Q(1)]:
+            for q in [Q(0), Q(2, 7), Q(1, 2), Q(1)]:
+                result = require_nash(game["A"], game["B"], [p, 1 - p], [q, 1 - q])
+                self.assertEqual(result["gains"], (0, 0))
+
+    def test_probability_and_payoff_permutations(self):
+        for game in self.games.values():
+            for witness in game["witnesses"] + game["negative_candidates"]:
+                a = [row[::-1] for row in game["A"][::-1]]
+                b = [row[::-1] for row in game["B"][::-1]]
+                original = nash_certificate(game["A"], game["B"], witness["p"], witness["q"])
+                reordered = nash_certificate(a, b, witness["p"][::-1], witness["q"][::-1])
+                self.assertEqual(original, reordered)
+
+    def test_positive_affine_payoffs_scale_gains(self):
+        for game in self.games.values():
+            for witness in game["witnesses"] + game["negative_candidates"]:
+                a = [[7 * Q(x) - 100 for x in row] for row in game["A"]]
+                b = [[7 * Q(x) + 30 for x in row] for row in game["B"]]
+                original = nash_certificate(game["A"], game["B"], witness["p"], witness["q"])
+                changed = nash_certificate(a, b, witness["p"], witness["q"])
+                self.assertEqual(changed["utilities"],
+                                 (7 * original["utilities"][0] - 100, 7 * original["utilities"][1] + 30))
+                self.assertEqual(changed["gains"], tuple(7 * x for x in original["gains"]))
+
+    def test_number_domain_errors(self):
+        for value in [True, False, 0.5, None, "NaN", "Infinity", "-Infinity", "1/0", ""]:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                rational(value)
+
+    def test_invalid_games_do_not_become_zero_residuals(self):
+        self.assertEqual(len(self.data["invalid_games"]), 6)
+        for game in self.data["invalid_games"]:
+            with self.subTest(game=game["id"]), self.assertRaises(ValueError):
+                nash_certificate(game["A"], game["B"], ["1"], ["1"])
+
+    def test_invalid_profiles_are_not_normalized(self):
+        self.assertEqual(len(self.data["invalid_profiles"]), 6)
+        game = self.games["matching_pennies"]
+        for profile in self.data["invalid_profiles"]:
+            with self.subTest(profile=profile["id"]), self.assertRaises(ValueError):
+                nash_certificate(game["A"], game["B"], profile["p"], profile["q"])
+
+    def test_small_nonzero_gain_is_not_rounded_away(self):
+        game = self.games["matching_pennies"]
+        delta = Q(1, 10**30)
+        p = [Q(1, 2) + delta, Q(1, 2) - delta]
+        result = nash_certificate(game["A"], game["B"], p, [Q(1, 2)] * 2)
+        self.assertEqual(result["gains"], (Q(0), 2 * delta))
+        with self.assertRaises(ValueError):
+            require_nash(game["A"], game["B"], p, [Q(1, 2)] * 2)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
