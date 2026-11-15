@@ -334,3 +334,490 @@ fn wrapped_errors_retain_the_original_code_path_and_error_source() {
         ProfileValidationError::InvalidSpecification(original)
     );
 }
+
+// Retained from accepted independent review 5909550432 at PR14 head
+// 0c88607a142508d1fe4f1153b963fd1411b49395. The external harness remains
+// the independent evidence; these are native regression controls, not a new review.
+mod independent_review_controls {
+    use paignia_core::{
+        ActionEdge, ActionId, ChanceEdge, Game, GameSpecification, Node, NodeId, PlayerId,
+        ProfileValidationError, ValidationError,
+    };
+    use std::collections::BTreeMap;
+    use std::error::Error;
+
+    const PROFILE: &str = "paignia/static-finite-perfect-information-sparse-zero/1.0.0";
+    fn nid(s: &str) -> NodeId {
+        NodeId(s.into())
+    }
+    fn pid(s: &str) -> PlayerId {
+        PlayerId(s.into())
+    }
+    fn terminal() -> Node {
+        Node::Terminal {
+            payoffs: BTreeMap::new(),
+        }
+    }
+    fn specification(root: &str, nodes: Vec<(&str, Node)>) -> GameSpecification {
+        GameSpecification {
+            schema_version: "1.0.0".into(),
+            id: "review:synthetic".into(),
+            game: Game {
+                root: nid(root),
+                nodes: nodes.into_iter().map(|(k, v)| (nid(k), v)).collect(),
+            },
+        }
+    }
+    fn decision(edges: &[(&str, &str)]) -> Node {
+        Node::Decision {
+            player: pid("p"),
+            edges: edges
+                .iter()
+                .map(|(a, t)| ActionEdge {
+                    action: ActionId((*a).into()),
+                    target: nid(t),
+                })
+                .collect(),
+        }
+    }
+    fn chance(weights: &[f64]) -> GameSpecification {
+        specification(
+            "c",
+            vec![
+                (
+                    "c",
+                    Node::Chance {
+                        edges: weights
+                            .iter()
+                            .map(|p| ChanceEdge {
+                                probability: *p,
+                                target: nid("t"),
+                            })
+                            .collect(),
+                    },
+                ),
+                ("t", terminal()),
+            ],
+        )
+    }
+    // Compile-time compatibility control: an old exhaustive match needs no new arm.
+    fn legacy_variant_index(e: &ValidationError) -> usize {
+        match e {
+            ValidationError::EmptyIdentifier { .. } => 0,
+            ValidationError::UnsupportedSchemaVersion { .. } => 1,
+            ValidationError::MissingRoot(_) => 2,
+            ValidationError::MissingTarget { .. } => 3,
+            ValidationError::EmptyDecision(_) => 4,
+            ValidationError::DuplicateAction { .. } => 5,
+            ValidationError::EmptyChance(_) => 6,
+            ValidationError::InvalidProbability(_) => 7,
+            ValidationError::ProbabilityMass(_) => 8,
+            ValidationError::InvalidPayoff { .. } => 9,
+            ValidationError::Cycle(_) => 10,
+            ValidationError::UnreachableNode(_) => 11,
+        }
+    }
+    fn expect_error(s: &GameSpecification, expected: ValidationError, code: &str, path: &str) {
+        assert_eq!(s.validate(), Err(expected.clone()));
+        let wrapped = s.validate_for_profile(PROFILE).unwrap_err();
+        assert_eq!(wrapped.code(), code);
+        assert_eq!(wrapped.path(), path);
+        let source = wrapped.source().expect("original typed source");
+        assert_eq!(source.downcast_ref::<ValidationError>(), Some(&expected));
+        assert!(source.source().is_none());
+        assert_eq!(
+            wrapped.to_string(),
+            format!("invalid game specification: {expected}")
+        );
+        assert!(legacy_variant_index(&expected) < 12);
+        assert_eq!(
+            wrapped,
+            ProfileValidationError::InvalidSpecification(expected)
+        );
+    }
+    fn stored_weights(s: &GameSpecification) -> Vec<u64> {
+        match &s.game.nodes[&nid("c")] {
+            Node::Chance { edges } => edges.iter().map(|e| e.probability.to_bits()).collect(),
+            _ => panic!("fixture requires chance root"),
+        }
+    }
+
+    #[test]
+    fn metadata_errors_preserve_payload_code_path_and_source() {
+        let mut blank = specification("r", vec![("r", terminal())]);
+        blank.id = " ".into();
+        expect_error(
+            &blank,
+            ValidationError::EmptyIdentifier { path: "id".into() },
+            "empty_identifier",
+            "id",
+        );
+        let mut future = specification("r", vec![("r", terminal())]);
+        future.schema_version = "2.0.0".into();
+        expect_error(
+            &future,
+            ValidationError::UnsupportedSchemaVersion {
+                path: "schema_version".into(),
+                value: "2.0.0".into(),
+            },
+            "unsupported_schema_version",
+            "schema_version",
+        );
+        expect_error(
+            &specification("r", vec![]),
+            ValidationError::MissingRoot(nid("r")),
+            "missing_root",
+            "game.nodes.r",
+        );
+    }
+
+    #[test]
+    fn graph_errors_preserve_payload_code_path_and_source() {
+        expect_error(
+            &specification("r", vec![("r", decision(&[("a", "missing.with.dot")]))]),
+            ValidationError::MissingTarget {
+                from: nid("r"),
+                target: nid("missing.with.dot"),
+            },
+            "missing_target",
+            "game.nodes.r.target.missing.with.dot",
+        );
+        expect_error(
+            &specification("r", vec![("r", decision(&[]))]),
+            ValidationError::EmptyDecision(nid("r")),
+            "empty_decision",
+            "game.nodes.r",
+        );
+        expect_error(
+            &specification(
+                "r",
+                vec![
+                    ("r", decision(&[("a", "t"), ("a", "t")])),
+                    ("t", terminal()),
+                ],
+            ),
+            ValidationError::DuplicateAction {
+                node: nid("r"),
+                action: ActionId("a".into()),
+            },
+            "duplicate_action",
+            "game.nodes.r",
+        );
+        expect_error(
+            &chance(&[]),
+            ValidationError::EmptyChance(nid("c")),
+            "empty_chance",
+            "game.nodes.c",
+        );
+        expect_error(
+            &chance(&[f64::NAN]),
+            ValidationError::InvalidProbability(nid("c")),
+            "invalid_probability",
+            "game.nodes.c",
+        );
+        expect_error(
+            &chance(&[0.5]),
+            ValidationError::ProbabilityMass(nid("c")),
+            "probability_mass",
+            "game.nodes.c",
+        );
+        expect_error(
+            &specification(
+                "t",
+                vec![(
+                    "t",
+                    Node::Terminal {
+                        payoffs: BTreeMap::from([(pid("p"), f64::INFINITY)]),
+                    },
+                )],
+            ),
+            ValidationError::InvalidPayoff {
+                node: nid("t"),
+                player: pid("p"),
+            },
+            "invalid_payoff",
+            "game.nodes.t",
+        );
+        expect_error(
+            &specification("r", vec![("r", decision(&[("a", "r")]))]),
+            ValidationError::Cycle(nid("r")),
+            "cycle",
+            "game.nodes.r",
+        );
+        expect_error(
+            &specification("r", vec![("r", terminal()), ("orphan", terminal())]),
+            ValidationError::UnreachableNode(nid("orphan")),
+            "unreachable_node",
+            "game.nodes.orphan",
+        );
+    }
+
+    #[test]
+    fn blank_identifier_roles_keep_their_original_paths() {
+        let blank = "\u{2003}\t\n";
+        let mut cases = Vec::new();
+        let mut s = specification("r", vec![("r", terminal())]);
+        s.id = blank.into();
+        cases.push((s, "id"));
+        cases.push((specification(blank, vec![(blank, terminal())]), "root"));
+        cases.push((
+            specification("r", vec![("r", terminal()), (blank, terminal())]),
+            "nodes",
+        ));
+        cases.push((
+            specification(
+                "r",
+                vec![
+                    (
+                        "r",
+                        Node::Decision {
+                            player: pid(blank),
+                            edges: vec![ActionEdge {
+                                action: ActionId("a".into()),
+                                target: nid("t"),
+                            }],
+                        },
+                    ),
+                    ("t", terminal()),
+                ],
+            ),
+            "decision.player",
+        ));
+        cases.push((
+            specification(
+                "r",
+                vec![("r", decision(&[(blank, "t")])), ("t", terminal())],
+            ),
+            "decision.action",
+        ));
+        cases.push((
+            specification(
+                "r",
+                vec![(
+                    "r",
+                    Node::Terminal {
+                        payoffs: BTreeMap::from([(pid(blank), 1.0)]),
+                    },
+                )],
+            ),
+            "terminal.player",
+        ));
+        for (s, path) in cases {
+            expect_error(
+                &s,
+                ValidationError::EmptyIdentifier { path: path.into() },
+                "empty_identifier",
+                path,
+            );
+        }
+    }
+
+    #[test]
+    fn adversarial_profile_spellings_reject_before_invalid_schema_or_graph() {
+        let mut s = specification("missing", vec![]);
+        s.schema_version = "future".into();
+        s.id.clear();
+        let variants = [
+            format!("{PROFILE}+build.1"),
+            format!("{PROFILE}-rc.1"),
+            format!("{PROFILE}/"),
+            PROFILE.replace("1.0.0", "01.0.0"),
+            PROFILE.replace("1.0.0", "^1.0.0"),
+            PROFILE.replace("paignia", "p\u{0430}ignia"),
+            PROFILE.replace("/1.0.0", "/%31.0.0"),
+            format!("{PROFILE}\n"),
+            format!("\0{PROFILE}"),
+            PROFILE.replace('-', "_"),
+        ];
+        for profile in variants {
+            let e = s.validate_for_profile(&profile).unwrap_err();
+            assert_eq!(
+                e,
+                ProfileValidationError::UnsupportedSemanticProfile { value: profile }
+            );
+            assert_eq!(e.code(), "unsupported_semantic_profile");
+            assert_eq!(e.path(), "semantic_profile");
+            assert!(e.source().is_none());
+        }
+        expect_error(
+            &s,
+            ValidationError::UnsupportedSchemaVersion {
+                path: "schema_version".into(),
+                value: "future".into(),
+            },
+            "unsupported_schema_version",
+            "schema_version",
+        );
+    }
+
+    #[test]
+    fn adjacent_binary64_values_straddle_each_mass_boundary() {
+        // Frozen IEEE-754 neighbours, checked independently with exact Decimal.from_float.
+        for bits in [0x3ff0_0000_0044_b82f_u64, 0x3fef_ffff_ff76_8fa1] {
+            let s = chance(&[f64::from_bits(bits)]);
+            assert_eq!(s.validate_for_profile(PROFILE), Ok(()));
+            assert_eq!(stored_weights(&s), vec![bits]);
+        }
+        for bits in [0x3ff0_0000_0044_b830_u64, 0x3fef_ffff_ff76_8fa0] {
+            let s = chance(&[f64::from_bits(bits)]);
+            expect_error(
+                &s,
+                ValidationError::ProbabilityMass(nid("c")),
+                "probability_mass",
+                "game.nodes.c",
+            );
+            assert_eq!(stored_weights(&s), vec![bits]);
+        }
+    }
+
+    #[test]
+    fn finite_weights_with_overflowed_total_reject() {
+        expect_error(
+            &chance(&[f64::MAX, f64::MAX]),
+            ValidationError::ProbabilityMass(nid("c")),
+            "probability_mass",
+            "game.nodes.c",
+        );
+        expect_error(
+            &chance(&[0.0, -0.0]),
+            ValidationError::ProbabilityMass(nid("c")),
+            "probability_mass",
+            "game.nodes.c",
+        );
+    }
+
+    #[test]
+    fn shared_descendants_and_parallel_chance_edges_are_admitted() {
+        let mut s = specification(
+            "r",
+            vec![
+                ("r", decision(&[("left", "l"), ("right", "h")])),
+                (
+                    "l",
+                    Node::Chance {
+                        edges: vec![
+                            ChanceEdge {
+                                probability: 0.25,
+                                target: nid("t"),
+                            },
+                            ChanceEdge {
+                                probability: 0.75,
+                                target: nid("t"),
+                            },
+                        ],
+                    },
+                ),
+                ("h", decision(&[("stay", "t")])),
+                ("t", terminal()),
+            ],
+        );
+        let before = s.clone();
+        assert_eq!(s.validate_for_profile(PROFILE), Ok(()));
+        assert_eq!(s, before);
+        s.game.nodes.insert(nid("h"), decision(&[("back", "r")]));
+        expect_error(
+            &s,
+            ValidationError::Cycle(nid("r")),
+            "cycle",
+            "game.nodes.r",
+        );
+    }
+
+    #[test]
+    fn zero_weight_branches_do_not_hide_cycles_or_nonfinite_payoffs() {
+        let mut s = specification(
+            "c",
+            vec![
+                (
+                    "c",
+                    Node::Chance {
+                        edges: vec![
+                            ChanceEdge {
+                                probability: 1.0,
+                                target: nid("t"),
+                            },
+                            ChanceEdge {
+                                probability: 0.0,
+                                target: nid("bad"),
+                            },
+                        ],
+                    },
+                ),
+                ("t", terminal()),
+                ("bad", decision(&[("again", "bad")])),
+            ],
+        );
+        expect_error(
+            &s,
+            ValidationError::Cycle(nid("bad")),
+            "cycle",
+            "game.nodes.bad",
+        );
+        s.game.nodes.insert(
+            nid("bad"),
+            Node::Terminal {
+                payoffs: BTreeMap::from([(pid("p"), f64::NAN)]),
+            },
+        );
+        expect_error(
+            &s,
+            ValidationError::InvalidPayoff {
+                node: nid("bad"),
+                player: pid("p"),
+            },
+            "invalid_payoff",
+            "game.nodes.bad",
+        );
+    }
+
+    #[test]
+    fn string_identity_preserves_namespace_whitespace_unicode_and_nul() {
+        let ids = [
+            "https://w3id.org/uogto/core#same",
+            "https://w3id.org/uogto/extensions#same",
+            "https://kairos.dev/ontology/game-theory#same",
+            " a",
+            "a",
+            "\u{e9}",
+            "e\u{301}",
+            "x\0y",
+        ];
+        let mut nodes = vec![(
+            " root ",
+            Node::Decision {
+                player: pid(" p "),
+                edges: ids
+                    .iter()
+                    .map(|id| ActionEdge {
+                        action: ActionId((*id).into()),
+                        target: nid(id),
+                    })
+                    .collect(),
+            },
+        )];
+        for id in ids {
+            nodes.push((
+                id,
+                Node::Terminal {
+                    payoffs: BTreeMap::from([(pid(id), 1.0)]),
+                },
+            ));
+        }
+        let mut s = specification(" root ", nodes);
+        s.id = " spec ".into();
+        let before = s.clone();
+        assert_eq!(s.validate_for_profile(PROFILE), Ok(()));
+        assert_eq!(s, before);
+        assert_eq!(s.game.nodes.len(), 9);
+    }
+
+    #[test]
+    fn signed_zero_and_minimum_subnormal_weights_are_retained_bitwise() {
+        let s = chance(&[1.0, -0.0, f64::from_bits(1)]);
+        assert_eq!(s.validate_for_profile(PROFILE), Ok(()));
+        assert_eq!(
+            stored_weights(&s),
+            vec![1.0_f64.to_bits(), 0x8000_0000_0000_0000, 1]
+        );
+    }
+}

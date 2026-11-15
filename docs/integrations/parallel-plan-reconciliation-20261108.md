@@ -304,7 +304,7 @@ records these assignments before any implementation in this continuation.
 | Owner | Bounded scope | Receipt / disposition |
 | --- | --- | --- |
 | Coordinator `6af93fe8-b14c-83ec-8de0-728c856bcbb3` | Shared CI, core contract/exports, shared Conductor and this map; serial leaves below | No takeover of worker fixtures or upstream work |
-| Numerical reviewer `6af9c0e1-b6a0-83ec-ad3b-62b228818763` | Independent read-only PR15 mathematical verification at `af7b9783e63943cce3988873160166ca0adfc73f` | [Claim received](https://github.com/edithatogo/paignia/pull/15#issuecomment-6896087576); in progress; no source writes |
+| Numerical reviewer `6af9c0e1-b6a0-83ec-ad3b-62b228818763` | Independent read-only PR15 mathematical verification at `af7b9783e63943cce3988873160166ca0adfc73f` | [Exact-head review accepted](https://github.com/edithatogo/paignia/pull/15#issuecomment-6896316061); no residual assignment; archive-ready |
 | T18 worker `6af9c112-7efc-83ec-8798-c10017de8c5f` | Only `verification/inspection_oracles/{README.md,inspection_2x2_v1.json,reference.py,test_inspection.py}` | [Claim received](https://github.com/edithatogo/paignia/pull/14#issuecomment-6896113657); independent synthetic development; no shared writes |
 | Existing PR15 author, workspace marker `2d989e3b740d` | The five `verification/numerical_oracles/` files | [Handoff accepted into intake](https://github.com/edithatogo/paignia/pull/15#issuecomment-6892003260); source ownership retained; method qualification open |
 | Completed PR14 reviewer `6af956e9-2d90-83ec-9bd9-5697990c506f` | Exact-head input-profile review only | [Review accepted](https://github.com/edithatogo/paignia/pull/14#issuecomment-6891995075); no residual assignment; archive-ready |
@@ -373,10 +373,59 @@ residual reviewer fixes. GitHub records that review as COMMENTED, not APPROVED.
   consumer activation, source pin migration, merge or publication decision.
 - Release an active worker only after reading and accepting its durable
   exact-head handoff, checking current head and resolving its residual fixes.
-  The two new workers are not released by this ownership receipt. Completion of
-  their synthetic assignments cannot be called production qualification.
+  The numerical reviewer's subsequent accepted handoff releases that assignment;
+  T18 still needs its own receipt. Completion of their synthetic assignments
+  cannot be called production qualification.
 
 Capacity was checked before execution: approximately 59 GiB available in the
 workspace. The earlier temporary checkout is absent in this environment; a new
 isolated clone and private tooling/build paths preserve other work. No cleanup
 of another owner's files or caches is part of this continuation.
+
+### Observed continuation evidence
+
+The ownership/plan commit `283da882027b87b185233bd4c7b82e9c14918bc3` and
+[draft PR16](https://github.com/edithatogo/paignia/pull/16) preceded the test edit.
+Ten native regression tests retain nine independent input-review probe groups
+(the twelve legacy errors are split into metadata and graph tests). Formatting,
+literal grouping and consuming the expected error avoid lint suppressions.
+The initial imported tests passed 24 cases but Clippy found seven test-code
+lint errors; after those repairs the target has 25 passing cases. These are
+already-correct behavior regressions, not a new production failure/fix claim.
+
+Local Rust 1.75.0: 42 workspace tests (6 core + 25 contract + 11 solve), two
+isolated extracted-source consumer tests, format, warnings-denied Clippy,
+extraction validation, warnings-denied rustdoc and whitespace all pass. Core
+SHA-256 remains `d5f0fd4edacfacbca0982c7284712ed65a2e984b020956862ee816c3d865c17f`;
+solver, manifests, lock, workflows and worker fixtures are unchanged. The final
+test file is `d6a757201748d09071b36dc2042fa875951bfa3fef6da747b3c1b79bdbef0cbe`.
+Exact final commit/tree and hosted evidence belong to PR16's receipt; prior
+review is evidence for the unchanged production parent, not a new-head approval.
+
+The [PR15 independent review](https://github.com/edithatogo/paignia/pull/15#pullrequestreview-5911272080)
+and complete 20,964-byte reviewer script were read and received. Script SHA-256
+`866b37adbd15e385063e99007ce02f4c0a9619b682db234fe76047e5088d0be2` matches its
+embedded source. The review reports 39 unchanged-harness tests, 10 independent
+reviewer tests and seven detected in-memory mutations; no corrective fixture
+edit. Its COMMENTED state is not formal approval. The coordinator accepted this
+synthetic review and confirmed the reviewer has no residual assignment.
+
+[Draft PR17](https://github.com/edithatogo/paignia/pull/17) at
+`89da0a0261cd5908aa7c1830a536283a03bcec1c` adds only the CI job. Its
+[hosted receipt](https://github.com/edithatogo/paignia/pull/17#issuecomment-6896316260)
+records actual CPython 3.12.14 execution of all 39 tests, unchanged fixture
+hashes, and artifact 14166630459. Head and actual temporary merge
+`38058b68ee58c27b2547d24d140f5bbca7fdcb2c` have identical tree
+`0a24bbb35f0d37d58c779790a6862aaccb467879`. Stable 1.100.0/MSRV 1.75.0 each pass
+17 native plus two source-consumer tests; required native/privacy steps pass.
+This addresses hosted reference execution in the proposed increment; PR15/main
+remain unchanged, and production numerical qualification is still open.
+
+Later reconciliation found T18's four-file [draft PR19](https://github.com/edithatogo/paignia/pull/19),
+Renovate [PR18](https://github.com/edithatogo/paignia/pull/18) and
+[PR20](https://github.com/edithatogo/paignia/pull/20). PR18 changes two existing
+action pins in `.github/workflows/ci.yml`, overlapping PR17's file but not its
+added job. Preserve both proposals; serialize further CI writes and qualify
+the eventual combined tree before integration. PR20 proposes thiserror 2.0.21
+and a syn 3 dependency closure; this work retains the existing lock/2.0.18 pin.
+No automated dependency proposal is adopted or qualified by these receipts.

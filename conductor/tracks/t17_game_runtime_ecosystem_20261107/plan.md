@@ -105,6 +105,12 @@ seed rename and source-level consumer slices without adding competing leaves.
   weights and invalid zero-weight branches. These are regressions for already
   passing behavior, not newly discovered production failures or qualification
   of the remaining result envelope. New interface work needs its own leaf.
+- Implemented: ten supplemental tests retain nine independent probe groups;
+  splitting the legacy-error case keeps each test bounded. Local Rust 1.75.0
+  runs 25 contract / 42 total native tests and two source-consumer tests; format,
+  Clippy, extraction guard and rustdoc pass. No production source changed.
+  [PR16](https://github.com/edithatogo/paignia/pull/16) records the exact-head
+  hosted handoff; it remains draft and does not close T17.01.
 
 ### [ ] T17.02 — reject Kairos in the static package dependency closure
 
@@ -168,6 +174,27 @@ Track 110's source regressions and transfer/retirement decisions. Do not maintai
 two corrected solver implementations. A bounded release may leave S01–S04
 pending and explicitly unsupported; any advertised method must complete its own
 oracle and result contract. Exclusion is not scientific completion.
+
+#### T17.04–06.oracle — separate synthetic fixture and CI receipts
+
+- [PR15](https://github.com/edithatogo/paignia/pull/15) retains five fixture paths
+  at `af7b9783e63943cce3988873160166ca0adfc73f`; author ownership is unchanged.
+  [Independent numerical review accepted](https://github.com/edithatogo/paignia/pull/15#issuecomment-6896316061):
+  39 unchanged-harness tests, 10 reviewer tests, seven detected mutations, no
+  corrective edit. Reviewer `6af9c0e1-b6a0-83ec-ad3b-62b228818763` has no residual
+  assignment and may archive. This is bounded synthetic agent-review acceptance.
+- Coordinator-owned [PR17](https://github.com/edithatogo/paignia/pull/17) changes
+  only `.github/workflows/ci.yml`, stacked on that fixed PR15 head. Exact head
+  `89da0a0261cd5908aa7c1830a536283a03bcec1c` has actual hosted CPython 3.12.14
+  evidence: all 39 oracle tests pass; zero/partial/skipped/failed reports reject.
+  Existing native stable/MSRV/privacy gates pass. Retain the equal head/merge
+  tree provenance in its [receipt](https://github.com/edithatogo/paignia/pull/17#issuecomment-6896316260).
+- Both PRs are unmerged. New PR18 action-pin overlap is serialized by the sole
+  integrator; combined-tree evidence is required before integration.
+- These receipts do not complete T17.04–06/S01–S03. Full accepted/pinned T17.01
+  result semantics, justified production tolerance/API mapping, upstream
+  caller/retirement, comparator/backend and package/consumer obligations remain.
+  T17.13 remains held; no T18/native simulation or consumer activation follows.
 
 ### [ ] T17.04 — implement the declared four-stage replicator step (S01)
 
