@@ -448,14 +448,66 @@ class NashOracleTests(unittest.TestCase):
             require_nash(game["A"], game["B"], p, [Q(1, 2)] * 2)
 
 
+def ce_problem(a, b, joint, objective):
+    a, b = game_matrices(a, b)
+    rows, cols = len(a), len(a[0])
+    joint, objective = matrix(joint), matrix(objective)
+    if any(len(x) != rows or len(x[0]) != cols for x in (joint, objective)):
+        raise ValueError("joint/objective dimensions must match the game")
+    z = probabilities(tuple(x for row in joint for x in row), rows * cols)
+    c = tuple(x for row in objective for x in row)
+    constraints, recommendation_mass = [], []
+    for recommended in range(rows):
+        for alternative in range(rows):
+            if recommended != alternative:
+                constraints.append(tuple(a[i][j] - a[alternative][j] if i == recommended else Q(0)
+                                         for i in range(rows) for j in range(cols)))
+                recommendation_mass.append(sum(joint[recommended]))
+    for recommended in range(cols):
+        for alternative in range(cols):
+            if recommended != alternative:
+                constraints.append(tuple(b[i][j] - b[i][alternative] if j == recommended else Q(0)
+                                         for i in range(rows) for j in range(cols)))
+                recommendation_mass.append(sum(joint[i][recommended] for i in range(rows)))
+    return c, z, constraints, recommendation_mass
+
+
+def ce_report(c, z, constraints, recommendation_mass):
+    incentives = tuple(sum(a * p for a, p in zip(row, z)) for row in constraints)
+    conditional = tuple(max(Q(0), -slack / mass) if mass else None
+                        for slack, mass in zip(incentives, recommendation_mass))
+    return {"incentives": incentives, "objective": sum(a * p for a, p in zip(c, z)),
+            "weighted_max_gain": max([Q(0)] + [-slack for slack in incentives]),
+            "conditional_gains": conditional,
+            "conditional_max_gain": max([Q(0)] + [x for x in conditional if x is not None])}
+
+
 def ce_certificate(a, b, joint, objective):
     """Verify all recommendation-conditional deviation inequalities."""
-    raise NotImplementedError("T17.06.oracle tests-first baseline")
+    return ce_report(*ce_problem(a, b, joint, objective))
 
 
 def require_ce_optimum(a, b, joint, objective, upper_bound, multipliers):
     """Check a supplied exact upper-bound certificate, never optimize/search."""
-    raise NotImplementedError("T17.06.oracle tests-first baseline")
+    problem = ce_problem(a, b, joint, objective)
+    c, z, constraints, _ = problem
+    report = ce_report(*problem)
+    if report["weighted_max_gain"] != 0:
+        raise ValueError("joint distribution violates an incentive constraint")
+    upper_bound = rational(upper_bound)
+    if not isinstance(multipliers, (tuple, list)) or len(multipliers) != len(constraints):
+        raise ValueError("dual multiplier dimension mismatch")
+    multipliers = tuple(rational(x) for x in multipliers)
+    if any(x < 0 for x in multipliers):
+        raise ValueError("dual multipliers must be nonnegative")
+    dual_slacks = tuple(upper_bound - c[j] - sum(weight * row[j] for weight, row in
+                                                zip(multipliers, constraints)) for j in range(len(z)))
+    if any(x < 0 for x in dual_slacks):
+        raise ValueError("invalid dual upper-bound certificate")
+    gap = upper_bound - report["objective"]
+    if gap != 0:
+        raise ValueError("feasible candidate does not attain the certified upper bound")
+    return {**report, "dual_slacks": dual_slacks, "duality_gap": gap}
 
 
 class CorrelatedOracleTests(unittest.TestCase):
@@ -499,6 +551,11 @@ class CorrelatedOracleTests(unittest.TestCase):
     def test_feasible_product_is_not_an_optimality_certificate(self):
         game = self.games["correlation_welfare_gap"]
         candidate = self.controls["feasible_nash_product_is_suboptimal"]
+        mixed = require_nash(game["A"], game["B"], ["1/3", "2/3"], ["1/3", "2/3"])
+        self.assertEqual(mixed["utilities"], (Q(14, 3), Q(14, 3)))
+        for p, q in [(["1", "0"], ["0", "1"]), (["0", "1"], ["1", "0"])]:
+            pure = require_nash(game["A"], game["B"], p, q)
+            self.assertEqual(sum(pure["utilities"]), 9)
         result = ce_certificate(game["A"], game["B"], candidate["joint"], game["objective"])
         self.assertEqual(result["weighted_max_gain"], 0)
         self.assertEqual(Q(game["upper_bound"]) - result["objective"], Q(7, 6))

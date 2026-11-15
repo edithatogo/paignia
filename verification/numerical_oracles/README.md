@@ -1,6 +1,7 @@
 # T17.04–T17.06 independent numerical fixtures
 
-Status: scoped fixture work in progress; **no production qualification**.
+Status: three local fixture slices implemented; independent numerical review
+pending; **no production qualification**.
 
 This directory contains synthetic mathematical references and certificate checks,
 not a Paignia solver, public interchange schema, or host-language runtime fallback.
@@ -34,7 +35,7 @@ remain authoritative; their shared status files are coordinator-owned.
 | --- | --- | --- | --- |
 | T17.04.oracle | Verify four-stage/logistic replicator references and distinguishing controls | README, harness, replicator fixture | [x] local reference checks; specialist review pending |
 | T17.05.oracle | Verify exact finite-game Nash witnesses and deviation residuals | README, harness, Nash fixture | [x] local reference checks; specialist review pending |
-| T17.06.oracle | Verify CE incentive and objective certificates | README, harness, CE fixture | [~] |
+| T17.06.oracle | Verify CE incentive and objective certificates | README, harness, CE fixture | [x] local reference checks; specialist review pending |
 
 Tests precede each reference implementation. Record actual distinguishing failures,
 nonzero executed cases, baseline/head and fixture hashes; an absent target is not
@@ -58,19 +59,20 @@ production tolerance semantics. An integration adapter must wait for T17.01.
 
 The shared filesystem had approximately 6.1 MB free. This lane uses an isolated
 checkout on the separate `/dev/shm` device, with approximately 4.8 GiB available
-at intake. No other work, cache or build was deleted. The planned harness uses
+at intake. No other work, cache or build was deleted. The harness uses
 only Python's standard library, exact rational arithmetic where possible, and
 explicit high-precision decimal arithmetic for analytic exponentials; no network,
 package installation, optimizer dependency or native build is required.
 
 ## Run the reference checks
 
-From the repository root, using Python 3.12 or later:
+From the repository root, using Python 3.12 (executed here on 3.12.14):
 
 ```bash
 python3 -B verification/numerical_oracles/test_oracles.py
 python3 -B verification/numerical_oracles/test_oracles.py ReplicatorOracleTests
 python3 -B verification/numerical_oracles/test_oracles.py NashOracleTests
+python3 -B verification/numerical_oracles/test_oracles.py CorrelatedOracleTests
 ```
 
 These are development/reference commands. The existing root CI does not run this
@@ -187,3 +189,120 @@ Tests-first commit `0d512b26472f05bda793de855eeef1e4266c09f7` runs 12 tests,
 exiting 1 with 43 errors (including subtests) from the missing certificate
 helpers. After implementation, these 12 and the earlier 14 tests pass (26 total).
 The parent T17.05/S02 remains open, with independent numerical review pending.
+
+## T17.06.oracle: correlated-equilibrium certificates
+
+For each recommended action and each alternative, the checker constructs the
+[standard obedience inequality](https://people.duke.edu/~rnau/Nau_et_al_2004_Geometry_of_Nash_and_Correlated_Equilibria.pdf#page=4):
+sum the recommendation-weighted payoff advantage of obeying over deviating.
+All those inequalities, probability nonnegativity and unit mass must hold.
+Rows precede columns and every ordered action pair is included, including the
+rectangular 2x3 case. Conditional ratios use positive recommendation masses only;
+zero-mass recommendations are recorded as `None`, without division by zero.
+Weighted and conditional deviation gains are deliberately distinct diagnostics.
+
+Let the incentive matrix be `C`, with `Cz >= 0`, and the explicit maximization
+objective be `c^T z`. A supplied rational multiplier vector `lambda >= 0` and
+upper bound `U` are a certificate if `d = U*1 - c - C^T lambda >= 0`.
+For any feasible distribution, `U - c^T z = lambda^T C z + d^T z >= 0`.
+A feasible witness attaining `U` is therefore optimal. The checker verifies
+this algebra exactly; it does not run or implement an optimizer.
+
+The distinguishing game is `A=[[0,7],[2,6]]`, `B=[[0,2],[7,6]]`, with the
+explicit synthetic objective `c=A+B`. For row-major coordinates, its four
+incentive slacks are:
+
+1. `-2*z00 + z01`;
+2. `2*z10 - z11`;
+3. `-2*z00 + z10`;
+4. `2*z01 - z11`.
+
+The witness `z=[[0,1/4],[1/4,1/2]]` achieves **21/2**. Multipliers
+`[0,3/4,0,3/4]` yield the exact dual slack `[21/2,0,0,0]`, proving the bound.
+Its two off-diagonal pure Nash profiles yield objective 9. Full-support
+indifference gives each player's first-action probability 1/3 and objective
+**28/3**. No player can mix alone against a pure action because every pure-action
+best response is strict; these are the only three Nash profiles. Any independent
+CE is a Nash product, so this CE optimum strictly improves on every feasible
+independent product. The harness also checks those three Nash witnesses.
+
+Three controls separate failure modes. The interior Nash product is obedient
+but falls short of the optimum by **7/6**. Multiplying the optimum's own
+marginals breaks obedience, with weighted gain **3/16** and conditional gain
+**1/4**. The bottom-right point mass has objective 12 but violates two
+incentive constraints, so a higher objective cannot conceal infeasibility.
+An asymmetric control has positive row slacks and negative column slacks,
+exposing row/column indexing or sign mistakes. Other exact certificates cover
+zero-mass recommendations, a rectangular game, and a negative single-action
+objective. Invalid probabilities, objective shapes and dual certificates reject.
+
+The [pinned upstream source](https://github.com/edithatogo/kairos/blob/cad43b592893579ccbea40343548fda7acd83fd0/crates/kairo-ecs-game-theory/src/normal_form.rs)
+contains both the product-based `CorrelatedEquilibriumSolver::verify_and_solve`
+and `ClarabelConvexSolver::solve_correlated_equilibrium_social_welfare`.
+Neither is executed or qualified here. The existing Clarabel candidate remains
+for the coordinator's qualified backend decision; no new optimizer dependency
+or competing production implementation is introduced.
+
+Tests-first commit `7a2cd6c7ea9a173f697acdf77e7199ca417bac0c` runs 13 tests,
+exiting 1 with 34 errors (including subtests) from missing CE helpers. After
+implementation all 13 pass, and all three groups run **39 tests**. These results
+establish only the stated reference identities and certificate checks.
+
+## Frozen fixture provenance and receipt
+
+All three fixtures are original synthetic data and derivations under the
+repository's Apache-2.0 licence. No external dataset, executable solver, ontology
+asset or source implementation was copied. The fixed references are Butcher's
+21 October 2004 classical tableau, Nau/Canovas/Hansen's 2004 CE inequalities,
+Gambit documentation version 16.6.0 for algorithm-scope distinctions, and the
+immutable Kairos source/obligation revision linked above. These are definitions
+and source characterization, not external software validation runs.
+
+| Fixture | SHA-256 |
+| --- | --- |
+| `replicator_rk4_v1.json` | `e793f8f4d2121e58d4195ee2967bfb61fbe533377863a18b3926a08b3210d5e3` |
+| `mixed_nash_v1.json` | `9545116fc6aa4b1026bf6b2a6a9b509af92d8ed6ca2204e68bcdccf8e2e126e3` |
+| `correlated_equilibrium_v1.json` | `1271809d3bf6a64c04d48456d42b87448f8c884cc159d0125ec68fc177a4f9ac` |
+
+The [PR15 receipt](https://github.com/edithatogo/paignia/pull/15) records final
+immutable commit/tree, harness hash, exact command results, author review and
+hosted-check provenance. Earlier exact implementation heads are
+`6216c480f59e0f89e33af279d31cc21a690fcb48` (14 RK4 tests) and
+`a8f329c1e8b3207ffa393b8fe9ec012ba1205895` (12 Nash tests; 26 combined).
+Tests-first failures are harness development evidence, not failed production
+qualification. The baseline main has no such fixture target or advanced method.
+
+## Coordinator handoff and remaining gates
+
+At the later ownership refresh, [PR14's independent interface review](https://github.com/edithatogo/paignia/pull/14#pullrequestreview-5909550432)
+had arrived for its unchanged input-profile head, finding no blocker within that
+slice. It explicitly leaves the full result/identity/algorithm/status/residual
+contract incomplete. This lane has not duplicated or accepted that review on
+the coordinator's behalf.
+
+For coordinator `6af93fe8-b14c-83ec-8de0-728c856bcbb3`:
+
+1. Record this scoped receipt in the existing ownership map/Conductor integration
+   only when accepted. Do not close the parent T17.04–06 tasks from fixture work.
+2. Add the full `python3 -B verification/numerical_oracles/test_oracles.py`
+   invocation to coordinator-owned CI, with an explicitly selected Python
+   interpreter. It currently executes 39 tests. No Cargo dependency/lock/export
+   change is required to run these independent checks.
+3. Obtain independent specialist numerical review of the derivations, precision,
+   residual definitions, coverage limits and primal/dual signs. Author review
+   and an automated CI pass are not that review. No worker was created here.
+4. Accept and pin the complete T17.01 semantics before an owned Rust adapter can
+   map these mathematical inputs to actual production APIs, statuses, identities,
+   algorithm/version, selection and catalogue claims. Freeze a separate binary64
+   tolerance policy before production comparison; these zero/exact and decimal
+   reference thresholds are not automatically suitable for production.
+5. Keep the upstream feature-aware API/caller inventory and retain/replace/retire
+   decisions open. Execute required Gambit/OpenSpiel or other approved comparator
+   work and qualify the existing Clarabel candidate before backend acceptance.
+   No external solver comparator, algorithm-completeness, dynamic-adapter or
+   real-consumer acceptance receipt is supplied by this lane.
+
+The authored diff is confined to the five claimed new paths. A normal revert of
+these additive fixture commits is the rollback; no runtime or consumer pin moved.
+Shared source/manifests/locks/CI/registry/Conductor and all upstream scopes remain
+with their existing owners. PR15 stays draft/open; no merge or release is authorised.
