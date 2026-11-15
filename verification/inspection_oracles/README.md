@@ -1,8 +1,8 @@
 # T18.01 synthetic inspection oracle
 
-Status: independently specified fixture implemented; qualification pending. This directory is a
-test-only analytical reference, not a production solver, runtime fallback,
-public contract or scientific/consumer qualification receipt.
+Status: independently specified fixture implemented; qualification pending.
+This directory is a test-only analytical reference, not a production solver,
+runtime fallback, public contract or scientific/consumer qualification receipt.
 
 ## Scope and ownership
 
@@ -32,7 +32,7 @@ manifests, lockfiles, CI, registries and consumer pins stay with their owners.
 
 ## Local increment
 
-- [~] T18.01.oracle: specify exact synthetic 2x2 inspection payoffs, pure/mixed
+- [x] T18.01.oracle authoring: specify exact synthetic 2x2 inspection payoffs, pure/mixed
   best responses and commitment values; test ties, effort constraints,
   supremum attainment and distinguishing invalid shortcuts.
 - [ ] Independent specialist numerical review and coordinator acceptance.
@@ -233,6 +233,59 @@ and exited 1 with 100 errors including subtests, caused by explicit
 `NotImplementedError` reference placeholders. Those were harness-development
 errors, not production failures or passing tests. The implementation replaces
 all placeholders; the current focused run passes all 28 tests without skips.
+
+## Executed evidence and author review
+
+On 16 November 2026, the 28-test command completed with zero failures, errors
+or skips on CPython 3.12.14. A second author calculation used only this JSON and
+the closed forms above, without importing `reference.py`: all eight pure
+profiles, two Nash witnesses, three false candidates and fourteen commitment
+certificates agreed exactly. This is implementation-independent arithmetic by
+the same author, not independent specialist review.
+
+Five deliberately corrupted copies were executed in isolated owned directories.
+Each focused test ran one named test, exited 1 and reported exactly one
+assertion failure, with no import/syntax error. All four original file hashes
+were unchanged afterwards. These are successful detections, not five additional
+passing tests or production failures.
+
+| Corruption | Focused test in `InspectionOracleTests` |
+| --- | --- |
+| Set `interior.nash.q` to `1/3` instead of `1/4` | `test_known_nash_witnesses_have_zero_deviation_gains` |
+| Erase `interior.false_nash[0].gains[0]` from `1/3` to `0` | `test_false_nash_candidates_are_distinguished` |
+| Change full-budget pessimistic `attained` from false to true | `test_all_commitment_bounds_match_literal_certificates` |
+| Change `if theta < budget:` to `if theta <= budget:` | `test_exact_budget_boundary_cannot_use_infeasible_right_limit` |
+| Replace `choose = max if tie == "optimistic" else min` with `choose = max` | `test_optimistic_tie_is_not_pessimistic_or_a_nash_profile` |
+
+To reproduce a control, copy this entire directory outside the source tree,
+apply only its stated mutation and run `python3 -B test_inspection.py
+InspectionOracleTests.<focused_test>` from that copy. Preserve the originals.
+
+| Runtime file | SHA-256 |
+| --- | --- |
+| `inspection_2x2_v1.json` | `d03dfa3140f6c89acd0d27749bf14ac5cfc43cdc649a44e9a5a157c4337f1925` |
+| `reference.py` | `d370a8ac96428c1b297ccca65dfcbfc0b82de865c88945753f00e290d30ea26b` |
+| `test_inspection.py` | `c37678b4d281c63a1dce5616f4bf29d7df89c5a0f25a5d4112ed8bf31e88ec69` |
+
+Python syntax/AST/import audit passed: reference imports only `dataclasses`,
+`fractions`, `re`; tests add `json`, `unittest`, `pathlib` and the local reference.
+The extraction guard passed for two crates. Scope and whitespace checks passed:
+exactly four new paths, all existing files byte-identical to main. These audits
+are not a claim of Ruff, Clippy or security-tool execution.
+
+Author review checked row/column orientation, all matrix cells, strict parameter
+domains, both players' deviations, follower response support, explicit tie
+selection, feasible one-sided limits and nonattainment, effort accounting and
+the distinction between observed distributions and observed actions. No open
+author finding remains in this bounded reference scope. The symbolic interval
+argument is recorded above; finite sampling is never its substitute.
+
+Disk was checked before work (about 59 GiB free); the isolated checkout preserves
+other work. No dependency installation or local Rust build was performed.
+Required hosted native/privacy checks and their actual checkout provenance are
+reported on the PR once observed. The new reference harness is currently local
+evidence: CI does not invoke it. The final PR receipt supplies the exact head,
+tree and this document's hash, avoiding a self-referential committed hash.
 
 ## Coordinator handoff requirements
 
