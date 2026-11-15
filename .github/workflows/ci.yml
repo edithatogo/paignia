@@ -34,6 +34,22 @@ jobs:
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - name: Native package tests
         run: cargo test --workspace --all-targets --locked
+      - name: Native role-separation doctests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo test --locked -p paignia-core --doc 2>&1 | tee doctests.log
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          summaries = re.findall(
+              r"^test result: ok\. (\d+) passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;",
+              Path("doctests.log").read_text(),
+              re.MULTILINE,
+          )
+          if len(summaries) != 1 or int(summaries[0]) < 3:
+              raise SystemExit("Expected at least the three role-separation doctests without skips or failures")
+          PY
       - name: Source ownership and package boundary
         run: python3 scripts/validate_extraction.py
       - name: Isolated extracted-source consumer
