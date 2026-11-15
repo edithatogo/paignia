@@ -174,7 +174,7 @@ seed rename and source-level consumer slices without adding competing leaves.
   path only. This accepts the supplemental review's nonblocking suggestion;
   it does not reopen either completed reviewer or change the public interface.
 
-#### [ ] T17.01.diagnostics — admit finite declared diagnostic magnitudes
+#### [~] T17.01.diagnostics — admit finite declared diagnostic magnitudes
 
 - One behavior: validate an exact versioned component containing a residual or
   exploitability magnitude and a caller-supplied tolerance. Reject non-finite
@@ -182,6 +182,16 @@ seed rename and source-level consumer slices without adding competing leaves.
 - Owner: sole coordinator, serially after the reviewed component integration.
   At most five paths: core lib, existing runtime-contract tests, contract doc,
   this plan and the same ownership map. No solver, dependency, fixture or CI edit.
+- Implementation parent: fixed PR25 head
+  `4cb88678e7544e4ff63bc5ab669d2d6546885790`, which contains the reviewed
+  composition in PR24. Hosted integration jobs are queued at this claim;
+  development proceeds on the fixed proposed stack, with all merges held until
+  their actual current-tree gates and receiving-main verification are satisfied.
+- Component: `ResultDiagnosticRecord`, exact schema `1.0.0`, typed
+  `ResultDiagnosticKind::{Residual, Exploitability}`, `value` and `tolerance`.
+  Check schema first, then value, then tolerance; finite checks precede negative
+  checks within each number. Signed zero is retained and zero tolerance is legal.
+  Admission does not compare value with tolerance or decide convergence.
 - Tests first: unsupported version, NaN/infinity/negative value and tolerance,
   boundary magnitudes and non-mutating admission; required native checks.
   A fresh independent public-contract review is required for the new head.

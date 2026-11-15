@@ -615,3 +615,23 @@ accepted and pinned. T18 information/method/production/credal/consumer, S01–S0
 package/dependency and two real-consumer gates remain. Static and optional
 dynamic acceptance remain independent; no adapter, consumer or publication is
 activated by scoped development integration.
+
+### Diagnostic implementation claim on the fixed proposed stack
+
+The sole coordinator starts `T17.01.diagnostics` from fixed PR25
+`4cb88678e7544e4ff63bc5ab669d2d6546885790` (tree
+`7e2a4cd4ec22ded5098c6226272295ccb4d8bc37`), containing reviewed static
+integration PR24 `45725cab03456b65e5d801f14677cc9585a23d2e`.
+Hosted integration jobs are currently queued; this is bounded development on a
+proposed stack, with no assertion of receiving-main acceptance. All merges
+remain held until their applicable exact-tree checks/reviews pass.
+
+The five claimed paths stay core lib, existing runtime-contract tests, contract
+document, T17 plan and this map. The one new admission behavior covers exact
+component schema `1.0.0`, typed residual/exploitability kind and required scalar
+`value`/`tolerance`. Validation order is schema, value, tolerance; each numeric
+field must be finite and nonnegative. Signed zero and positive subnormals retain
+their stored bits. There is no default tolerance or value-to-tolerance comparison.
+Missing/undefined diagnostics belong to the future enclosing method/result
+contract, not a manufactured zero record. The new component needs fresh
+independent public-contract review at its final head before integration.
