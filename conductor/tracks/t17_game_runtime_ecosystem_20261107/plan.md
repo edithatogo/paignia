@@ -31,7 +31,7 @@ seed rename and source-level consumer slices without adding competing leaves.
 
 ## Phase A — package boundary
 
-### [ ] T17.01 — expose a versioned generic game/result contract
+### [~] T17.01 — expose a versioned generic game/result contract
 
 - Behavior: validate the declared semantic and result schema version, rejecting
   unsupported versions explicitly while preserving UOGTO identifiers.
@@ -53,6 +53,25 @@ seed rename and source-level consumer slices without adding competing leaves.
   status and residuals; backend diagnostics are optional. Solver diagnostic
   traces and realized causal traces are different record types. Core references
   no Kairos state, clock or simulation RNG; unknown information structures reject.
+
+#### [~] T17.01.profile — admit the existing static input profile explicitly
+
+- One behavior: `GameSpecification::validate_for_profile` admits only the exact
+  versioned finite, perfect-information, intentional sparse-zero input profile,
+  rejects unknown profile strings with a structured error, then uses existing
+  specification/graph validation. Existing `validate` and solver APIs are retained.
+- Ownership and five-file scope: the [current ownership map](../../../docs/integrations/parallel-plan-reconciliation-20261108.md#scoped-ownership-update--15-november-2026).
+  No competing published claim was found; recheck before each source write.
+- Tests first: `cargo test --locked -p paignia-core --test runtime_contract`.
+  Exercise exact profile/schema rejection, full-IRI preservation, graph-invalid
+  controls and the inherited chance/sparse-payoff semantics. Record the initial
+  failure honestly; zero tests is not acceptance.
+- Qualification: candidate input profile only. The full result envelope,
+  algorithm/termination/completeness guarantees, identity roles and conversion
+  contracts remain pending in T17.01. T17.13 source work stays blocked until
+  those required semantics are accepted and pinned. No dynamic adapter work.
+- Merge gates: required native checks on stable and Rust 1.75, plus independent
+  specialist public-contract review. Do not close the parent from this slice.
 
 ### [ ] T17.02 — reject Kairos in the static package dependency closure
 

@@ -6,6 +6,10 @@ Read the [Voiage handoff](voiage-handoff.md) and the concurrently authored
 [scientific-contract refinements](../../conductor/refinements/scientific-contracts-20261108.md).
 Existing owner plans retain task status and acceptance authority.
 
+The [15 November scoped ownership update](#scoped-ownership-update--15-november-2026)
+below is the current reconciliation for the bounded T17.01 input-profile slice.
+The earlier snapshots remain historical evidence.
+
 ## Source change reconciled
 
 [Paignia #2](https://github.com/edithatogo/paignia/pull/2) merged as
@@ -120,3 +124,117 @@ that every live ChatGPT session saw or acknowledged it; any response or later ow
 acceptance must be recorded as actual evidence. No direct live-chat broadcast,
 runtime implementation, dependency pin change, native qualification, publication
 or merge is claimed by this document.
+
+## Scoped ownership update — 15 November 2026
+
+Dylan authorised the **Paignia — Ownership and static-contract integration**
+coordinator to reconcile ownership and implement one unowned T17.01 slice.
+This update is the single current ownership map, extending the existing record.
+Task status stays in the [T17 plan](../../conductor/tracks/t17_game_runtime_ecosystem_20261107/plan.md).
+It does not reassign other repositories or turn their planning into execution.
+No new workers are authorised by this claim.
+
+### Live-source and claim inventory
+
+| Repository | Inspected main | Retained authority |
+| --- | --- | --- |
+| Paignia | `fca2b2f8811c8cd56d27be4c9407f573d54ad1e9` | T17 provider contracts; this coordinator claims only the five paths below |
+| Kairos | `cad43b592893579ccbea40343548fda7acd83fd0` | Track 114 `api-governance-agent` / `core-scheduler-agent`; Track 110 `vv-uq-agent` / `game-theory-agent` / `ml-integration-agent`; original source owners retain their scopes |
+| Innovate | `1cd9af803a21cdb08705cf77a45b27346afa4b69` | Existing ecosystem integration G01–G04 / T17.10 owner; planning status and application models stay there |
+| Reimbursement | `ce99fbcf6bee195c24df1d741d4c4ac8eccc117d` | Existing T17.09 consumer and T17.11 valuation owner; PRs #103/#104 keep their own scopes |
+
+Read the exact-source [Kairos ownership contract](https://github.com/edithatogo/kairos/blob/cad43b592893579ccbea40343548fda7acd83fd0/conductor/tracks/114-dependency-and-consumer-contracts/agent-contract.md),
+[source extraction map](https://github.com/edithatogo/kairos/blob/cad43b592893579ccbea40343548fda7acd83fd0/conductor/contracts/game-extraction-map.md),
+[Innovate plan](https://github.com/edithatogo/innovate/blob/1cd9af803a21cdb08705cf77a45b27346afa4b69/conductor/tracks/ecosystem_decision_integration_20261107/plan.md),
+and [reimbursement plan](https://github.com/edithatogo/new-drug-reimbursement-game/blob/ce99fbcf6bee195c24df1d741d4c4ac8eccc117d/conductor/tracks/t17_game_runtime_ecosystem_20261107/plan.md).
+UOGTO [issue #123](https://github.com/edithatogo/UOGTO/issues/123) retains ontology,
+IRIs, executable profiles and authoritative semantic fixtures. Voiage
+[issue #1286](https://github.com/edithatogo/voiage/issues/1286) retains information
+value arithmetic. T18 and its Tobac handoff remain outside this claim.
+
+All 12 Paignia PRs and all 11 published branches were inspected. Branches other
+than `main` map to the PRs below; retained squash-merged branches are history,
+not evidence of a new source owner.
+
+| Paignia PR | Observed state | Scope / disposition |
+| --- | --- | --- |
+| #1 | merged | Scientific refinement and this reconciliation; retained |
+| #2 | merged | Native seed transfer; retained |
+| #3 | merged | Renovate setup; retained |
+| #4 | merged | Source receipts and independent static conversion; retained |
+| #5 | merged | T18/Tobac planning; separate owner |
+| #6 | merged | Privacy/secret checks; retained |
+| #7 | open, draft | `.github/workflows/offline-ai-security.yml`; existing owner and explicit infrastructure hold preserved |
+| #9 | merged | Dependency policy; retained |
+| #10 | merged | Typed errors and pinned dependency closure; retained |
+| #11 | open | `CONTRIBUTING.md`; existing documentation owner preserved |
+| #12 | merged | Citation metadata; retained |
+| #13 | merged | PR template; retained |
+
+Open PR heads: [#7](https://github.com/edithatogo/paignia/pull/7)
+`4f48f9f3492edb785a31ddf59fc4716bbe376fbd` and
+[#11](https://github.com/edithatogo/paignia/pull/11)
+`bfec9755aa1d5ced7ea141b944d17ad4b79d80b5`. Their full changed-file lists have no
+intersection with this slice. Paignia issues/comments contain no published
+competing T17.01 claim at inspection. Cross-repository searches for Paignia and
+T17.01, relevant current Conductor records, and owner comments on Kairos
+#381/#383, Innovate #570/#574, and reimbursement #100/#101/#103 were read.
+The open upstream PR inventories were also checked: Kairos #363/#365/#367/#383/
+#386/#387/#390/#391/#392; Innovate #613; reimbursement #91/#93/#94/#95/#103/#104/#106.
+Their source/CI/application owners are not reassigned.
+
+### Conflicts and limits
+
+- Some Kairos maturity-task prose still calls reimbursement issue #100/T17 the
+  receiving solver owner, and Innovate's historical handoff still describes a
+  transfer in progress. Paignia's merged transfer, Kairos's newer extraction
+  ownership table and reimbursement's current provider handoff resolve these as
+  stale descriptions. No upstream text, leases, source, pin or status is edited.
+- No competing published claim was found for the exact five paths below. This
+  is a bounded observation, not proof that no private or live-chat owner exists.
+  No direct acknowledgement from other ChatGPT sessions is claimed. A later
+  overlapping claim stops writes to the intersecting path until reconciled.
+- The old source-transfer work and strategic-information supplement owners keep
+  their completed/history scopes. This new authorisation is limited to one
+  input-profile admission behavior; it does not confer general solver ownership.
+
+### Exclusive bounded path claim
+
+Branch: `codex/t17-01-static-profile-20261115`, based on the Paignia main SHA above.
+The claim is published before implementation and covers exactly:
+
+1. `docs/integrations/parallel-plan-reconciliation-20261108.md` — this map and
+   scoped handoff evidence.
+2. `conductor/tracks/t17_game_runtime_ecosystem_20261107/plan.md` — only T17.01's
+   linked input-profile slice and its evidence/status.
+3. `crates/paignia-core/src/lib.rs` — explicit admission to the existing static
+   semantic profile, structured rejection, and delegation to existing validation.
+4. `crates/paignia-core/tests/runtime_contract.rs` — new native admission and
+   negative contract fixtures.
+5. `docs/architecture/game-runtime-contract-v1.md` — the exact input-profile
+   identifier, observed semantics, compatibility and qualification limits.
+
+The slice changes one behavior: callers can request an exact named static input
+profile and receive an explicit unsupported-profile error before admission.
+Existing `GameSpecification::validate`, solver source and caller pins remain
+compatible. The complete T17.01 result/identity contract is still pending.
+
+T17.04–06 independent numerical fixtures may be claimed separately only after
+their exact paths are checked against live owners; this coordinator claims none
+of them. T17.13 source conversion waits for the accepted, pinned full T17.01
+contract. T17.08/.14–.17 dynamic/observation/RNG/replay work is not activated.
+Static acceptance remains independent of dynamic acceptance; neither is obtained
+from this bounded input-validation change. Planning-only restrictions elsewhere
+remain in force. No upstream edits, merge, release or infrastructure change is
+part of this claim.
+
+### Verification and handoff
+
+Before implementation, the checkout was clean and its HEAD matched live main.
+The shared workspace had approximately 7 MB free; an isolated checkout and build
+directory use the separate temporary filesystem, with approximately 4.7 GiB
+available. No other working tree, cache or build output is deleted or modified.
+Actual implementation/check results will be recorded here and in the scoped PR.
+Hold merge for the required native stable/MSRV checks and independent specialist
+public-contract review. The same author cannot supply that independent review;
+no worker will be created to bypass Dylan's no-workers instruction.
