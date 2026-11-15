@@ -448,5 +448,138 @@ class NashOracleTests(unittest.TestCase):
             require_nash(game["A"], game["B"], p, [Q(1, 2)] * 2)
 
 
+def ce_certificate(a, b, joint, objective):
+    """Verify all recommendation-conditional deviation inequalities."""
+    raise NotImplementedError("T17.06.oracle tests-first baseline")
+
+
+def require_ce_optimum(a, b, joint, objective, upper_bound, multipliers):
+    """Check a supplied exact upper-bound certificate, never optimize/search."""
+    raise NotImplementedError("T17.06.oracle tests-first baseline")
+
+
+class CorrelatedOracleTests(unittest.TestCase):
+    def setUp(self):
+        self.data = fixture("correlated_equilibrium_v1.json",
+                            "paignia.test-oracle.correlated-equilibrium/1")
+        self.games = {case["id"]: case for case in self.data["optimal_cases"]}
+        self.controls = {case["id"]: case for case in self.data["controls"]}
+
+    def test_inventory_and_reference_scope(self):
+        self.assertEqual(set(self.games), {"correlation_welfare_gap", "dominance_zero_recommendations",
+                                         "rectangular_2x3", "negative_single_action"})
+        self.assertEqual(len(self.data["optimal_cases"]), 4)
+        self.assertEqual(len(self.controls), 4)
+        self.assertEqual(len(self.data["invalid_joints"]), 7)
+        self.assertIs(self.data["provenance"]["optimizer_executed"], False)
+
+    def test_exact_primal_dual_optimality_certificates(self):
+        for case in self.games.values():
+            with self.subTest(case=case["id"]):
+                result = require_ce_optimum(case["A"], case["B"], case["joint"], case["objective"],
+                                            case["upper_bound"], case["dual_multipliers"])
+                self.assertEqual(result["incentives"], tuple(map(Q, case["expected_incentives"])))
+                self.assertEqual(result["objective"], Q(case["upper_bound"]))
+                self.assertEqual(result["dual_slacks"], tuple(map(Q, case["expected_dual_slacks"])))
+                self.assertEqual(result["weighted_max_gain"], 0)
+                self.assertEqual(result["conditional_max_gain"], 0)
+                self.assertEqual(result["duality_gap"], 0)
+
+    def test_all_distinguishing_controls(self):
+        for case in self.controls.values():
+            with self.subTest(case=case["id"]):
+                game = self.games[case["game"]] if "game" in case else case
+                objective = game["objective"] if "game" in case else case["objective_matrix"]
+                result = ce_certificate(game["A"], game["B"], case["joint"], objective)
+                self.assertEqual(result["incentives"], tuple(map(Q, case["expected_incentives"])))
+                self.assertEqual(result["objective"], Q(case["objective"]))
+                self.assertEqual(result["weighted_max_gain"], Q(case["weighted_max_gain"]))
+                self.assertEqual(result["conditional_max_gain"], Q(case["conditional_max_gain"]))
+
+    def test_feasible_product_is_not_an_optimality_certificate(self):
+        game = self.games["correlation_welfare_gap"]
+        candidate = self.controls["feasible_nash_product_is_suboptimal"]
+        result = ce_certificate(game["A"], game["B"], candidate["joint"], game["objective"])
+        self.assertEqual(result["weighted_max_gain"], 0)
+        self.assertEqual(Q(game["upper_bound"]) - result["objective"], Q(7, 6))
+        with self.assertRaises(ValueError):
+            require_ce_optimum(game["A"], game["B"], candidate["joint"], game["objective"],
+                               game["upper_bound"], game["dual_multipliers"])
+
+    def test_marginal_product_loses_obedience(self):
+        game = self.games["correlation_welfare_gap"]
+        z = [[Q(x) for x in row] for row in game["joint"]]
+        rows = [sum(row) for row in z]
+        cols = [sum(row[j] for row in z) for j in range(2)]
+        product = [[p * q for q in cols] for p in rows]
+        expected = self.controls["product_of_ce_marginals_breaks_obedience"]
+        self.assertEqual(product, [[Q(x) for x in row] for row in expected["joint"]])
+        result = ce_certificate(game["A"], game["B"], product, game["objective"])
+        self.assertEqual(result["weighted_max_gain"], Q(3, 16))
+        self.assertEqual(result["conditional_max_gain"], Q(1, 4))
+
+    def test_large_objective_cannot_hide_incentive_failure(self):
+        game = self.games["correlation_welfare_gap"]
+        candidate = self.controls["higher_objective_infeasible_point"]
+        self.assertGreater(Q(candidate["objective"]), Q(game["upper_bound"]))
+        with self.assertRaises(ValueError):
+            require_ce_optimum(game["A"], game["B"], candidate["joint"], game["objective"],
+                               candidate["objective"], ["0"] * 4)
+
+    def test_zero_mass_recommendations_have_no_conditional_ratio(self):
+        case = self.games["dominance_zero_recommendations"]
+        result = ce_certificate(case["A"], case["B"], case["joint"], case["objective"])
+        self.assertEqual(result["conditional_gains"], (Q(0), None, Q(0), None))
+
+    def test_rectangular_constraints_include_all_deviations(self):
+        case = self.games["rectangular_2x3"]
+        result = ce_certificate(case["A"], case["B"], case["joint"], case["objective"])
+        self.assertEqual(result["incentives"], (0, 0, 0, 1, 0, 1, 0, 0))
+        self.assertEqual(result["conditional_gains"][-2:], (None, None))
+
+    def test_signed_objective_with_no_alternative_actions(self):
+        case = self.games["negative_single_action"]
+        result = require_ce_optimum(case["A"], case["B"], case["joint"], case["objective"],
+                                    case["upper_bound"], case["dual_multipliers"])
+        self.assertEqual(result["objective"], -7)
+        self.assertEqual(result["incentives"], ())
+
+    def test_invalid_joint_distributions(self):
+        game = self.games["correlation_welfare_gap"]
+        for case in self.data["invalid_joints"]:
+            with self.subTest(case=case["id"]), self.assertRaises(ValueError):
+                ce_certificate(game["A"], game["B"], case["joint"], game["objective"])
+
+    def test_invalid_objective_dimensions_and_values(self):
+        game = self.games["correlation_welfare_gap"]
+        for objective in [[], [["1"]], [["0", "0"], ["0"]],
+                          [["NaN", "0"], ["0", "0"]], [[True, 0], [0, 0]]]:
+            with self.subTest(objective=objective), self.assertRaises(ValueError):
+                ce_certificate(game["A"], game["B"], game["joint"], objective)
+
+    def test_invalid_dual_certificates(self):
+        game = self.games["correlation_welfare_gap"]
+        invalid = [("21/2", []), ("21/2", ["0", "-3/4", "0", "3/4"]),
+                   ("21/2", ["0", "NaN", "0", "3/4"]),
+                   ("NaN", game["dual_multipliers"]), ("10", game["dual_multipliers"]),
+                   ("11", game["dual_multipliers"]), ("21/2", ["0"] * 4)]
+        for bound, weights in invalid:
+            with self.subTest(bound=bound, weights=weights), self.assertRaises(ValueError):
+                require_ce_optimum(game["A"], game["B"], game["joint"], game["objective"],
+                                   bound, weights)
+
+    def test_action_permutation_preserves_incentive_values(self):
+        for case in self.controls.values():
+            game = self.games[case["game"]] if "game" in case else case
+            objective = game["objective"] if "game" in case else case["objective_matrix"]
+            reverse = lambda values: [row[::-1] for row in values[::-1]]
+            before = ce_certificate(game["A"], game["B"], case["joint"], objective)
+            after = ce_certificate(reverse(game["A"]), reverse(game["B"]),
+                                   reverse(case["joint"]), reverse(objective))
+            self.assertEqual(sorted(before["incentives"]), sorted(after["incentives"]))
+            self.assertEqual(before["objective"], after["objective"])
+            self.assertEqual(before["conditional_max_gain"], after["conditional_max_gain"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
