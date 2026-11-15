@@ -31,7 +31,7 @@ seed rename and source-level consumer slices without adding competing leaves.
 
 ## Phase A — package boundary
 
-### [ ] T17.01 — expose a versioned generic game/result contract
+### [~] T17.01 — expose a versioned generic game/result contract
 
 - Behavior: validate the declared semantic and result schema version, rejecting
   unsupported versions explicitly while preserving UOGTO identifiers.
@@ -53,6 +53,142 @@ seed rename and source-level consumer slices without adding competing leaves.
   status and residuals; backend diagnostics are optional. Solver diagnostic
   traces and realized causal traces are different record types. Core references
   no Kairos state, clock or simulation RNG; unknown information structures reject.
+
+#### [~] T17.01.profile — admit the existing static input profile explicitly
+
+- One behavior: `GameSpecification::validate_for_profile` admits only the exact
+  versioned finite, perfect-information, intentional sparse-zero input profile,
+  rejects unknown profile strings with a structured error, then uses existing
+  specification/graph validation. Existing `validate` and solver APIs are retained.
+- Ownership and five-file scope: the [current ownership map](../../../docs/integrations/parallel-plan-reconciliation-20261108.md#scoped-ownership-update--15-november-2026).
+  No competing published claim was found; recheck before each source write.
+- Tests first: `cargo test --locked -p paignia-core --test runtime_contract`.
+  Exercise exact profile/schema rejection, full-IRI preservation, graph-invalid
+  controls and the inherited chance/sparse-payoff semantics. Record the initial
+  failure honestly; zero tests is not acceptance.
+- Qualification: candidate input profile only. The full result envelope,
+  algorithm/termination/completeness guarantees, identity roles and conversion
+  contracts remain pending in T17.01. T17.13 source work stays blocked until
+  those required semantics are accepted and pinned. No dynamic adapter work.
+- Merge gates: required native checks on stable and Rust 1.75, plus independent
+  specialist public-contract review. Do not close the parent from this slice.
+- Implemented and locally verified on 15 November 2026; merge remains held.
+  The [candidate profile contract](../../../docs/architecture/game-runtime-contract-v1.md)
+  freezes the input identifier and inherited rules. The separate
+  `ProfileValidationError` keeps the original public error enum unchanged.
+  Tests-first commit `25d00f40fed5d2225db82945ff1f1f40e825bd2c` fails to compile
+  against the old core with E0432/E0599 (exit 101: missing API, not a passing or
+  zero-test run). After implementation, the focused target runs 15 passing tests.
+  Rust/cargo 1.99.1: workspace/all-targets 32 passed (6 core + 15 contract + 11
+  solve), extracted-source consumer 2 passed, formatting, warnings-denied Clippy,
+  extraction guard and warnings-denied rustdoc all passed. Dependencies were
+  resolved offline against the unchanged lock. See the ownership-map receipt for
+  source hashes and the exact PR handoff. These results do not close T17.01.
+- Independent [review 5909550432](https://github.com/edithatogo/paignia/pull/14#pullrequestreview-5909550432)
+  at `0c88607a142508d1fe4f1153b963fd1411b49395` was
+  [accepted by the coordinator](https://github.com/edithatogo/paignia/pull/14#issuecomment-6891995075).
+  Its 11-test synthetic harness and nonblocking supplemental controls are
+  received. Hosted stable/MSRV/privacy checks cover the equal head/merge tree.
+  The reviewer has no residual assignment and can be archived. This is scoped
+  agent-review acceptance, not a formal GitHub approval or full T17.01 closure.
+
+#### [~] T17.01.profile-controls — retain accepted admission regressions
+
+- One behavior: pin existing input-profile admission using selected probes from
+  the accepted independent review; no production or solver behavior changes.
+- Owner: sole shared coordinator; [three-file claim](../../../docs/integrations/parallel-plan-reconciliation-20261108.md#continued-bounded-work--16-november-2026).
+- Parent: exact reviewed PR14 head above. Preserve that head and its review;
+  publish this increment separately. Existing and supplemental native cases
+  must execute, with required native stable/MSRV checks on the new head.
+- Cover legacy typed errors and paths, six blank identifier roles, immediate
+  binary64 mass-boundary neighbours, shared descendants, signed zero/subnormal
+  weights and invalid zero-weight branches. These are regressions for already
+  passing behavior, not newly discovered production failures or qualification
+  of the remaining result envelope. New interface work needs its own leaf.
+- Implemented: ten supplemental tests retain nine independent probe groups;
+  splitting the legacy-error case keeps each test bounded. Local Rust 1.75.0
+  runs 25 contract / 42 total native tests and two source-consumer tests; format,
+  Clippy, extraction guard and rustdoc pass. No production source changed.
+  [PR16](https://github.com/edithatogo/paignia/pull/16) records the exact-head
+  hosted handoff; it remains draft and does not close T17.01.
+
+#### [~] T17.01.identities — admit a versioned result identity record
+
+- One behavior: reject unsupported identity-schema versions or blank supplied
+  identities without rewriting their strings. Specification, instantiated game
+  and solver-run IDs are required and have distinct types. Session, policy
+  artifact and solver-diagnostic trace IDs are separately typed and optional;
+  static validation never invents them or a causal execution trace.
+- Owner: sole shared coordinator; parent PR16 exact head
+  `177d76167a8c58299be4ab2aba26da7f44c96964`; [five-file pre-implementation claim](../../../docs/integrations/parallel-plan-reconciliation-20261108.md#continued-bounded-work--16-november-2026).
+- Check: `cargo test --locked -p paignia-core --test runtime_contract`, plus
+  role-confusion compile-fail doctests and required native stable/MSRV checks.
+  Observe distinguishing unknown-version/blank-ID failures before implementing
+  admission; preserve legacy input structs, error variants and solver source.
+- Execution: specialist public-contract review at the new exact head. Existing
+  review acceptance covers the unchanged input profile only; no completed
+  worker is reassigned and no new reviewer is created here.
+- Limits: component schema only, not a complete result envelope, wire format,
+  identity-to-source binding, conversion or numerical qualification. Full
+  result/status/algorithm/selection/diagnostic/catalogue/serialization obligations
+  remain; T17.13 and T18 native-comparison prerequisites stay held.
+- Implementation candidate in [PR21](https://github.com/edithatogo/paignia/pull/21):
+  `ResultIdentityRecord`, six distinct identity types and a separate structured
+  admission error; exact identity component schema `1.0.0`. No existing core
+  bytes, solver, manifest/lock or workflow change.
+- Red evidence at `733ec013ea1b3cd7eee23a18b45f56c906143f6d`: the explicit
+  no-check prototype runs all 35 contract tests, with 30 passes and five failures
+  (exit 101), including an unknown-schema assertion. This is a development
+  control, not an inherited production defect. The implemented validator passes
+  all 35 contract tests, 52 workspace tests, three role-confusion compile-fail
+  doctests and two extracted-source consumer tests on Rust 1.75.0; format,
+  warnings-denied Clippy, extraction guard and warnings-denied rustdoc pass.
+  The final exact-head hosted receipt is recorded on PR21. Independent primary
+  review `5912344623` and supplemental review `5912337436` at
+  `afacdb12600ccf37d32962387790f2ce9647a3c4` are now
+  [accepted](https://github.com/edithatogo/paignia/pull/21#issuecomment-6902551304).
+  No necessary source fix or residual reviewer duty remains. Their reproducible
+  harnesses and nonblocking recommendations are retained without duplicating
+  ownership or aggregating overlapping test counts. This accepts the bounded
+  component, not full T17.01, conversion or consumer qualification.
+
+#### [~] T17.01.reviewed-integration — qualify the reviewed static components on main
+
+- One behavior: integrate the unchanged PR14/16/21 static-contract source and
+  tests with current main `c7367b93244add88bb76f0ae34fcd244787ebab6`.
+- Owner: sole shared coordinator; [pre-integration claim](https://github.com/edithatogo/paignia/pull/14#issuecomment-6902565416).
+  Five paths relative to main: core lib, runtime-contract tests, contract doc,
+  this plan and the existing ownership map. Only the two owning context files
+  change relative to the accepted PR21 source snapshot.
+- Gates: fresh exact-tree stable/MSRV/native/privacy execution, composition
+  review linked to unchanged-source independent evidence, and receiving-main
+  verification after any scoped development merge. No old run is relabeled.
+- All old heads and histories remain. Full T17.01 and all scientific, package,
+  consumer and T17.13 holds are independent of this development integration.
+
+#### [ ] T17.01.doctest-ci — execute existing role-separation doctests in CI
+
+- One behavior: run `cargo test --locked -p paignia-core --doc` in both hosted
+  compiler jobs; no existing command, permission, trigger or check is removed.
+- Owner: sole coordinator, serially after reviewed integration. One workflow
+  path only. This accepts the supplemental review's nonblocking suggestion;
+  it does not reopen either completed reviewer or change the public interface.
+
+#### [ ] T17.01.diagnostics — admit finite declared diagnostic magnitudes
+
+- One behavior: validate an exact versioned component containing a residual or
+  exploitability magnitude and a caller-supplied tolerance. Reject non-finite
+  or negative numbers in a defined field order; preserve all supplied bits.
+- Owner: sole coordinator, serially after the reviewed component integration.
+  At most five paths: core lib, existing runtime-contract tests, contract doc,
+  this plan and the same ownership map. No solver, dependency, fixture or CI edit.
+- Tests first: unsupported version, NaN/infinity/negative value and tolerance,
+  boundary magnitudes and non-mutating admission; required native checks.
+  A fresh independent public-contract review is required for the new head.
+- This is structural admission only. No norm, units, algorithm result, source
+  binding, convergence, equilibrium certificate or production binary64 tolerance
+  policy is established. Full envelope/status/selection/catalogue/serialization
+  obligations and T17.13/T18 prerequisites remain open.
 
 ### [ ] T17.02 — reject Kairos in the static package dependency closure
 
@@ -116,6 +252,27 @@ Track 110's source regressions and transfer/retirement decisions. Do not maintai
 two corrected solver implementations. A bounded release may leave S01–S04
 pending and explicitly unsupported; any advertised method must complete its own
 oracle and result contract. Exclusion is not scientific completion.
+
+#### T17.04–06.oracle — separate synthetic fixture and CI receipts
+
+- [PR15](https://github.com/edithatogo/paignia/pull/15) retains five fixture paths
+  at `af7b9783e63943cce3988873160166ca0adfc73f`; author ownership is unchanged.
+  [Independent numerical review accepted](https://github.com/edithatogo/paignia/pull/15#issuecomment-6896316061):
+  39 unchanged-harness tests, 10 reviewer tests, seven detected mutations, no
+  corrective edit. Reviewer `6af9c0e1-b6a0-83ec-ad3b-62b228818763` has no residual
+  assignment and may archive. This is bounded synthetic agent-review acceptance.
+- Coordinator-owned [PR17](https://github.com/edithatogo/paignia/pull/17) changes
+  only `.github/workflows/ci.yml`, stacked on that fixed PR15 head. Exact head
+  `89da0a0261cd5908aa7c1830a536283a03bcec1c` has actual hosted CPython 3.12.14
+  evidence: all 39 oracle tests pass; zero/partial/skipped/failed reports reject.
+  Existing native stable/MSRV/privacy gates pass. Retain the equal head/merge
+  tree provenance in its [receipt](https://github.com/edithatogo/paignia/pull/17#issuecomment-6896316260).
+- Both PRs are unmerged. New PR18 action-pin overlap is serialized by the sole
+  integrator; combined-tree evidence is required before integration.
+- These receipts do not complete T17.04–06/S01–S03. Full accepted/pinned T17.01
+  result semantics, justified production tolerance/API mapping, upstream
+  caller/retirement, comparator/backend and package/consumer obligations remain.
+  T17.13 remains held; no T18/native simulation or consumer activation follows.
 
 ### [ ] T17.04 — implement the declared four-stage replicator step (S01)
 

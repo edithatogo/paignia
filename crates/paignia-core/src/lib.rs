@@ -52,6 +52,143 @@ pub struct Game {
 
 pub const GAME_SPEC_SCHEMA_VERSION: &str = "1.0.0";
 
+/// Exact input-profile identifier for the existing finite, acyclic,
+/// perfect-information graph with intentional sparse-zero terminal payoffs.
+///
+/// This is a Paignia input-validation profile, not a UOGTO vocabulary IRI,
+/// solver-result version, or numerical qualification receipt.
+pub const STATIC_GAME_PROFILE_V1: &str =
+    "paignia/static-finite-perfect-information-sparse-zero/1.0.0";
+
+/// Component schema for [`ResultIdentityRecord`], not a complete result envelope.
+pub const RESULT_IDENTITY_SCHEMA_VERSION: &str = "1.0.0";
+
+/// An opaque specification identity, preserving its complete string.
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct GameSpecificationId(pub String);
+
+/// An instantiated game's identity, distinct from its specification.
+///
+/// ```compile_fail
+/// use paignia_core::{GameInstanceId, GameSpecificationId};
+/// let instance: GameInstanceId = GameSpecificationId("urn:example:same".into());
+/// ```
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct GameInstanceId(pub String);
+
+/// One solver invocation; this is not a game session or simulation replicate.
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct SolverRunId(pub String);
+
+/// Optional external game-session identity; no live session is created here.
+///
+/// ```compile_fail
+/// use paignia_core::{GameSessionId, SolverRunId};
+/// let session: GameSessionId = SolverRunId("urn:example:same".into());
+/// ```
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct GameSessionId(pub String);
+
+/// An optional policy artifact identity, not a solver run or live policy state.
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct PolicyArtifactId(pub String);
+
+/// A solver-diagnostic trace identity, never a realized causal execution trace.
+///
+/// ```compile_fail
+/// use paignia_core::{PolicyArtifactId, SolverDiagnosticTraceId};
+/// let trace: SolverDiagnosticTraceId = PolicyArtifactId("urn:example:same".into());
+/// ```
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct SolverDiagnosticTraceId(pub String);
+
+/// Role-specific identity metadata for a future result envelope.
+///
+/// Admission checks this component's schema and supplied strings only. It does
+/// not resolve references, certify source bindings or validate a solver result.
+/// Optional context remains absent for a static caller that does not supply it.
+/// The role and full string together identify a record; equal strings in
+/// different roles are not implicitly equated or converted.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ResultIdentityRecord {
+    pub schema_version: String,
+    pub specification_id: GameSpecificationId,
+    pub game_instance_id: GameInstanceId,
+    pub solver_run_id: SolverRunId,
+    pub session_id: Option<GameSessionId>,
+    pub policy_artifact_id: Option<PolicyArtifactId>,
+    pub solver_trace_id: Option<SolverDiagnosticTraceId>,
+}
+
+/// Structural admission failure for [`ResultIdentityRecord`].
+#[derive(Clone, Debug, Eq, PartialEq, Error)]
+pub enum ResultIdentityValidationError {
+    #[error("unsupported result identity schema version {value}")]
+    UnsupportedSchemaVersion { value: String },
+    #[error("empty result identity at {path}")]
+    EmptyIdentifier { path: &'static str },
+}
+
+impl ResultIdentityValidationError {
+    #[must_use]
+    pub fn code(&self) -> &'static str {
+        match self {
+            Self::UnsupportedSchemaVersion { .. } => "unsupported_result_identity_schema",
+            Self::EmptyIdentifier { .. } => "empty_result_identity",
+        }
+    }
+
+    #[must_use]
+    pub fn path(&self) -> &'static str {
+        match self {
+            Self::UnsupportedSchemaVersion { .. } => "schema_version",
+            Self::EmptyIdentifier { path } => path,
+        }
+    }
+}
+
+impl ResultIdentityRecord {
+    /// Admit the exact component schema and nonblank supplied identities.
+    ///
+    /// Strings are not trimmed, normalized, shortened, generated or resolved.
+    /// Missing optional context is distinct from a supplied empty identifier.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ResultIdentityValidationError`] for an unsupported schema,
+    /// checked first, or a blank identifier in declaration order.
+    pub fn validate(&self) -> Result<(), ResultIdentityValidationError> {
+        if self.schema_version != RESULT_IDENTITY_SCHEMA_VERSION {
+            return Err(ResultIdentityValidationError::UnsupportedSchemaVersion {
+                value: self.schema_version.clone(),
+            });
+        }
+        let identities = [
+            ("specification_id", Some(self.specification_id.0.as_str())),
+            ("game_instance_id", Some(self.game_instance_id.0.as_str())),
+            ("solver_run_id", Some(self.solver_run_id.0.as_str())),
+            (
+                "session_id",
+                self.session_id.as_ref().map(|id| id.0.as_str()),
+            ),
+            (
+                "policy_artifact_id",
+                self.policy_artifact_id.as_ref().map(|id| id.0.as_str()),
+            ),
+            (
+                "solver_trace_id",
+                self.solver_trace_id.as_ref().map(|id| id.0.as_str()),
+            ),
+        ];
+        for (path, value) in identities {
+            if value.is_some_and(|id| id.trim().is_empty()) {
+                return Err(ResultIdentityValidationError::EmptyIdentifier { path });
+            }
+        }
+        Ok(())
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct GameSpecification {
     pub schema_version: String,
@@ -128,7 +265,63 @@ impl ValidationError {
     }
 }
 
+/// Admission failure for an explicitly requested semantic input profile.
+///
+/// The separate wrapper preserves the existing [`ValidationError`] variants
+/// for callers of [`GameSpecification::validate`].
+#[derive(Clone, Debug, Eq, PartialEq, Error)]
+pub enum ProfileValidationError {
+    #[error("unsupported semantic profile {value}")]
+    UnsupportedSemanticProfile { value: String },
+    #[error("invalid game specification: {0}")]
+    InvalidSpecification(#[from] ValidationError),
+}
+
+impl ProfileValidationError {
+    /// Return the admission error code, preserving wrapped validation codes.
+    #[must_use]
+    pub fn code(&self) -> &'static str {
+        match self {
+            Self::UnsupportedSemanticProfile { .. } => "unsupported_semantic_profile",
+            Self::InvalidSpecification(error) => error.code(),
+        }
+    }
+
+    /// Return the profile field or the original specification/graph error path.
+    #[must_use]
+    pub fn path(&self) -> String {
+        match self {
+            Self::UnsupportedSemanticProfile { .. } => "semantic_profile".into(),
+            Self::InvalidSpecification(error) => error.path(),
+        }
+    }
+}
+
 impl GameSpecification {
+    /// Validate this specification under an explicitly requested input profile.
+    ///
+    /// Only [`STATIC_GAME_PROFILE_V1`] is admitted, using exact string equality
+    /// before the existing schema and graph checks. No identifier, probability,
+    /// or payoff is rewritten. Profile admission does not solve the game or
+    /// certify the interpretation of an external representation.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProfileValidationError::UnsupportedSemanticProfile`] for any
+    /// other profile, including unknown versions. For the supported profile,
+    /// wraps the original [`ValidationError`] from [`Self::validate`].
+    pub fn validate_for_profile(
+        &self,
+        semantic_profile: &str,
+    ) -> Result<(), ProfileValidationError> {
+        if semantic_profile != STATIC_GAME_PROFILE_V1 {
+            return Err(ProfileValidationError::UnsupportedSemanticProfile {
+                value: semantic_profile.into(),
+            });
+        }
+        self.validate().map_err(ProfileValidationError::from)
+    }
+
     /// Validate specification metadata and the embedded game graph.
     ///
     /// # Errors
