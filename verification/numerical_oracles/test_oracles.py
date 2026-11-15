@@ -280,16 +280,62 @@ class ReplicatorOracleTests(unittest.TestCase):
 
 
 def rational(value):
-    raise NotImplementedError("T17.05.oracle tests-first baseline")
+    if isinstance(value, Q):
+        return value
+    if type(value) not in (str, int):
+        raise ValueError("reference requires exact rational strings or integers")
+    try:
+        return Q(value)
+    except (ValueError, ZeroDivisionError) as error:
+        raise ValueError("invalid/non-finite rational fixture value") from error
+
+
+def matrix(values):
+    if not isinstance(values, (list, tuple)) or not values:
+        raise ValueError("empty or malformed matrix")
+    if any(not isinstance(row, (list, tuple)) or not row for row in values):
+        raise ValueError("empty or malformed matrix row")
+    width = len(values[0])
+    if any(len(row) != width for row in values):
+        raise ValueError("ragged matrix")
+    return tuple(tuple(rational(x) for x in row) for row in values)
+
+
+def game_matrices(a, b):
+    a, b = matrix(a), matrix(b)
+    if len(a) != len(b) or len(a[0]) != len(b[0]):
+        raise ValueError("payoff matrix dimensions differ")
+    return a, b
+
+
+def probabilities(values, count):
+    if not isinstance(values, (list, tuple)) or len(values) != count:
+        raise ValueError("probability dimension mismatch")
+    values = tuple(rational(x) for x in values)
+    if any(x < 0 for x in values) or sum(values) != 1:
+        raise ValueError("probabilities must be nonnegative with exact unit mass")
+    return values
 
 
 def nash_certificate(a, b, p, q):
     """Check an existing witness, never search for or enumerate equilibria."""
-    raise NotImplementedError("T17.05.oracle tests-first baseline")
+    a, b = game_matrices(a, b)
+    rows, cols = len(a), len(a[0])
+    p, q = probabilities(p, rows), probabilities(q, cols)
+    row_values = tuple(sum(a[i][j] * q[j] for j in range(cols)) for i in range(rows))
+    column_values = tuple(sum(p[i] * b[i][j] for i in range(rows)) for j in range(cols))
+    utilities = (sum(p[i] * row_values[i] for i in range(rows)),
+                 sum(q[j] * column_values[j] for j in range(cols)))
+    gains = (max(row_values) - utilities[0], max(column_values) - utilities[1])
+    return {"utilities": utilities, "gains": gains,
+            "sum_gain": sum(gains), "max_gain": max(gains)}
 
 
 def require_nash(a, b, p, q):
-    raise NotImplementedError("T17.05.oracle tests-first baseline")
+    certificate = nash_certificate(a, b, p, q)
+    if certificate["max_gain"] != 0:
+        raise ValueError("candidate has a profitable unilateral deviation")
+    return certificate
 
 
 class NashOracleTests(unittest.TestCase):

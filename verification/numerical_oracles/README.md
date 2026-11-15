@@ -33,8 +33,8 @@ remain authoritative; their shared status files are coordinator-owned.
 | Local fixture slice | One reference behavior | Changed files | Status |
 | --- | --- | --- | --- |
 | T17.04.oracle | Verify four-stage/logistic replicator references and distinguishing controls | README, harness, replicator fixture | [x] local reference checks; specialist review pending |
-| T17.05.oracle | Verify exact finite-game Nash witnesses and deviation residuals | README, harness, Nash fixture | [~] |
-| T17.06.oracle | Verify CE incentive and objective certificates | README, harness, CE fixture | [ ] |
+| T17.05.oracle | Verify exact finite-game Nash witnesses and deviation residuals | README, harness, Nash fixture | [x] local reference checks; specialist review pending |
+| T17.06.oracle | Verify CE incentive and objective certificates | README, harness, CE fixture | [~] |
 
 Tests precede each reference implementation. Record actual distinguishing failures,
 nonzero executed cases, baseline/head and fixture hashes; an absent target is not
@@ -70,6 +70,7 @@ From the repository root, using Python 3.12 or later:
 ```bash
 python3 -B verification/numerical_oracles/test_oracles.py
 python3 -B verification/numerical_oracles/test_oracles.py ReplicatorOracleTests
+python3 -B verification/numerical_oracles/test_oracles.py NashOracleTests
 ```
 
 These are development/reference commands. The existing root CI does not run this
@@ -130,3 +131,59 @@ explicitly unimplemented reference helpers. After implementation and grid
 refinement, all 14 tests pass on CPython 3.12.14. The final PR receipt pins the
 implementation SHA and fixture hashes. This local completion marker does not
 close T17.04/S01 or satisfy its independent specialist review.
+
+## T17.05.oracle: exact Nash witnesses
+
+For complete two-player payoff tables `A[i][j]`, `B[i][j]`, let `p` and `q`
+be independent probability vectors over rows and columns. The harness computes
+each pure action's payoff against the opponent, each player's mixed payoff, and
+the difference between the best pure payoff and the mixed payoff. A mixed
+deviation is a convex combination of pure deviations, so nonpositive pure gains
+are sufficient. Nonnegative exact gains must both be zero at a witness. We
+record each gain, their sum and their maximum separately, without assigning
+unsettled production residual names or tolerances.
+
+Eight original rational examples contain 12 equilibrium witnesses and five
+false candidates with pinned positive gains:
+
+| Example | Independent justification |
+| --- | --- |
+| Strict dominance | Row 0 and column 0 each beat the other action by exactly 1 |
+| Matching pennies | Two indifference equations force both probabilities to 1/2 |
+| Coordination | Two diagonal pure equilibria and the unique interior profile `(2/3,1/3)` / `(1/3,2/3)` |
+| Asymmetric interior | Indifference gives row probability 3/4 and column probability 1/2 |
+| Rectangular 2x3 and 3x2 | Strictly dominated third action has zero probability; remaining game is matching pennies |
+| Degenerate zero game | All mixed profiles are equilibria; the finite list is explicitly samples of a continuum |
+| Signed single-action game | No possible deviation; the negative payoff is retained |
+
+The strict-dominance example is derived from the inspected upstream formulas,
+not from their output: `A=[[2,2],[1,1]]`, `B=[[2,1],[2,1]]` make both legacy
+indifference denominators zero. `MixedNashSolver::solve_2x2_and_support_enumeration`
+therefore selects half/half by its literal fallback; `LemkeHowsonSolver::solve`
+delegates to it. That profile gives utility 3/2 to each player but a unilateral
+gain of 1/2 each. The unique equilibrium is pure row 0/column 0. Source reading
+and algebra are the evidence; no upstream execution or full caller retirement
+receipt is claimed. The original source-side obligations remain with Kairos.
+
+The independent references here are mathematical identities, not an external
+software comparator. [Gambit 16.6.0's algorithm documentation](https://gambitproject.readthedocs.io/en/v16.6.0/algorithms.html)
+distinguishes support/extreme-point enumeration from Lemke–Howson's accessible
+equilibria. Neither algorithm is run by this harness; neither can borrow its
+correctness or catalogue guarantees. Production algorithm identity, unsupported
+dimensions, nonconvergence and completeness reporting still require T17.01 and
+the actual future implementation. No Gambit/OpenSpiel package was installed.
+
+All payoff, probability and residual checks use `fractions.Fraction`, with zero
+tolerance. Matrix cells must be present; zero is explicit. Probabilities must
+have exact unit mass and are never normalized. Negative payoffs are valid.
+Domain controls cover malformed/ragged/mismatched shapes, non-finite values,
+wrong dimensions, negative/wrong-mass distributions, booleans and floating-point
+input. An exact positive gain of `2e-30` is retained and rejected. Reversing
+action order preserves certificates, and positive affine payoff transformations
+scale gains as expected. Array positions here are local mathematical coordinates,
+not a substitute for the pending public identity contract.
+
+Tests-first commit `0d512b26472f05bda793de855eeef1e4266c09f7` runs 12 tests,
+exiting 1 with 43 errors (including subtests) from the missing certificate
+helpers. After implementation, these 12 and the earlier 14 tests pass (26 total).
+The parent T17.05/S02 remains open, with independent numerical review pending.
