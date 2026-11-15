@@ -1,5 +1,209 @@
 //! T17.01.profile: native admission controls for the existing static input model.
 
+mod result_identities {
+    use std::error::Error;
+
+    use paignia_core::{
+        GameInstanceId, GameSessionId, GameSpecificationId, PolicyArtifactId, ResultIdentityRecord,
+        ResultIdentityValidationError, SolverDiagnosticTraceId, SolverRunId,
+        RESULT_IDENTITY_SCHEMA_VERSION,
+    };
+
+    fn record() -> ResultIdentityRecord {
+        ResultIdentityRecord {
+            schema_version: "1.0.0".into(),
+            specification_id: GameSpecificationId("https://w3id.org/uogto/core#fixture".into()),
+            game_instance_id: GameInstanceId("https://w3id.org/uogto/extensions#fixture".into()),
+            solver_run_id: SolverRunId("urn:paignia:test:solver-run:1".into()),
+            session_id: Some(GameSessionId("urn:paignia:test:session:1".into())),
+            policy_artifact_id: Some(PolicyArtifactId("urn:paignia:test:policy:1".into())),
+            solver_trace_id: Some(SolverDiagnosticTraceId(
+                "urn:paignia:test:diagnostic:1".into(),
+            )),
+        }
+    }
+
+    fn expect_blank(record: &ResultIdentityRecord, path: &'static str) {
+        let error = record.validate().unwrap_err();
+        assert_eq!(
+            error,
+            ResultIdentityValidationError::EmptyIdentifier { path }
+        );
+        assert_eq!(error.code(), "empty_result_identity");
+        assert_eq!(error.path(), path);
+        assert_eq!(
+            error.to_string(),
+            format!("empty result identity at {path}")
+        );
+        assert!(error.source().is_none());
+    }
+
+    #[test]
+    fn component_schema_literal_is_independently_pinned() {
+        assert_eq!(RESULT_IDENTITY_SCHEMA_VERSION, "1.0.0");
+    }
+
+    #[test]
+    fn role_specific_record_is_admitted_without_mutation() {
+        let record = record();
+        let before = record.clone();
+        assert_eq!(record.validate(), Ok(()));
+        assert_eq!(record, before);
+        assert_ne!(record.specification_id.0, record.game_instance_id.0);
+    }
+
+    #[test]
+    fn static_record_does_not_manufacture_optional_context() {
+        let mut record = record();
+        record.session_id = None;
+        record.policy_artifact_id = None;
+        record.solver_trace_id = None;
+        let before = record.clone();
+        assert_eq!(record.validate(), Ok(()));
+        assert_eq!(record, before);
+        assert_eq!(record.session_id, None);
+        assert_eq!(record.policy_artifact_id, None);
+        assert_eq!(record.solver_trace_id, None);
+    }
+
+    #[test]
+    fn unsupported_component_versions_reject_without_normalization() {
+        for version in [
+            "",
+            "1",
+            "1.0",
+            "1.0.1",
+            "2.0.0",
+            " 1.0.0",
+            "1.0.0\n",
+            "1.0.0+build",
+            "1.0.0-rc.1",
+            "^1.0.0",
+            "1.0.0\0",
+            "１.0.0",
+        ] {
+            let mut record = record();
+            record.schema_version = version.into();
+            let error = record.validate().unwrap_err();
+            assert_eq!(
+                error,
+                ResultIdentityValidationError::UnsupportedSchemaVersion {
+                    value: version.into(),
+                }
+            );
+            assert_eq!(error.code(), "unsupported_result_identity_schema");
+            assert_eq!(error.path(), "schema_version");
+            assert_eq!(
+                error.to_string(),
+                format!("unsupported result identity schema version {version}")
+            );
+            assert!(error.source().is_none());
+        }
+    }
+
+    #[test]
+    fn unknown_schema_precedes_invalid_identifiers() {
+        let mut record = record();
+        record.schema_version = "future".into();
+        record.specification_id.0.clear();
+        record.game_instance_id.0.clear();
+        record.solver_run_id.0.clear();
+        assert_eq!(
+            record.validate(),
+            Err(ResultIdentityValidationError::UnsupportedSchemaVersion {
+                value: "future".into(),
+            })
+        );
+    }
+
+    #[test]
+    fn each_required_role_rejects_blank_strings() {
+        for blank in ["", " ", "\t\n", "\u{2003}\u{00a0}"] {
+            let mut specification = record();
+            specification.specification_id.0 = blank.into();
+            expect_blank(&specification, "specification_id");
+            let mut instance = record();
+            instance.game_instance_id.0 = blank.into();
+            expect_blank(&instance, "game_instance_id");
+            let mut run = record();
+            run.solver_run_id.0 = blank.into();
+            expect_blank(&run, "solver_run_id");
+        }
+    }
+
+    #[test]
+    fn present_optional_ids_must_not_be_blank() {
+        for blank in ["", " ", "\t\n", "\u{2003}\u{00a0}"] {
+            let mut session = record();
+            session.session_id = Some(GameSessionId(blank.into()));
+            expect_blank(&session, "session_id");
+            let mut policy = record();
+            policy.policy_artifact_id = Some(PolicyArtifactId(blank.into()));
+            expect_blank(&policy, "policy_artifact_id");
+            let mut trace = record();
+            trace.solver_trace_id = Some(SolverDiagnosticTraceId(blank.into()));
+            expect_blank(&trace, "solver_trace_id");
+        }
+    }
+
+    #[test]
+    fn invalid_role_precedence_is_explicit() {
+        let mut record = record();
+        record.specification_id.0.clear();
+        record.game_instance_id.0.clear();
+        record.solver_run_id.0.clear();
+        record.session_id = Some(GameSessionId(String::new()));
+        record.policy_artifact_id = Some(PolicyArtifactId(String::new()));
+        record.solver_trace_id = Some(SolverDiagnosticTraceId(String::new()));
+        expect_blank(&record, "specification_id");
+        record.specification_id.0 = "spec".into();
+        expect_blank(&record, "game_instance_id");
+        record.game_instance_id.0 = "instance".into();
+        expect_blank(&record, "solver_run_id");
+        record.solver_run_id.0 = "run".into();
+        expect_blank(&record, "session_id");
+        record.session_id = None;
+        expect_blank(&record, "policy_artifact_id");
+        record.policy_artifact_id = None;
+        expect_blank(&record, "solver_trace_id");
+    }
+
+    #[test]
+    fn opaque_strings_are_preserved_in_every_role() {
+        for identity in [
+            " id ",
+            "https://kairos.dev/ontology/game-theory#fixture",
+            "é",
+            "e\u{301}",
+            "x\0y",
+        ] {
+            let record = ResultIdentityRecord {
+                schema_version: "1.0.0".into(),
+                specification_id: GameSpecificationId(identity.into()),
+                game_instance_id: GameInstanceId(identity.into()),
+                solver_run_id: SolverRunId(identity.into()),
+                session_id: Some(GameSessionId(identity.into())),
+                policy_artifact_id: Some(PolicyArtifactId(identity.into())),
+                solver_trace_id: Some(SolverDiagnosticTraceId(identity.into())),
+            };
+            let before = record.clone();
+            assert_eq!(record.validate(), Ok(()));
+            assert_eq!(record, before);
+        }
+    }
+
+    #[test]
+    fn equal_strings_in_different_roles_do_not_require_global_uniqueness() {
+        let mut record = record();
+        record.specification_id = GameSpecificationId("urn:example:same".into());
+        record.game_instance_id = GameInstanceId("urn:example:same".into());
+        record.solver_run_id = SolverRunId("urn:example:same".into());
+        assert_eq!(record.validate(), Ok(()));
+        // The compile-fail API examples separately reject cross-role assignment.
+        // This validator neither resolves references nor infers entity equality.
+    }
+}
+
 use std::collections::BTreeMap;
 use std::error::Error;
 

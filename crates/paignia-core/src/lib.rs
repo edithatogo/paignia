@@ -60,6 +60,109 @@ pub const GAME_SPEC_SCHEMA_VERSION: &str = "1.0.0";
 pub const STATIC_GAME_PROFILE_V1: &str =
     "paignia/static-finite-perfect-information-sparse-zero/1.0.0";
 
+/// Component schema for [`ResultIdentityRecord`], not a complete result envelope.
+pub const RESULT_IDENTITY_SCHEMA_VERSION: &str = "1.0.0";
+
+/// An opaque specification identity, preserving its complete string.
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct GameSpecificationId(pub String);
+
+/// An instantiated game's identity, distinct from its specification.
+///
+/// ```compile_fail
+/// use paignia_core::{GameInstanceId, GameSpecificationId};
+/// let instance: GameInstanceId = GameSpecificationId("urn:example:same".into());
+/// ```
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct GameInstanceId(pub String);
+
+/// One solver invocation; this is not a game session or simulation replicate.
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct SolverRunId(pub String);
+
+/// Optional external game-session identity; no live session is created here.
+///
+/// ```compile_fail
+/// use paignia_core::{GameSessionId, SolverRunId};
+/// let session: GameSessionId = SolverRunId("urn:example:same".into());
+/// ```
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct GameSessionId(pub String);
+
+/// An optional policy artifact identity, not a solver run or live policy state.
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct PolicyArtifactId(pub String);
+
+/// A solver-diagnostic trace identity, never a realized causal execution trace.
+///
+/// ```compile_fail
+/// use paignia_core::{PolicyArtifactId, SolverDiagnosticTraceId};
+/// let trace: SolverDiagnosticTraceId = PolicyArtifactId("urn:example:same".into());
+/// ```
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct SolverDiagnosticTraceId(pub String);
+
+/// Role-specific identity metadata for a future result envelope.
+///
+/// Admission checks this component's schema and supplied strings only. It does
+/// not resolve references, certify source bindings or validate a solver result.
+/// Optional context remains absent for a static caller that does not supply it.
+/// The role and full string together identify a record; equal strings in
+/// different roles are not implicitly equated or converted.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ResultIdentityRecord {
+    pub schema_version: String,
+    pub specification_id: GameSpecificationId,
+    pub game_instance_id: GameInstanceId,
+    pub solver_run_id: SolverRunId,
+    pub session_id: Option<GameSessionId>,
+    pub policy_artifact_id: Option<PolicyArtifactId>,
+    pub solver_trace_id: Option<SolverDiagnosticTraceId>,
+}
+
+/// Structural admission failure for [`ResultIdentityRecord`].
+#[derive(Clone, Debug, Eq, PartialEq, Error)]
+pub enum ResultIdentityValidationError {
+    #[error("unsupported result identity schema version {value}")]
+    UnsupportedSchemaVersion { value: String },
+    #[error("empty result identity at {path}")]
+    EmptyIdentifier { path: &'static str },
+}
+
+impl ResultIdentityValidationError {
+    #[must_use]
+    pub fn code(&self) -> &'static str {
+        match self {
+            Self::UnsupportedSchemaVersion { .. } => "unsupported_result_identity_schema",
+            Self::EmptyIdentifier { .. } => "empty_result_identity",
+        }
+    }
+
+    #[must_use]
+    pub fn path(&self) -> &'static str {
+        match self {
+            Self::UnsupportedSchemaVersion { .. } => "schema_version",
+            Self::EmptyIdentifier { path } => path,
+        }
+    }
+}
+
+impl ResultIdentityRecord {
+    /// Admit the exact component schema and nonblank supplied identities.
+    ///
+    /// Strings are not trimmed, normalized, shortened, generated or resolved.
+    /// Missing optional context is distinct from a supplied empty identifier.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ResultIdentityValidationError`] for an unsupported schema,
+    /// checked first, or a blank identifier in declaration order.
+    pub fn validate(&self) -> Result<(), ResultIdentityValidationError> {
+        // Red-stage prototype: the contract tests must reject missing admission.
+        Ok(())
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct GameSpecification {
     pub schema_version: String,
