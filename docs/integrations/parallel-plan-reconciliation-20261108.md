@@ -510,5 +510,34 @@ input and PR15's numerical reviews are accepted at their original heads. Both
 new worker handoffs have been accepted with no residual assignment and may be
 archived; the coordinator's role remains active. T17.13, the full result
 envelope, T18 native/interval/consumer and other scientific/package/real-consumer
-gates remain. PR18/20 proposals are not adopted; no merge, activation or
-publication decision is made.
+gates remain. The later PR18 main advancement is reconciled below; PR20's
+dependency proposal is not adopted. This coordinator makes no merge, activation
+or publication decision.
+
+### Live-main advancement during this continuation
+
+At the pre-publication refresh, main had advanced from `fca2b2f8811c8cd56d27be4c9407f573d54ad1e9`
+to **`c7367b93244add88bb76f0ae34fcd244787ebab6`**. PR18 was merged outside this
+coordinator at 00:58:48 on 16 November (Australia/Brisbane). Its sole changed
+file is `.github/workflows/ci.yml`: two existing native-job action pins, for
+the Rust toolchain installer and source-consumer artifact upload. No core,
+contract, fixture, manifest or lock changed. This supersedes the earlier open
+PR18 snapshot; it does not retroactively change any recorded tested tree.
+
+The sole integrator now claims a serial child of fixed PR22, branch
+`codex/t17-ci-main-reconcile-20261116`, **one file and one behavior**: carry
+exactly those two current-main action-pin changes into the combined fixture-CI
+candidate and execute its existing checks. No additional pin update is bundled.
+The expected tree is computed by a read-only three-way tree merge of current
+main and PR22, then compared with the proposed one-file commit. This is a
+qualification proposal, not a main/PR merge. The actual new head, merge-tree
+identity, nonzero tests and artifact provenance belong to its PR receipt.
+This ownership-map update is published before that workflow edit.
+
+PR14/15/16/17/19/22 source heads remain fixed. PR21's new interface remains
+pending independent review; the current metadata update does not add behavior.
+PR20 remains open/unmerged at `9b2c36c9f039fe22f96bcc23b6102c2360fada30`, now based
+on the newer main, and its thiserror/syn proposal is not applied. Any eventual
+integration combining the contract and CI branches still needs its own exact
+tree checks and the outstanding specialist gates. Existing owners and all
+T17.13, T18, scientific/package/consumer and activation holds remain intact.
