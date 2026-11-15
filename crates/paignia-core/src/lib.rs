@@ -247,12 +247,30 @@ impl ResultDiagnosticValidationError {
 }
 
 impl ResultDiagnosticRecord {
-    /// Tests-first prototype; the final validator will enforce this component.
+    /// Admit this exact schema and finite, nonnegative supplied numbers.
+    ///
+    /// Checks schema first, then value, then tolerance. Zero tolerance is legal;
+    /// signed zero and subnormal magnitudes are preserved. No value is clamped,
+    /// normalized or compared with tolerance to infer convergence.
     ///
     /// # Errors
     ///
-    /// Admission failures are introduced after the distinguishing red run.
+    /// Returns a schema error for an unsupported version, otherwise the first
+    /// invalid numeric field. Non-finite checks precede negative checks.
     pub fn validate(&self) -> Result<(), ResultDiagnosticValidationError> {
+        if self.schema_version != RESULT_DIAGNOSTIC_SCHEMA_VERSION {
+            return Err(ResultDiagnosticValidationError::UnsupportedSchemaVersion {
+                value: self.schema_version.clone(),
+            });
+        }
+        for (path, value) in [("value", self.value), ("tolerance", self.tolerance)] {
+            if !value.is_finite() {
+                return Err(ResultDiagnosticValidationError::NonFiniteNumber { path });
+            }
+            if value < 0.0 {
+                return Err(ResultDiagnosticValidationError::NegativeNumber { path });
+            }
+        }
         Ok(())
     }
 }

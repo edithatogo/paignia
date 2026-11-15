@@ -6,9 +6,9 @@ Read the [Voiage handoff](voiage-handoff.md) and the concurrently authored
 [scientific-contract refinements](../../conductor/refinements/scientific-contracts-20261108.md).
 Existing owner plans retain task status and acceptance authority.
 
-The [16 November continued-work receipt](#continued-bounded-work--16-november-2026)
-below is the current reconciliation. The 15 November update records the bounded
-T17.01 input-profile slice.
+Current reconciliation is in [accepted reviews and serial integration](#accepted-reviews-and-serial-integration--16-november-2026)
+and the [diagnostic implementation receipt](#diagnostic-implementation-receipt--16-november-2026).
+The 15 November update records the bounded T17.01 input-profile slice.
 The earlier snapshots remain historical evidence.
 
 ## Source change reconciled
@@ -635,3 +635,41 @@ their stored bits. There is no default tolerance or value-to-tolerance compariso
 Missing/undefined diagnostics belong to the future enclosing method/result
 contract, not a manufactured zero record. The new component needs fresh
 independent public-contract review at its final head before integration.
+
+### Diagnostic implementation receipt — 16 November 2026
+
+The fixed five-file PR26 candidate implements the claimed scalar diagnostic
+admission behavior. Ownership commit
+`28b3724bbe79b4918e75f3130de59b8a7f35b448` precedes the actual tests-first
+no-check prototype `2fda0b6a687189c58d0ecbbce362a4f79cb59b40`:
+46 contract tests executed, 39 passed and seven failed, exit 101. The final
+validator has no prototype placeholder and passes 46 contract / 63 workspace
+native tests, three existing compile-fail doctests and two extracted-source
+consumer tests on Rust 1.75. Format, Clippy with warnings denied, extraction and
+rustdoc pass. Only an additive 86-line core block and eleven new contract tests
+change native behavior/coverage. Every old core byte outside that block and
+all old test bodies are preserved; solver, manifests/lock and CI are unchanged.
+
+This new interface needs **fresh independent public-contract review**. Its
+exact final SHA/tree, source hashes and hosted result belong to PR26's durable
+receipt. The accepted identity reviews are not relabeled as diagnostic review.
+The magnitude/tolerance domain is structural: no default, renormalization,
+convergence decision, norm/unit/source binding or production tolerance policy.
+
+PR24's exact-head composition review `5913350938` and fresh hosted/native/privacy
+checks passed. It merged as `969d2d22cc38a205c6087902a88cd1cd535aa96e`;
+GitHub and local receiving-tree checks confirm
+`9fa72d34cc8e86b2141298923c248ebfe34cfa65`, preserving all reviewed source
+ancestry. Receiving-main workflows were queued at this source snapshot;
+PR24's subsequent receipt records their actual conclusion. PR25 at
+`4cb88678e7544e4ff63bc5ab669d2d6546885790` separately passes hosted
+52 native + three doctests + two source-consumer tests on each compiler and
+privacy. Its receiving-main integration has its own review/receipt; none of
+these counts supplies a real-application or production-method acceptance.
+
+Full T17.01 and **T17.13 hold** remain. T18 information/method/production/credal/
+consumer, S01–S04, external comparisons/backend, package/dependency and two
+actual consumer receipts remain open. The PR23 numerical/inspection chain
+still needs its own integration with the accepted static tree; its original
+qualification is not assigned to a new combined tree automatically. No source
+owner is displaced, no worker created and no adapter/consumer/publication enabled.
