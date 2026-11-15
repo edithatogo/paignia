@@ -189,6 +189,74 @@ impl ResultIdentityRecord {
     }
 }
 
+/// Exact schema for a scalar diagnostic component, not a full result envelope.
+pub const RESULT_DIAGNOSTIC_SCHEMA_VERSION: &str = "1.0.0";
+
+/// The caller-declared category of a nonnegative diagnostic magnitude.
+///
+/// This tag does not define a norm, unit, game class or supported solver method.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum ResultDiagnosticKind {
+    Residual,
+    Exploitability,
+}
+
+/// A declared diagnostic magnitude and its explicit, caller-supplied tolerance.
+///
+/// Structural admission does not certify the calculation, source binding,
+/// tolerance policy, convergence or existence of an equilibrium. The enclosing
+/// method contract must define the metric and its meaning. Undefined diagnostics
+/// must not be manufactured as zero-valued records. Public mutation requires
+/// revalidation; no solver automatically creates this component.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ResultDiagnosticRecord {
+    pub schema_version: String,
+    pub kind: ResultDiagnosticKind,
+    pub value: f64,
+    pub tolerance: f64,
+}
+
+/// Structural admission failure for a result diagnostic component.
+#[derive(Clone, Debug, Eq, PartialEq, Error)]
+pub enum ResultDiagnosticValidationError {
+    #[error("unsupported result diagnostic schema version {value}")]
+    UnsupportedSchemaVersion { value: String },
+    #[error("non-finite result diagnostic at {path}")]
+    NonFiniteNumber { path: &'static str },
+    #[error("negative result diagnostic at {path}")]
+    NegativeNumber { path: &'static str },
+}
+
+impl ResultDiagnosticValidationError {
+    #[must_use]
+    pub fn code(&self) -> &'static str {
+        match self {
+            Self::UnsupportedSchemaVersion { .. } => "unsupported_result_diagnostic_schema",
+            Self::NonFiniteNumber { .. } => "non_finite_result_diagnostic",
+            Self::NegativeNumber { .. } => "negative_result_diagnostic",
+        }
+    }
+
+    #[must_use]
+    pub fn path(&self) -> &'static str {
+        match self {
+            Self::UnsupportedSchemaVersion { .. } => "schema_version",
+            Self::NonFiniteNumber { path } | Self::NegativeNumber { path } => path,
+        }
+    }
+}
+
+impl ResultDiagnosticRecord {
+    /// Tests-first prototype; the final validator will enforce this component.
+    ///
+    /// # Errors
+    ///
+    /// Admission failures are introduced after the distinguishing red run.
+    pub fn validate(&self) -> Result<(), ResultDiagnosticValidationError> {
+        Ok(())
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct GameSpecification {
     pub schema_version: String,
