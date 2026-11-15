@@ -72,7 +72,7 @@ seed rename and source-level consumer slices without adding competing leaves.
   those required semantics are accepted and pinned. No dynamic adapter work.
 - Merge gates: required native checks on stable and Rust 1.75, plus independent
   specialist public-contract review. Do not close the parent from this slice.
-- Implemented and locally verified on 15 November 2026; merge/review pending.
+- Implemented and locally verified on 15 November 2026; merge remains held.
   The [candidate profile contract](../../../docs/architecture/game-runtime-contract-v1.md)
   freezes the input identifier and inherited rules. The separate
   `ProfileValidationError` keeps the original public error enum unchanged.
@@ -84,6 +84,27 @@ seed rename and source-level consumer slices without adding competing leaves.
   extraction guard and warnings-denied rustdoc all passed. Dependencies were
   resolved offline against the unchanged lock. See the ownership-map receipt for
   source hashes and the exact PR handoff. These results do not close T17.01.
+- Independent [review 5909550432](https://github.com/edithatogo/paignia/pull/14#pullrequestreview-5909550432)
+  at `0c88607a142508d1fe4f1153b963fd1411b49395` was
+  [accepted by the coordinator](https://github.com/edithatogo/paignia/pull/14#issuecomment-6891995075).
+  Its 11-test synthetic harness and nonblocking supplemental controls are
+  received. Hosted stable/MSRV/privacy checks cover the equal head/merge tree.
+  The reviewer has no residual assignment and can be archived. This is scoped
+  agent-review acceptance, not a formal GitHub approval or full T17.01 closure.
+
+#### [~] T17.01.profile-controls — retain accepted admission regressions
+
+- One behavior: pin existing input-profile admission using selected probes from
+  the accepted independent review; no production or solver behavior changes.
+- Owner: sole shared coordinator; [three-file claim](../../../docs/integrations/parallel-plan-reconciliation-20261108.md#continued-bounded-work--16-november-2026).
+- Parent: exact reviewed PR14 head above. Preserve that head and its review;
+  publish this increment separately. Existing and supplemental native cases
+  must execute, with required native stable/MSRV checks on the new head.
+- Cover legacy typed errors and paths, six blank identifier roles, immediate
+  binary64 mass-boundary neighbours, shared descendants, signed zero/subnormal
+  weights and invalid zero-weight branches. These are regressions for already
+  passing behavior, not newly discovered production failures or qualification
+  of the remaining result envelope. New interface work needs its own leaf.
 
 ### [ ] T17.02 — reject Kairos in the static package dependency closure
 

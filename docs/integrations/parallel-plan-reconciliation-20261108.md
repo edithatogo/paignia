@@ -6,8 +6,9 @@ Read the [Voiage handoff](voiage-handoff.md) and the concurrently authored
 [scientific-contract refinements](../../conductor/refinements/scientific-contracts-20261108.md).
 Existing owner plans retain task status and acceptance authority.
 
-The [15 November scoped ownership update](#scoped-ownership-update--15-november-2026)
-below is the current reconciliation for the bounded T17.01 input-profile slice.
+The [16 November continued-work receipt](#continued-bounded-work--16-november-2026)
+below is the current reconciliation. The 15 November update records the bounded
+T17.01 input-profile slice.
 The earlier snapshots remain historical evidence.
 
 ## Source change reconciled
@@ -288,3 +289,94 @@ the recorded source hashes; they are not claimed as hosted or Rust 1.75 results.
 Hold merge for the required native stable/MSRV checks and independent specialist
 public-contract review. The same author cannot supply that independent review;
 no worker will be created to bypass Dylan's no-workers instruction.
+
+## Continued bounded work — 16 November 2026
+
+Dylan authorised continued bounded implementation and assigned two existing
+ordinary Pro workers. Coordinator `6af93fe8-b14c-83ec-8de0-728c856bcbb3` remains
+the sole shared integrator. This extends the same ownership map; task status
+still belongs to the existing Conductor plans. No worker is created here.
+The [pre-implementation receipt](https://github.com/edithatogo/paignia/pull/14#issuecomment-6896175943)
+records these assignments before any implementation in this continuation.
+
+### Current owners and non-overlap
+
+| Owner | Bounded scope | Receipt / disposition |
+| --- | --- | --- |
+| Coordinator `6af93fe8-b14c-83ec-8de0-728c856bcbb3` | Shared CI, core contract/exports, shared Conductor and this map; serial leaves below | No takeover of worker fixtures or upstream work |
+| Numerical reviewer `6af9c0e1-b6a0-83ec-ad3b-62b228818763` | Independent read-only PR15 mathematical verification at `af7b9783e63943cce3988873160166ca0adfc73f` | [Claim received](https://github.com/edithatogo/paignia/pull/15#issuecomment-6896087576); in progress; no source writes |
+| T18 worker `6af9c112-7efc-83ec-8798-c10017de8c5f` | Only `verification/inspection_oracles/{README.md,inspection_2x2_v1.json,reference.py,test_inspection.py}` | [Claim received](https://github.com/edithatogo/paignia/pull/14#issuecomment-6896113657); independent synthetic development; no shared writes |
+| Existing PR15 author, workspace marker `2d989e3b740d` | The five `verification/numerical_oracles/` files | [Handoff accepted into intake](https://github.com/edithatogo/paignia/pull/15#issuecomment-6892003260); source ownership retained; method qualification open |
+| Completed PR14 reviewer `6af956e9-2d90-83ec-9bd9-5697990c506f` | Exact-head input-profile review only | [Review accepted](https://github.com/edithatogo/paignia/pull/14#issuecomment-6891995075); no residual assignment; archive-ready |
+| PR7 / PR11 owners | Offline-security workflow / contribution documentation respectively | Existing ownership and PR7 infrastructure hold retained |
+
+Reconciled live main `fca2b2f8811c8cd56d27be4c9407f573d54ad1e9`, all 14 PR
+records, four open PR file lists/discussions and 13 published branches. PR14
+remains `0c88607a142508d1fe4f1153b963fd1411b49395`; PR15 remains the SHA above.
+Their reviewed source heads will not be advanced by these child increments.
+No intersecting published claim was found; a later overlap stops intersecting
+writes. This observation is not proof of private-owner absence or a claim that
+every live session acknowledged this receipt.
+
+Kairos main remains `cad43b592893579ccbea40343548fda7acd83fd0` and reimbursement
+main remains `ce99fbcf6bee195c24df1d741d4c4ac8eccc117d`. Innovate advanced to
+`ef115480d06f909af60510d0d1ed1168a0342bb0`; its intervening documentation and
+dependency changes do not touch the game-provider plan. Its current
+[ecosystem plan](https://github.com/edithatogo/innovate/blob/ef115480d06f909af60510d0d1ed1168a0342bb0/conductor/tracks/ecosystem_decision_integration_20261107/plan.md)
+preserves G01–G04 and independent static/dynamic acceptance. All cross-repository
+owners in the previous table retain their scopes and planning restrictions.
+
+### Coordinator increments and exact file claims
+
+1. **T17.01.profile-controls**, child of PR14, branch
+   `codex/t17-01-profile-regressions-20261116`: only this map,
+   `conductor/tracks/t17_game_runtime_ecosystem_20261107/plan.md`, and
+   `crates/paignia-core/tests/runtime_contract.rs`. One behavior: retain the
+   accepted independent review's supplemental input-admission controls as native
+   regressions. Core and solver source remain identical to the reviewed parent.
+   Publish the ownership/plan commit before the test edit.
+2. **T17.04–06.oracle-ci**, child of PR15, branch
+   `codex/t17-oracle-ci-20261116`: only `.github/workflows/ci.yml`. One behavior:
+   explicitly select CPython 3.12.14 and execute the unchanged numerical oracle
+   harness with a failing exit propagated and retained execution evidence.
+   Existing Rust stable/MSRV, privacy and security workflows are preserved.
+   This is shared integration; no fixture or mathematical review is duplicated.
+3. A subsequent **T17.01 result-contract** leaf needs its own exact behavior/file
+   claim here before implementation. New public interfaces need fresh
+   independent exact-head specialist review; PR14 review does not cover them.
+
+The input review's 11-test external harness and SHA-256
+`e02994d0356b446d9a1de2fe9091f69b66e0b0990b9438cd812b2069cd63df37` were received
+and checked in the preceding receipt. Its coverage recommendations are
+nonblocking, assigned to the coordinator's next test increment; they are not
+residual reviewer fixes. GitHub records that review as COMMENTED, not APPROVED.
+
+### Acceptance and prerequisite holds
+
+- PR15's 39 reported local tests and three corruption controls are synthetic
+  author evidence. Existing native CI did not invoke that harness. Hosted
+  execution, independent numerical review and production method qualification
+  are separate gates; progress in one does not discharge the others.
+- Full T17.01 remains open: versioned result admission, separate specification /
+  instantiated model / session / policy / trace identities, game and information
+  class, algorithm/version and solution concept, unsupported / proved absence /
+  nonconvergence, finite residuals/exploitability and justified tolerances,
+  versioned selection and reorder controls, catalogue completeness evidence and
+  multiplicity-preserving serialization. Solver diagnostics are not causal play.
+- T17.13 conversion source remains held until its required T17.01 semantics are
+  accepted and pinned. T18 native use also waits for the relevant representation,
+  result, tolerance and method qualification; the current extensive-form input
+  profile does not admit simultaneous or hidden-randomization commitment games.
+  T18.02 and its consumer-owned .03 remain outside the synthetic fixture slice.
+- S01–S04, upstream API/caller retirement, external comparator/backend decisions,
+  package artifacts and two real consumer receipts remain open. No adapter,
+  consumer activation, source pin migration, merge or publication decision.
+- Release an active worker only after reading and accepting its durable
+  exact-head handoff, checking current head and resolving its residual fixes.
+  The two new workers are not released by this ownership receipt. Completion of
+  their synthetic assignments cannot be called production qualification.
+
+Capacity was checked before execution: approximately 59 GiB available in the
+workspace. The earlier temporary checkout is absent in this environment; a new
+isolated clone and private tooling/build paths preserve other work. No cleanup
+of another owner's files or caches is part of this continuation.
