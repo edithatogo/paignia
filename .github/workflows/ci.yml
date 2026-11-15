@@ -48,3 +48,40 @@ jobs:
           path: target/extracted-package-smoke.json
           if-no-files-found: error
           retention-days: 30
+
+  numerical-oracles:
+    name: Synthetic numerical oracles (CPython 3.12.14)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12.14"
+      - name: Execute all 39 synthetic oracle tests
+        shell: bash
+        env:
+          PYTHONNOUSERSITE: "1"
+        run: |
+          set -euo pipefail
+          python3 --version | tee numerical-oracles.log
+          git rev-parse HEAD 'HEAD^{tree}' | tee -a numerical-oracles.log
+          sha256sum verification/numerical_oracles/* | tee -a numerical-oracles.log
+          python3 -B verification/numerical_oracles/test_oracles.py 2>&1 | tee -a numerical-oracles.log
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          log = Path("numerical-oracles.log").read_text()
+          if not re.search(r"^Ran 39 tests in [0-9.]+s$", log, re.MULTILINE) or "\nOK\n" not in log:
+              raise SystemExit("Expected all 39 oracle tests with no failures, errors or skips")
+          PY
+      - name: Retain synthetic oracle execution evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: synthetic-numerical-oracles-python-3.12.14
+          path: numerical-oracles.log
+          if-no-files-found: error
+          retention-days: 30
