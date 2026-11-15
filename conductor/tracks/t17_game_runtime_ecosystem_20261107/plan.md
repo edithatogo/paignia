@@ -112,6 +112,27 @@ seed rename and source-level consumer slices without adding competing leaves.
   [PR16](https://github.com/edithatogo/paignia/pull/16) records the exact-head
   hosted handoff; it remains draft and does not close T17.01.
 
+#### [~] T17.01.identities — admit a versioned result identity record
+
+- One behavior: reject unsupported identity-schema versions or blank supplied
+  identities without rewriting their strings. Specification, instantiated game
+  and solver-run IDs are required and have distinct types. Session, policy
+  artifact and solver-diagnostic trace IDs are separately typed and optional;
+  static validation never invents them or a causal execution trace.
+- Owner: sole shared coordinator; parent PR16 exact head
+  `177d76167a8c58299be4ab2aba26da7f44c96964`; [five-file pre-implementation claim](../../../docs/integrations/parallel-plan-reconciliation-20261108.md#continued-bounded-work--16-november-2026).
+- Check: `cargo test --locked -p paignia-core --test runtime_contract`, plus
+  role-confusion compile-fail doctests and required native stable/MSRV checks.
+  Observe distinguishing unknown-version/blank-ID failures before implementing
+  admission; preserve legacy input structs, error variants and solver source.
+- Execution: specialist public-contract review at the new exact head. Existing
+  review acceptance covers the unchanged input profile only; no completed
+  worker is reassigned and no new reviewer is created here.
+- Limits: component schema only, not a complete result envelope, wire format,
+  identity-to-source binding, conversion or numerical qualification. Full
+  result/status/algorithm/selection/diagnostic/catalogue/serialization obligations
+  remain; T17.13 and T18 native-comparison prerequisites stay held.
+
 ### [ ] T17.02 — reject Kairos in the static package dependency closure
 
 - Behavior: fail the boundary guard if either generic crate gains a direct or

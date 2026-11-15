@@ -305,7 +305,7 @@ records these assignments before any implementation in this continuation.
 | --- | --- | --- |
 | Coordinator `6af93fe8-b14c-83ec-8de0-728c856bcbb3` | Shared CI, core contract/exports, shared Conductor and this map; serial leaves below | No takeover of worker fixtures or upstream work |
 | Numerical reviewer `6af9c0e1-b6a0-83ec-ad3b-62b228818763` | Independent read-only PR15 mathematical verification at `af7b9783e63943cce3988873160166ca0adfc73f` | [Exact-head review accepted](https://github.com/edithatogo/paignia/pull/15#issuecomment-6896316061); no residual assignment; archive-ready |
-| T18 worker `6af9c112-7efc-83ec-8798-c10017de8c5f` | Only `verification/inspection_oracles/{README.md,inspection_2x2_v1.json,reference.py,test_inspection.py}` | [Claim received](https://github.com/edithatogo/paignia/pull/14#issuecomment-6896113657); independent synthetic development; no shared writes |
+| T18 worker `6af9c112-7efc-83ec-8798-c10017de8c5f` | Only `verification/inspection_oracles/{README.md,inspection_2x2_v1.json,reference.py,test_inspection.py}` | [Bounded handoff accepted](https://github.com/edithatogo/paignia/pull/19#issuecomment-6896411347); no residual authoring assignment; archive-ready; independent review remains a coordinator gate |
 | Existing PR15 author, workspace marker `2d989e3b740d` | The five `verification/numerical_oracles/` files | [Handoff accepted into intake](https://github.com/edithatogo/paignia/pull/15#issuecomment-6892003260); source ownership retained; method qualification open |
 | Completed PR14 reviewer `6af956e9-2d90-83ec-9bd9-5697990c506f` | Exact-head input-profile review only | [Review accepted](https://github.com/edithatogo/paignia/pull/14#issuecomment-6891995075); no residual assignment; archive-ready |
 | PR7 / PR11 owners | Offline-security workflow / contribution documentation respectively | Existing ownership and PR7 infrastructure hold retained |
@@ -341,9 +341,29 @@ owners in the previous table retain their scopes and planning restrictions.
    harness with a failing exit propagated and retained execution evidence.
    Existing Rust stable/MSRV, privacy and security workflows are preserved.
    This is shared integration; no fixture or mathematical review is duplicated.
-3. A subsequent **T17.01 result-contract** leaf needs its own exact behavior/file
-   claim here before implementation. New public interfaces need fresh
-   independent exact-head specialist review; PR14 review does not cover them.
+3. **T17.01.identities**, child of fixed PR16 head
+   `177d76167a8c58299be4ab2aba26da7f44c96964`, branch
+   `codex/t17-01-result-identities-20261116`: exactly this map, the T17 plan,
+   `crates/paignia-core/src/lib.rs`, `crates/paignia-core/tests/runtime_contract.rs`
+   and `docs/architecture/game-runtime-contract-v1.md`. One behavior: admit an
+   explicitly versioned result identity record, rejecting unknown schema
+   versions and blank supplied IDs while preserving whole strings. Distinct
+   types separate specification, instantiated game and solver run from optional
+   session, policy artifact and solver-diagnostic trace. This is one component
+   of the future result envelope; no result payload/status/algorithm is admitted.
+   The [claim](https://github.com/edithatogo/paignia/pull/14#issuecomment-6896395511)
+   and this map/plan commit precede source work. Fresh independent exact-head
+   public-contract review remains required; completed reviewers are not reassigned.
+4. **T18.01.oracle-ci**, child of fixed PR17 head
+   `89da0a0261cd5908aa7c1830a536283a03bcec1c`, branch
+   `codex/t18-inspection-ci-20261116`: five changed paths, comprising the exact
+   four accepted PR19 fixture blobs and `.github/workflows/ci.yml`. One behavior:
+   execute the delivered 28-test harness under CPython 3.12.14, retaining the
+   existing 39-test job. This is source integration, not fixture authoring;
+   preserve worker bytes/head `48d02e9961bd7dfadbf20d7891d7f9c3573dd626`.
+   Serialize after PR17; keep PR18's proposed action-pin changes unadopted and
+   require new combined-tree checks. The [intake/claim](https://github.com/edithatogo/paignia/pull/19#issuecomment-6896411347)
+   and this map precede the workflow edit. Independent T18 review stays open.
 
 The input review's 11-test external harness and SHA-256
 `e02994d0356b446d9a1de2fe9091f69b66e0b0990b9438cd812b2069cd63df37` were received
@@ -374,8 +394,9 @@ residual reviewer fixes. GitHub records that review as COMMENTED, not APPROVED.
 - Release an active worker only after reading and accepting its durable
   exact-head handoff, checking current head and resolving its residual fixes.
   The numerical reviewer's subsequent accepted handoff releases that assignment;
-  T18 still needs its own receipt. Completion of their synthetic assignments
-  cannot be called production qualification.
+  T18's subsequent accepted authoring handoff likewise has no residual fixes.
+  Completion of their synthetic assignments cannot be called production
+  qualification; unassigned independent T18 review stays a coordinator gate.
 
 Capacity was checked before execution: approximately 59 GiB available in the
 workspace. The earlier temporary checkout is absent in this environment; a new
@@ -429,3 +450,20 @@ added job. Preserve both proposals; serialize further CI writes and qualify
 the eventual combined tree before integration. PR20 proposes thiserror 2.0.21
 and a syn 3 dependency closure; this work retains the existing lock/2.0.18 pin.
 No automated dependency proposal is adopted or qualified by these receipts.
+
+PR16's [final receipt](https://github.com/edithatogo/paignia/pull/16#issuecomment-6896410971)
+confirms 42 native plus two source-consumer tests on local MSRV and hosted
+MSRV/stable, with required gates passing. Its actual temporary merge
+`dee79c0476e8f8995b4d05fe2ecc9184e2c7c789` has the same tree as head
+`177d76167a8c58299be4ab2aba26da7f44c96964`. That regression increment is fixed.
+
+PR19's author review and complete handoff have been read. A clean exact-head
+coordinator intake run passes 28 tests on CPython 3.12.14, with all four source
+SHA-256 values matching. The author reports five detected corruptions and
+separate closed-form calculations; these remain author evidence. Head and
+hosted merge `366ecb56a92bb3d4ccd860e1739916f92312c005` have equal tree
+`1b8f9a869f1e2a1c5a3b822ab6d87bf6ce9b416e`. Existing native/privacy checks pass
+but do not execute this harness. The bounded authoring packet is accepted;
+no residual authoring fix is assigned. Independent T18 numerical review,
+hosted harness execution and native contract/method acceptance remain separate.
+No parent T18 status is closed, and the worker's source ownership is retained.
