@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Offline synthetic reference tests; never import Paignia production code."""
 
-import copy
 import json
+import unittest
 from fractions import Fraction as F
 from pathlib import Path
-import unittest
 
 from reference import (
     Game,
@@ -37,7 +36,9 @@ class InspectionOracleTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         path = Path(__file__).with_name("inspection_2x2_v1.json")
-        cls.data = json.loads(path.read_text(), object_pairs_hook=no_duplicate_keys)
+        cls.data = json.loads(
+            path.read_text(encoding="utf-8"), object_pairs_hook=no_duplicate_keys
+        )
         cls.cases = {case["id"]: case for case in cls.data["cases"]}
 
     def game(self, case_id="interior"):
@@ -127,15 +128,21 @@ class InspectionOracleTests(unittest.TestCase):
             for row in case["pure_profiles"]:
                 with self.subTest(case=case_id, row=row):
                     p, q = rational(row["p"]), rational(row["q"])
-                    self.assertEqual(expected_payoffs(self.game(case_id), p, q), exact_values(row["payoffs"]))
-                    self.assertEqual(nash_gains(self.game(case_id), p, q), exact_values(row["gains"]))
+                    self.assertEqual(
+                        expected_payoffs(self.game(case_id), p, q), exact_values(row["payoffs"])
+                    )
+                    self.assertEqual(
+                        nash_gains(self.game(case_id), p, q), exact_values(row["gains"])
+                    )
 
     def test_known_nash_witnesses_have_zero_deviation_gains(self):
         for case_id, case in self.cases.items():
             row = case["nash"]
             p, q = rational(row["p"]), rational(row["q"])
             with self.subTest(case=case_id):
-                self.assertEqual(expected_payoffs(self.game(case_id), p, q), exact_values(row["payoffs"]))
+                self.assertEqual(
+                    expected_payoffs(self.game(case_id), p, q), exact_values(row["payoffs"])
+                )
                 self.assertEqual(nash_gains(self.game(case_id), p, q), (F(0), F(0)))
 
     def test_mixed_witness_indifference_and_pure_exclusion(self):
@@ -154,7 +161,9 @@ class InspectionOracleTests(unittest.TestCase):
         self.assertGreater(game.c, game.h)
         self.assertEqual(game.c / game.h, F(5, 4))
         for q in [F(0), F(1, 2), F(1)]:
-            self.assertGreater(expected_payoffs(game, F(0), q)[0], expected_payoffs(game, F(1), q)[0])
+            self.assertGreater(
+                expected_payoffs(game, F(0), q)[0], expected_payoffs(game, F(1), q)[0]
+            )
         with self.assertRaises(ValueError):
             nash_gains(game, F(1, 3), F(5, 4))
 
@@ -167,7 +176,9 @@ class InspectionOracleTests(unittest.TestCase):
                     gains = nash_gains(self.game(case_id), p, q)
                     self.assertEqual(gains, exact_values(row["gains"]))
                     self.assertGreater(max(gains), F(0))
-                    self.assertEqual(expected_payoffs(self.game(case_id), p, q), exact_values(row["payoffs"]))
+                    self.assertEqual(
+                        expected_payoffs(self.game(case_id), p, q), exact_values(row["payoffs"])
+                    )
 
     def test_follower_best_responses_below_at_above_threshold(self):
         self.assertEqual(len(self.data["best_response_probes"]), 5)
@@ -175,7 +186,10 @@ class InspectionOracleTests(unittest.TestCase):
             self.assertEqual(rational(case["threshold"]), F(1, 3))
             for row in self.data["best_response_probes"]:
                 with self.subTest(case=case_id, p=row["p"]):
-                    self.assertEqual(follower_best_responses(self.game(case_id), rational(row["p"])), tuple(row["best"]))
+                    self.assertEqual(
+                        follower_best_responses(self.game(case_id), rational(row["p"])),
+                        tuple(row["best"]),
+                    )
 
     def test_tie_retains_both_responses_and_mixtures(self):
         game = self.game()
@@ -193,7 +207,9 @@ class InspectionOracleTests(unittest.TestCase):
         for case_id, case in self.cases.items():
             budgets = {"0", "1/4", "1/3", "1"} if case_id == "interior" else {"1/4", "1/3", "1"}
             expected_keys = {(b, t) for b in budgets for t in ["optimistic", "pessimistic"]}
-            self.assertEqual({(row["budget"], row["tie"]) for row in case["commitment"]}, expected_keys)
+            self.assertEqual(
+                {(row["budget"], row["tie"]) for row in case["commitment"]}, expected_keys
+            )
             self.assertEqual(len(case["commitment"]), len(expected_keys))
             for row in case["commitment"]:
                 with self.subTest(case=case_id, budget=row["budget"], tie=row["tie"]):
@@ -205,8 +221,14 @@ class InspectionOracleTests(unittest.TestCase):
                     self.assertEqual(bound.q, None if row["q"] is None else rational(row["q"]))
                     if bound.attained:
                         q, leader, follower = commitment_at(game, bound.p, budget, row["tie"])
-                        self.assertEqual((q, leader, follower), (bound.q, bound.value, rational(row["follower_payoff"])))
-                        self.assertEqual(check_follower_response(game, bound.p, bound.q, budget), (leader, follower))
+                        self.assertEqual(
+                            (q, leader, follower),
+                            (bound.q, bound.value, rational(row["follower_payoff"])),
+                        )
+                        self.assertEqual(
+                            check_follower_response(game, bound.p, bound.q, budget),
+                            (leader, follower),
+                        )
                     else:
                         self.assertIsNone(row["follower_payoff"])
 
@@ -239,7 +261,9 @@ class InspectionOracleTests(unittest.TestCase):
     def test_exact_budget_boundary_cannot_use_infeasible_right_limit(self):
         for case_id, value, p in [("interior", F(-3), F(1, 3)), ("costly", F(-4), F(0))]:
             bound = commitment_bound(self.game(case_id), F(1, 3), "pessimistic")
-            self.assertEqual((bound.value, bound.attained, bound.p, bound.q), (value, True, p, F(1)))
+            self.assertEqual(
+                (bound.value, bound.attained, bound.p, bound.q), (value, True, p, F(1))
+            )
             with self.assertRaisesRegex(ValueError, "budget"):
                 commitment_at(self.game(case_id), F(1, 3) + F(1, 1000), F(1, 3), "pessimistic")
 
@@ -253,7 +277,10 @@ class InspectionOracleTests(unittest.TestCase):
         for case_id in self.cases:
             for tie in ["optimistic", "pessimistic"]:
                 bound = commitment_bound(self.game(case_id), F(0), tie)
-                self.assertEqual((bound.p, bound.q, bound.value, bound.attained), (F(0), F(1), F(-4), True))
+                self.assertEqual(
+                    (bound.p, bound.q, bound.value, bound.attained),
+                    (F(0), F(1), F(-4), True),
+                )
 
     def test_unknown_ties_reject_instead_of_falling_back(self):
         for tie in [None, "", "lexical", "Optimistic", "optimistic "]:
@@ -294,7 +321,6 @@ class InspectionOracleTests(unittest.TestCase):
     def test_duplicate_fixture_keys_are_not_silently_overwritten(self):
         with self.assertRaisesRegex(ValueError, "duplicate"):
             json.loads('{"p":"0","p":"1"}', object_pairs_hook=no_duplicate_keys)
-        self.assertEqual(copy.deepcopy(self.data), self.data)
 
 
 if __name__ == "__main__":
