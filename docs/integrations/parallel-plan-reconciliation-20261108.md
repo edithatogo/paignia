@@ -234,7 +234,57 @@ Before implementation, the checkout was clean and its HEAD matched live main.
 The shared workspace had approximately 7 MB free; an isolated checkout and build
 directory use the separate temporary filesystem, with approximately 4.7 GiB
 available. No other working tree, cache or build output is deleted or modified.
-Actual implementation/check results will be recorded here and in the scoped PR.
+The ownership-only commit
+[`9ff164a8199f5f30413db69f048de7ddde934dea`](https://github.com/edithatogo/paignia/commit/9ff164a8199f5f30413db69f048de7ddde934dea)
+and [draft PR #14](https://github.com/edithatogo/paignia/pull/14) were published
+before the new test or source was written. Immediately before that source work,
+live main and the claimed PR head were re-read and no new overlapping comment
+was present. No live-chat acknowledgement is inferred from publication.
+
+The first native baseline passed 17 tests (6 core, 11 solve). The tests-first
+commit [`25d00f40fed5d2225db82945ff1f1f40e825bd2c`](https://github.com/edithatogo/paignia/commit/25d00f40fed5d2225db82945ff1f1f40e825bd2c)
+adds only `runtime_contract.rs`; against the old core the focused command exits
+101 with E0432/E0599 for the missing profile constant, error wrapper and method.
+This is an observed compile-time contract failure, not an executed assertion
+failure. The source implementation then passes all 15 new native cases.
+
+Implemented API: `STATIC_GAME_PROFILE_V1`,
+`GameSpecification::validate_for_profile(&str)` and `ProfileValidationError`.
+Exact profile admission delegates to the existing validator. A separate error
+wrapper avoids changing existing `ValidationError` variants or exhaustive
+matches. The [input contract](../architecture/game-runtime-contract-v1.md)
+records mass tolerance (including the inherited slight-above-one possibility),
+intentional sparse payoffs, full-string identity preservation and result limits.
+
+Local evidence uses rustc 1.99.1 (`58cf8f9c3`) / cargo 1.99.1 (`5f94df478`).
+Read-only existing compiler binaries were reused; the six dependency archives
+were checksum-verified against the unchanged Cargo lock and copied to an isolated
+cache. All dependency resolution was offline. No credentials were inspected or
+changed. Git publication uses the existing connector with expected-head checks.
+
+| Executed check | Result |
+| --- | --- |
+| `cargo test --locked --offline -p paignia-core --test runtime_contract` | 15 passed; zero failed, ignored or filtered |
+| `cargo fmt --all -- --check` | exit 0 |
+| `cargo clippy --workspace --all-targets --locked --offline -- -D warnings` | exit 0 |
+| `cargo test --workspace --all-targets --locked --offline` | 32 passed: 6 core + 15 contract + 11 solve; zero ignored/filtered |
+| `python3 scripts/validate_extraction.py` | 2-crate boundary check passed; not full T17.02 closure qualification |
+| `python3 scripts/validate_game_packages.py --receipt <temporary-receipt>` | 2 native extracted-source consumer tests passed; no registry artifact claim |
+| `RUSTDOCFLAGS='-D warnings' cargo doc --workspace --no-deps --locked --offline` | exit 0 |
+| Relative Markdown links / `git diff --check` | 9 local links resolved after receipt additions; whitespace passed |
+| Scope review | Exactly five paths; solver, manifests, lock and CI byte-identical to base |
+
+| Tested source | SHA-256 |
+| --- | --- |
+| `crates/paignia-core/src/lib.rs` | `d5f0fd4edacfacbca0982c7284712ed65a2e984b020956862ee816c3d865c17f` |
+| `crates/paignia-core/tests/runtime_contract.rs` | `62096b5e85b05fe52169e58994619bede5ea8bb42884be88710725f643e4bb61` |
+| Unchanged `Cargo.lock` | `841b5ac24e14dd10fb3f42b4e35cfedf197ca9577e1f634bd2878399d6b79b95` |
+
+Author review checked exact admission/error precedence, graph validation
+delegation, preservation of old fields/error variants, bounded source scope and
+honest input-versus-result claims. The PR supplies the final exact commit/tree
+handoff and hosted results once observed. Local results above are attached to
+the recorded source hashes; they are not claimed as hosted or Rust 1.75 results.
 Hold merge for the required native stable/MSRV checks and independent specialist
 public-contract review. The same author cannot supply that independent review;
 no worker will be created to bypass Dylan's no-workers instruction.

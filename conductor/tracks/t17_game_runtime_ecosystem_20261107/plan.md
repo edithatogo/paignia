@@ -72,6 +72,18 @@ seed rename and source-level consumer slices without adding competing leaves.
   those required semantics are accepted and pinned. No dynamic adapter work.
 - Merge gates: required native checks on stable and Rust 1.75, plus independent
   specialist public-contract review. Do not close the parent from this slice.
+- Implemented and locally verified on 15 November 2026; merge/review pending.
+  The [candidate profile contract](../../../docs/architecture/game-runtime-contract-v1.md)
+  freezes the input identifier and inherited rules. The separate
+  `ProfileValidationError` keeps the original public error enum unchanged.
+  Tests-first commit `25d00f40fed5d2225db82945ff1f1f40e825bd2c` fails to compile
+  against the old core with E0432/E0599 (exit 101: missing API, not a passing or
+  zero-test run). After implementation, the focused target runs 15 passing tests.
+  Rust/cargo 1.99.1: workspace/all-targets 32 passed (6 core + 15 contract + 11
+  solve), extracted-source consumer 2 passed, formatting, warnings-denied Clippy,
+  extraction guard and warnings-denied rustdoc all passed. Dependencies were
+  resolved offline against the unchanged lock. See the ownership-map receipt for
+  source hashes and the exact PR handoff. These results do not close T17.01.
 
 ### [ ] T17.02 — reject Kairos in the static package dependency closure
 

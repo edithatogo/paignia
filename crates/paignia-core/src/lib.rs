@@ -52,6 +52,14 @@ pub struct Game {
 
 pub const GAME_SPEC_SCHEMA_VERSION: &str = "1.0.0";
 
+/// Exact input-profile identifier for the existing finite, acyclic,
+/// perfect-information graph with intentional sparse-zero terminal payoffs.
+///
+/// This is a Paignia input-validation profile, not a UOGTO vocabulary IRI,
+/// solver-result version, or numerical qualification receipt.
+pub const STATIC_GAME_PROFILE_V1: &str =
+    "paignia/static-finite-perfect-information-sparse-zero/1.0.0";
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct GameSpecification {
     pub schema_version: String,
@@ -128,7 +136,63 @@ impl ValidationError {
     }
 }
 
+/// Admission failure for an explicitly requested semantic input profile.
+///
+/// The separate wrapper preserves the existing [`ValidationError`] variants
+/// for callers of [`GameSpecification::validate`].
+#[derive(Clone, Debug, Eq, PartialEq, Error)]
+pub enum ProfileValidationError {
+    #[error("unsupported semantic profile {value}")]
+    UnsupportedSemanticProfile { value: String },
+    #[error("invalid game specification: {0}")]
+    InvalidSpecification(#[from] ValidationError),
+}
+
+impl ProfileValidationError {
+    /// Return the admission error code, preserving wrapped validation codes.
+    #[must_use]
+    pub fn code(&self) -> &'static str {
+        match self {
+            Self::UnsupportedSemanticProfile { .. } => "unsupported_semantic_profile",
+            Self::InvalidSpecification(error) => error.code(),
+        }
+    }
+
+    /// Return the profile field or the original specification/graph error path.
+    #[must_use]
+    pub fn path(&self) -> String {
+        match self {
+            Self::UnsupportedSemanticProfile { .. } => "semantic_profile".into(),
+            Self::InvalidSpecification(error) => error.path(),
+        }
+    }
+}
+
 impl GameSpecification {
+    /// Validate this specification under an explicitly requested input profile.
+    ///
+    /// Only [`STATIC_GAME_PROFILE_V1`] is admitted, using exact string equality
+    /// before the existing schema and graph checks. No identifier, probability,
+    /// or payoff is rewritten. Profile admission does not solve the game or
+    /// certify the interpretation of an external representation.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProfileValidationError::UnsupportedSemanticProfile`] for any
+    /// other profile, including unknown versions. For the supported profile,
+    /// wraps the original [`ValidationError`] from [`Self::validate`].
+    pub fn validate_for_profile(
+        &self,
+        semantic_profile: &str,
+    ) -> Result<(), ProfileValidationError> {
+        if semantic_profile != STATIC_GAME_PROFILE_V1 {
+            return Err(ProfileValidationError::UnsupportedSemanticProfile {
+                value: semantic_profile.into(),
+            });
+        }
+        self.validate().map_err(ProfileValidationError::from)
+    }
+
     /// Validate specification metadata and the embedded game graph.
     ///
     /// # Errors
