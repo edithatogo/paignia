@@ -38,22 +38,94 @@ def fixture(name, schema):
     return data
 
 
+def finite_number(value):
+    if not isinstance(value, (Q, D)) or (isinstance(value, D) and not value.is_finite()):
+        raise ValueError("reference requires a finite Fraction or Decimal")
+    return value
+
+
+def population_domain(population):
+    if len(population) != 2:
+        raise ValueError("reference requires exactly two components")
+    for value in population:
+        finite_number(value)
+        if value < 0 or value > 1:
+            raise ValueError("population leaves the simplex; no clipping allowed")
+    if abs(sum(population) - 1) > D("1e-65"):
+        raise ValueError("population mass is not one; no normalization allowed")
+
+
+def step_domain(population, time, step):
+    population_domain(population)
+    finite_number(time)
+    finite_number(step)
+    if step < 0:
+        raise ValueError("reference supports forward steps only")
+
+
+def replicator_rhs(time, population, fitness):
+    """Definition of the two-component replicator, not a production callback API."""
+    values = fitness(time, population)
+    if len(values) != 2:
+        raise ValueError("fitness dimension mismatch")
+    for value in (*population, *values):
+        finite_number(value)
+    mean = sum(x * f for x, f in zip(population, values))
+    return tuple(x * (f - mean) for x, f in zip(population, values))
+
+
 def rk4_step(population, time, step, fitness):
-    """Reference-only classical four-stage update, pending implementation."""
-    raise NotImplementedError("T17.04.oracle tests-first baseline")
+    """Classical RK4 on the full two-component state; no projection or clipping.
+
+    Exact stage witnesses and a closed-form ODE solution test this small reference.
+    This function cannot be called through any Paignia production entry point.
+    """
+    step_domain(population, time, step)
+
+    def stage(slope, amount):
+        return tuple(x + amount * dx for x, dx in zip(population, slope))
+
+    k1 = replicator_rhs(time, population, fitness)
+    k2 = replicator_rhs(time + step / 2, stage(k1, step / 2), fitness)
+    k3 = replicator_rhs(time + step / 2, stage(k2, step / 2), fitness)
+    k4 = replicator_rhs(time + step, stage(k3, step), fitness)
+    result = tuple(x + step * (a + 2 * b + 2 * c + d) / 6
+                   for x, a, b, c, d in zip(population, k1, k2, k3, k4))
+    population_domain(result)
+    return result
 
 
 def euler_step(population, time, step, fitness):
-    """Named mathematical Euler negative control, pending implementation."""
-    raise NotImplementedError("T17.04.oracle tests-first baseline")
+    """Named unclipped Euler negative control on the admitted small-step domain."""
+    step_domain(population, time, step)
+    result = tuple(x + step * dx for x, dx in
+                   zip(population, replicator_rhs(time, population, fitness)))
+    population_domain(result)
+    return result
 
 
 def trajectory(population, start, end, count, fitness, stepper=rk4_step):
-    raise NotImplementedError("T17.04.oracle tests-first baseline")
+    finite_number(start)
+    finite_number(end)
+    if type(count) is not int or count <= 0 or end < start:
+        raise ValueError("invalid reference time grid")
+    step = (end - start) / count
+    states = [population]
+    for index in range(count):
+        population = stepper(population, start + index * step, step, fitness)
+        states.append(population)
+    return states
 
 
 def logistic(initial, integrated_difference):
-    raise NotImplementedError("T17.04.oracle tests-first baseline")
+    """Separate closed form from d(log(x/(1-x)))/dt = f1-f2."""
+    finite_number(initial)
+    finite_number(integrated_difference)
+    if initial < 0 or initial > 1:
+        raise ValueError("initial proportion is outside [0,1]")
+    if initial in (0, 1):
+        return initial
+    return 1 / (1 + ((1 - initial) / initial) * (-integrated_difference).exp())
 
 
 class ReplicatorOracleTests(unittest.TestCase):
@@ -69,6 +141,10 @@ class ReplicatorOracleTests(unittest.TestCase):
         self.assertEqual({c["id"] for c in self.data["smooth_cases"]},
                          {"constant_positive", "time_varying", "constant_negative"})
         self.assertEqual(len(self.data["invalid_inputs"]), 9)
+        self.assertEqual(self.data["tolerances"]["analytic_literal_absolute"], "1e-70")
+        self.assertEqual(self.data["tolerances"]["mass_absolute"], "1e-65")
+        self.assertEqual(self.data["tolerances"]["refinement_ratio_min"], "14")
+        self.assertEqual(self.data["tolerances"]["refinement_ratio_max"], "18")
         with self.assertRaises(ValueError):
             json.loads('{"x":1,"x":2}', object_pairs_hook=unique_object)
         with self.assertRaises(ValueError):

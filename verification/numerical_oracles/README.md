@@ -32,8 +32,8 @@ remain authoritative; their shared status files are coordinator-owned.
 
 | Local fixture slice | One reference behavior | Changed files | Status |
 | --- | --- | --- | --- |
-| T17.04.oracle | Verify four-stage/logistic replicator references and distinguishing controls | README, harness, replicator fixture | [~] |
-| T17.05.oracle | Verify exact finite-game Nash witnesses and deviation residuals | README, harness, Nash fixture | [ ] |
+| T17.04.oracle | Verify four-stage/logistic replicator references and distinguishing controls | README, harness, replicator fixture | [x] local reference checks; specialist review pending |
+| T17.05.oracle | Verify exact finite-game Nash witnesses and deviation residuals | README, harness, Nash fixture | [~] |
 | T17.06.oracle | Verify CE incentive and objective certificates | README, harness, CE fixture | [ ] |
 
 Tests precede each reference implementation. Record actual distinguishing failures,
@@ -63,5 +63,70 @@ only Python's standard library, exact rational arithmetic where possible, and
 explicit high-precision decimal arithmetic for analytic exponentials; no network,
 package installation, optimizer dependency or native build is required.
 
-Mathematical provenance, tolerances, fixture hashes, executed receipts and the
-precise coordinator integration request follow with each implemented slice.
+## Run the reference checks
+
+From the repository root, using Python 3.12 or later:
+
+```bash
+python3 -B verification/numerical_oracles/test_oracles.py
+python3 -B verification/numerical_oracles/test_oracles.py ReplicatorOracleTests
+```
+
+These are development/reference commands. The existing root CI does not run this
+new harness; adding an explicit invocation is a coordinator integration request.
+The repository's native stable/MSRV checks remain separate required merge gates.
+
+## T17.04.oracle: replicator references
+
+For two proportions `(x, 1-x)` and fitness difference `s(t)`, the replicator
+equation reduces to `x' = s(t) x (1-x)`. Separation gives
+`log(x/(1-x)) - log(x0/(1-x0)) = integral(s(t), t0, t)`, hence the closed form
+recorded in the JSON. This independent solution, not a second integration
+implementation, supplies the trajectory targets. The boundary states 0 and 1
+and equal-fitness states are stationary. Negative fitness is allowed.
+
+The [classical four-stage tableau](https://www.math.auckland.ac.nz/~butcher/CONFERENCES/seminar-21-10-04.pdf#page=22)
+is independently expanded at `x0=1/4`, `h=1/2`, `s=1` into exact rational stage
+states and slopes. The result is
+`408885515741609973/1152921504606846976`; the named Euler control gives `11/32`.
+The harness advances both components and checks their sum, with no projection,
+clipping, or renormalization. An oversized step that leaves the simplex fails
+explicitly in the reference checker; positivity is only asserted on the stated
+small-step grids, never unconditionally for RK4.
+
+Smooth references cover constant positive, constant negative and affine
+time-varying fitness. At 80-digit decimal precision, successive error ratios
+must lie strictly between 14 and 18 (the fourth-order asymptote is 16), and the
+finest absolute error must be below `1e-9`. The analytic literals have a separate
+`1e-70` check and population mass a `1e-65` check. Exact rational witnesses use
+zero tolerance. These limits describe the fixture harness, not a future binary64
+production acceptance policy.
+
+The initial affine-fitness grid of 64 steps missed the unchanged `1e-9` error
+budget: observed error `1.0539302169784621e-9`. The reference grid was refined to
+32/64/128 steps, retaining both the error budget and order interval. Its final
+error is approximately `6.5723e-11`; the last error ratio is approximately 16.036.
+Constant positive/negative finest errors are approximately `2.5503e-10` and
+`3.1339e-10`. This was a reference-fixture refinement, not a production result.
+
+The event fixture switches the fitness difference from +1 to -1 halfway through
+a unit interval, so the integrated difference is exactly zero and the final
+proportion is exactly the initial 1/4. Split smooth segments use one-sided
+endpoint stages and meet the error budget. An unsplit right-continuous callback
+misses it. Additional controls detect Euler relabelled as RK4, frozen stage
+times, invalid populations/time/steps and invalid fitness callbacks.
+
+Upstream characterization is pinned to
+[Kairos `cad43b5`, `normal_form.rs`](https://github.com/edithatogo/kairos/blob/cad43b592893579ccbea40343548fda7acd83fd0/crates/kairo-ecs-game-theory/src/normal_form.rs):
+`ReplicatorDynamics::step_continuous_rk4` is the inherited clipped/normalized
+Euler expression, and `run_trajectory` calls it with a fixed fitness vector.
+The tiny admitted single-step fixture needs no clipping, so its named Euler
+value is analytically comparable. This lane does not execute, repair or retire
+that API and does not complete the feature-aware upstream caller inventory.
+
+Tests-first commit `c052ec32708b0022b133d482826488bd1f039f7f` has the frozen
+fixture and 14 executed tests: exit 1, with 27 errors (including subtests) from
+explicitly unimplemented reference helpers. After implementation and grid
+refinement, all 14 tests pass on CPython 3.12.14. The final PR receipt pins the
+implementation SHA and fixture hashes. This local completion marker does not
+close T17.04/S01 or satisfy its independent specialist review.
