@@ -92,6 +92,13 @@ Retain the selected run's bundle with the application evidence before that
 window expires. Record the run and exact commit; a moving branch URL alone is
 not an immutable input.
 
+For the currently selected handoff, start from the
+[qualified bundle index](receipts/t17-bd880dd-handoff.json). Use its canonical
+`package_receipt` and durable `provider_revision` with `game-consumers.json`.
+The downloaded workflow receipt retains GitHub's executed PR merge revision;
+preserve it unchanged as hosted provenance. The index records the separately
+executed canonical receipt and verified provider-tree/archive-byte equivalence.
+
 **Choose one complete qualification bundle for both applications.** Compiler
 profiles may package different bytes even at the same provider commit. Do not
 mix archives from one bundle with another bundle's receipt or regenerate each
