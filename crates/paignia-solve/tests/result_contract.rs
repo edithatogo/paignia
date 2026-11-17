@@ -87,7 +87,10 @@ fn generated_record_is_admitted_and_preserves_the_native_result() {
     );
     assert_eq!(result.diagnostic_trace, expected.trace);
     assert_eq!(result.solver_diagnostics, expected.diagnostics);
-    assert!(result.envelope.diagnostics.is_empty());
+    assert_eq!(
+        result.envelope.diagnostics,
+        Vec::<paignia_core::DeclaredDiagnostic>::new()
+    );
     assert!(result.envelope.identities.session_id.is_none());
     result
         .envelope
