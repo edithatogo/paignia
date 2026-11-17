@@ -1,7 +1,19 @@
 //! Backward induction for finite, acyclic, perfect-information games.
 
+mod mixed_nash;
 mod replicator;
 mod result;
+
+pub use mixed_nash::{
+    evaluate_candidate as evaluate_mixed_nash_candidate, solve as solve_mixed_nash,
+    Algorithm as MixedNashAlgorithm, Candidate as MixedNashCandidate,
+    CatalogueCompleteness as MixedNashCatalogueCompleteness, Config as MixedNashConfig,
+    Diagnostics as MixedNashDiagnostics, Error as MixedNashError, GameClass as MixedNashGameClass,
+    Player as MixedNashPlayer, ResultRecord as MixedNashResult, Scope as MixedNashScope,
+    SearchCompleteness as MixedNashSearchCompleteness, Selection as MixedNashSelection,
+    SolutionConcept as MixedNashSolutionConcept, Status as MixedNashStatus,
+    MAX_ACTIONS as MAX_MIXED_NASH_ACTIONS, SUPPORT_ENUMERATION_VERSION,
+};
 
 pub use replicator::{
     euler_step as replicator_euler_step, rk4_step as replicator_rk4_step,
@@ -9,6 +21,7 @@ pub use replicator::{
     Step as ReplicatorStep, StepError as ReplicatorError,
     EULER_VERSION as REPLICATOR_EULER_VERSION, RK4_VERSION as REPLICATOR_RK4_VERSION,
 };
+
 pub use result::{
     solve_specification as backward_induction_result, ComputedPolicy as BackwardInductionResult,
     EmissionError as ResultSolveError,
