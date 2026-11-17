@@ -4,16 +4,12 @@
   "type": "refactor",
   "status": "in_progress",
   "created_at": "2026-11-07T00:00:00Z",
-  "updated_at": "2026-11-08T00:00:00Z",
+  "updated_at": "2026-11-17T09:33:51Z",
   "description": "Paignia native provider, scientific completion and explicit external consumer handoffs",
   "bootstrap_revision": "0e28f1bf33ed8c7be5fa1d63b8cc40517b61d22c",
   "incubator_main_revision": "f6c1c87b6b00875b33c1e19401c1de09481913ce",
   "incubator_prepared_revision": "9ee388502bfe5f71d22b363dbb9c74f032a07ad4",
   "incubator_naming_pr_head": "c7b2539b60ecb6457c75164c2a759730f5c1ec7c",
-  "source_files_sha256": {
-    "crates/paignia-core/src/lib.rs": "497c00c00d150c1c2b676fcf3b157c2dc726775fb7c1e87b719321591a0c3b74",
-    "crates/paignia-solve/src/lib.rs": "cf78787234cd8cb88643450a626423a5aa26d1ec377e18aeae7767ff9a54ad60"
-  },
   "leaf_count": 17,
   "provider_leaf_count": 14,
   "provider_owned_leaves": [
@@ -67,10 +63,10 @@
     ]
   },
   "scientific_obligations": {
-    "S01": "T17.04: RK4/replicator pending",
-    "S02": "T17.05: mixed Nash pending",
-    "S03": "T17.06: correlated equilibrium pending",
-    "S04": "T17.07: CFR/CFR+ pending"
+    "S01": "Native classical RK4 and separately named Euler accepted; Kairos caller/retirement receipt remains open.",
+    "S02": "Bounded mixed Nash implementation under independent review; cancellation defects require accepted fixes.",
+    "S03": "Optional Clarabel 0.11.1 backend qualified; public correlated-equilibrium method and independent numerical review in progress.",
+    "S04": "CFR/CFR+ pending executable information-set profile and T17.17."
   },
   "max_files_per_leaf": 5,
   "review_policy": "Focused checks and coherent specialist review; no repeated human approval loop",
@@ -86,7 +82,15 @@
     "source_tree": "f438caa902e07a7ec5b7be3020c94d5b7e4868e8",
     "pull_request": "https://github.com/edithatogo/paignia/pull/2"
   },
-  "verification": {
+  "semantic_conversion_scope": {
+    "T17.13_static": "Depends on T17.01; versioned neutral records and semantic mapping in core, no Kairos imports",
+    "T17.13_native": "Native generational-handle/lifetime/causal binding is owned by T17.08, which requires the qualified static T17.13 converter when used; no reciprocal dependency or native acceptance from static DTO tests"
+  },
+  "seed_source_files_sha256": {
+    "crates/paignia-core/src/lib.rs": "497c00c00d150c1c2b676fcf3b157c2dc726775fb7c1e87b719321591a0c3b74",
+    "crates/paignia-solve/src/lib.rs": "cf78787234cd8cb88643450a626423a5aa26d1ec377e18aeae7767ff9a54ad60"
+  },
+  "historical_seed_verification": {
     "status": "local_rust_1_75_and_hosted_stable_msrv_native_checks_passed",
     "source_parity": "Both Rust library source files byte-identical to prepared incubator seed",
     "native_profiles": [
@@ -145,8 +149,50 @@
     },
     "independent_followup_review": "Reviewed five-file status/scope follow-up; exact merged-source hosted jobs independently confirmed. Clarified conditional .08 dependency on static .13 to avoid an adapter/converter cycle; all task statuses and provider/external ownership preserved."
   },
-  "semantic_conversion_scope": {
-    "T17.13_static": "Depends on T17.01; versioned neutral records and semantic mapping in core, no Kairos imports",
-    "T17.13_native": "Native generational-handle/lifetime/causal binding is owned by T17.08, which requires the qualified static T17.13 converter when used; no reciprocal dependency or native acceptance from static DTO tests"
-  }
+  "verification": {
+    "status": "bounded_native_contract_and_local_artifact_qualification_accepted",
+    "provider_revision": "60cbebf4a540a65f259747f5216beaf41820d8a1",
+    "native_ci_run": 44053358824,
+    "native_profiles": [
+      "1.75.0",
+      "stable (1.100.0 at execution)"
+    ],
+    "workspace_native_tests_per_profile": 132,
+    "identity_doctests_per_profile": 3,
+    "python_guard_tests_per_profile": 52,
+    "artifact_profiles_per_compiler": 6,
+    "artifact_native_executions_per_compiler": 21,
+    "artifact_distinct_native_cases": 7,
+    "independent_result_controls": 9,
+    "independent_replicator_controls": 10,
+    "receipt": "docs/validation/t17-review-20261117.md",
+    "offline_security": "queued for central self-hosted runner; unexecuted, not passed",
+    "limits": "No registry publication or two real application receipts; subsequent capability increments require their own integrated acceptance."
+  },
+  "leaf_states": {
+    "T17.01": "completed for the selected native static profile",
+    "T17.02": "completed for qualified package capabilities",
+    "T17.03": "completed for qualified local library artifacts",
+    "T17.04": "native method accepted; external source retirement pending",
+    "T17.05": "in_progress",
+    "T17.06": "in_progress",
+    "T17.07": "blocked_on_T17.17",
+    "T17.08": "blocked_on_accepted_Kairos_native_port",
+    "T17.09": "external_application_receipt_pending",
+    "T17.10": "external_second_application_receipt_pending",
+    "T17.11": "external_valued_payoff_port_pending",
+    "T17.12": "guard_complete; real_consumer_receipts_missing",
+    "T17.13": "in_progress",
+    "T17.14": "in_progress",
+    "T17.15": "blocked_on_T17.08",
+    "T17.16": "blocked_on_T17.08_and_T17.15",
+    "T17.17": "blocked_on_UOGTO_executable_information_set_profile"
+  },
+  "archive_eligible": false,
+  "archive_blockers": [
+    "Remaining provider numerical/contract acceptance",
+    "Accepted UOGTO information-set and Kairos execution contracts",
+    "Two real applications with matching immutable artifact/profile receipts",
+    "External reimbursement valued-payoff and inherited source-retirement obligations"
+  ]
 }
