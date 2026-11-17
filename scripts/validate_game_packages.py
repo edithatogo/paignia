@@ -157,14 +157,17 @@ This is an acceptance guard, not an untrusted-code execution security boundary.
         raise ValueError("artifact consumer must be outside the provider checkout")
     (staging / "build-tmp").mkdir(exist_ok=True)
     wrapped = [bubblewrap, "--die-with-parent", "--ro-bind", "/", "/",
-               "--bind", str(staging), str(staging), "--tmpfs", str(provider),
+               "--bind", str(staging), str(staging),
                "--proc", "/proc", "--dev", "/dev"]
     cargo_home = Path(os.environ.get("CARGO_HOME", str(Path.home() / ".cargo"))).resolve()
     if cargo_home.exists():
         if cargo_home.is_relative_to(provider):
             raise ValueError("Cargo cache must be outside the masked provider checkout")
         wrapped.extend(["--bind", str(cargo_home), str(cargo_home)])
-    wrapped.extend(["--setenv", "CARGO_TARGET_DIR", str(staging / "target"),
+    # A cache can be an ancestor of the provider. Apply the mask after every
+    # writable bind so rebinding that ancestor cannot restore source access.
+    wrapped.extend(["--tmpfs", str(provider),
+                    "--setenv", "CARGO_TARGET_DIR", str(staging / "target"),
                     "--setenv", "CARGO_NET_OFFLINE", "true",
                     "--setenv", "TMPDIR", str(staging / "build-tmp"), *command])
     return wrapped
@@ -178,19 +181,26 @@ def unpack_artifact(archive_path: Path, staging: Path, name: str, version: str) 
     total = 0
     with tarfile.open(archive_path, "r:gz") as archive:
         for member in archive:
-            path = PurePosixPath(member.name)
-            if (path.is_absolute() or ".." in path.parts or not path.parts
-                    or path.parts[0] != expected_root or "\\" in member.name):
+            # Tar directories may have one trailing slash; otherwise require
+            # canonical spelling before PurePosixPath can collapse aliases.
+            spelling = member.name[:-1] if member.isdir() and member.name.endswith("/") else member.name
+            path = PurePosixPath(spelling)
+            if (path.is_absolute() or any(part in {"", ".", ".."} for part in spelling.split("/"))
+                    or not path.parts or path.parts[0] != expected_root
+                    or "\\" in member.name or "\x00" in member.name):
                 raise ValueError(f"invalid artifact path: {member.name}")
-            if member.name in seen:
+            canonical = path.as_posix()
+            if canonical in seen:
                 raise ValueError(f"duplicate artifact member: {member.name}")
-            seen.add(member.name)
+            seen.add(canonical)
+            if len(seen) > 10_000:
+                raise ValueError("artifact exceeds the bounded package size")
             if member.isdir():
                 continue
             if not member.isfile():
                 raise ValueError(f"artifact member is not a regular file: {member.name}")
             total += member.size
-            if total > 64 * 1024 * 1024 or len(seen) > 10_000:
+            if member.size < 0 or total > 64 * 1024 * 1024:
                 raise ValueError("artifact exceeds the bounded package size")
             output = staging.joinpath(*path.parts)
             output.parent.mkdir(parents=True, exist_ok=True)

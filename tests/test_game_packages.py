@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import importlib.util
 import io
+import os
 from pathlib import Path
 import shutil
 import subprocess
 import tarfile
 import tempfile
 import unittest
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -53,6 +55,38 @@ class ArtifactControls(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "duplicate"):
             packages.unpack_artifact(path, self.root / "unpacked", "example", "1.0.0")
 
+    def test_noncanonical_aliases_cannot_overwrite_an_extracted_file(self) -> None:
+        entries = [
+            ("example-1.0.0/Cargo.toml", b'[package]\nname="example"\nversion="1.0.0"\n', tarfile.REGTYPE),
+            ("example-1.0.0/LICENSE", b"license", tarfile.REGTYPE),
+            ("example-1.0.0/NOTICE", b"notice", tarfile.REGTYPE),
+            ("example-1.0.0/src/lib.rs", b"original", tarfile.REGTYPE),
+        ]
+        for index, alias in enumerate([
+            "example-1.0.0/src/./lib.rs",
+            "example-1.0.0//src/lib.rs",
+            "./example-1.0.0/src/lib.rs",
+        ]):
+            with self.subTest(alias=alias):
+                path = self.archive([*entries, (alias, b"overwritten", tarfile.REGTYPE)])
+                destination = self.root / f"unpacked-{index}"
+                with self.assertRaisesRegex(ValueError, "path|duplicate"):
+                    packages.unpack_artifact(path, destination, "example", "1.0.0")
+                self.assertEqual(
+                    (destination / "example-1.0.0/src/lib.rs").read_bytes(), b"original"
+                )
+
+    def test_directory_entries_cannot_bypass_the_member_limit(self) -> None:
+        path = self.archive([
+            ("example-1.0.0/Cargo.toml", b'[package]\nname="example"\nversion="1.0.0"\n', tarfile.REGTYPE),
+            ("example-1.0.0/LICENSE", b"license", tarfile.REGTYPE),
+            ("example-1.0.0/NOTICE", b"notice", tarfile.REGTYPE),
+            ("example-1.0.0/src/lib.rs", b"original", tarfile.REGTYPE),
+            *[(f"example-1.0.0/empty-{index}", b"", tarfile.DIRTYPE) for index in range(10_001)],
+        ])
+        with self.assertRaisesRegex(ValueError, "size"):
+            packages.unpack_artifact(path, self.root / "unpacked", "example", "1.0.0")
+
     def test_missing_notice_rejects_artifact(self) -> None:
         path = self.archive([("example-1.0.0/Cargo.toml", b'[package]\nname="example"\nversion="1.0.0"', tarfile.REGTYPE), ("example-1.0.0/src/lib.rs", b"", tarfile.REGTYPE), ("example-1.0.0/LICENSE", b"license", tarfile.REGTYPE)])
         with self.assertRaisesRegex(ValueError, "NOTICE"):
@@ -78,6 +112,13 @@ class ArtifactControls(unittest.TestCase):
         self.assertIn('rust-version = "1.75"', text)
 
     def test_provider_file_is_unavailable_to_native_compiler(self) -> None:
+        self.check_native_source_isolation()
+
+    def test_ancestor_cargo_cache_cannot_reexpose_provider_source(self) -> None:
+        with patch.dict(os.environ, {"CARGO_HOME": str(self.root)}):
+            self.check_native_source_isolation()
+
+    def check_native_source_isolation(self) -> None:
         rustc = shutil.which("rustc")
         if rustc is None or shutil.which("bwrap") is None:
             self.fail("rustc and bubblewrap are required for the source-isolation control")
