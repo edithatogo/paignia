@@ -752,3 +752,42 @@ fn one_action_against_many_selects_verified_pure_best_responses() {
         [-7.0, 3.0]
     );
 }
+
+#[test]
+fn exact_dyadic_profitable_deviation_survives_cancellation_and_column_permutations() {
+    // Independent review counterexample: 2^52 + 1/2 - 2^52 = 1/2.
+    // Left-to-right binary64 addition loses the middle term and admits a false
+    // witness at the unchanged 1e-10 equilibrium tolerance.
+    let h = 2.0_f64.powi(54);
+    let original_a = [h, 1.0, -h];
+    let original_q = [0.25, 0.5, 0.25];
+    let b = vec![vec![0.0; 3]; 2];
+    for order in [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]] {
+        let a = vec![order.map(|i| original_a[i]).to_vec(), vec![0.0; 3]];
+        let q = order.map(|i| original_q[i]);
+        let candidate = evaluate_mixed_nash_candidate(&a, &b, &[0.0, 1.0], &q, Config::default()).unwrap();
+        assert_eq!(candidate.diagnostics.best_response_gains, [0.5, 0.0], "order={order:?}");
+        assert!(!candidate.diagnostics.within_tolerance);
+    }
+}
+
+#[test]
+fn exact_dyadic_payoff_and_negative_deviation_survive_cancellation() {
+    let h = 2.0_f64.powi(54);
+    let a = vec![vec![h, 1.0, -h], vec![0.0; 3]];
+    let b = vec![vec![h, -1.0, -h], vec![0.0; 3]];
+    let candidate = evaluate_mixed_nash_candidate(&a, &b, &[1.0, 0.0], &[0.25, 0.5, 0.25], Config::default()).unwrap();
+    assert_eq!(candidate.diagnostics.expected_payoffs, [0.5, -0.5]);
+    assert_eq!(candidate.diagnostics.best_response_gains[0], 0.0);
+}
+
+#[test]
+fn probability_mass_error_survives_rounding_of_the_total_to_one() {
+    let tiny = 2.0_f64.powi(-56);
+    let z = vec![vec![0.0]; 3];
+    let p = [0.5, 0.5, tiny];
+    let candidate = evaluate_mixed_nash_candidate(&z, &z, &p, &[1.0], Config::default()).unwrap();
+    assert_eq!(candidate.diagnostics.probability_mass_errors[0], tiny);
+    let config = Config { probability_tolerance: 0.0, ..Config::default() };
+    assert!(matches!(evaluate_mixed_nash_candidate(&z, &z, &p, &[1.0], config), Err(Error::InvalidProbabilityMass { .. })));
+}
