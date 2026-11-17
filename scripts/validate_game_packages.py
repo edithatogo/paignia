@@ -159,6 +159,37 @@ fn rejects_missing_root() {
     let game = Game { root: NodeId("absent".into()), nodes: BTreeMap::new() };
     assert!(game.validate().is_err());
 }
+
+#[test]
+fn explicit_static_identity_mapping_round_trips_from_the_artifact() {
+    use paignia_core::{convert_static_game, restore_static_game, GameInstanceId,
+        GameSpecification, ResultInformationStructure, ResultSelectionRule, StaticChanceRule,
+        StaticGameRecord, StaticIdentityBinding, StaticIdentityMap, StaticIdentityRole,
+        StaticPayoffRule, STATIC_GAME_PROFILE_V1};
+    let source = StaticGameRecord {
+        schema_version: "1.0.0".into(), semantic_profile: STATIC_GAME_PROFILE_V1.into(),
+        information_structure: ResultInformationStructure::PerfectInformation,
+        chance_rule: StaticChanceRule::AllowZeroAndValidateEveryBranch,
+        payoff_rule: StaticPayoffRule::IntentionalSparseZero,
+        selection_rule: ResultSelectionRule::InputOrderPairwiseToleranceThenLexicographic,
+        selection_tolerance: 0.0,
+        specification: GameSpecification { schema_version: "1.0.0".into(), id: "urn:spec".into(),
+            game: Game { root: NodeId("terminal".into()), nodes: BTreeMap::from([
+                (NodeId("terminal".into()), Node::Terminal { payoffs: BTreeMap::new() }),
+            ]) },
+        },
+        instance_id: GameInstanceId("urn:instance".into()), session_id: None,
+        policy_artifact_id: None, solver_run_id: None, solver_trace_id: None,
+    };
+    let mapping = StaticIdentityMap { schema_version: "1.0.0".into(), bindings: vec![
+        StaticIdentityBinding { role: StaticIdentityRole::Specification, source: "urn:spec".into(), target: "urn:converted:spec".into() },
+        StaticIdentityBinding { role: StaticIdentityRole::Instance, source: "urn:instance".into(), target: "urn:converted:instance".into() },
+        StaticIdentityBinding { role: StaticIdentityRole::Node, source: "terminal".into(), target: "converted-terminal".into() },
+    ] };
+    let converted = convert_static_game(&source, &mapping, STATIC_GAME_PROFILE_V1).unwrap();
+    assert_eq!(converted.record.specification.game.root.0, "converted-terminal");
+    assert_eq!(restore_static_game(&converted).unwrap(), source);
+}
 '''
 
 
@@ -385,7 +416,7 @@ def artifact_qualification(cargo: str) -> dict:
                             raise ValueError("consumer did not resolve the exact unpacked artifact")
                 output = isolated([cargo, "test", "--offline", "--locked", "--manifest-path", manifest,
                                    "--test", "artifact_consumer"])
-                count = 2 if name == "paignia-core" else 5
+                count = 3 if name == "paignia-core" else 5
                 require_native_tests(output, count)
                 receipt["profiles"].append({
                     "package": name, "profile": label, "default_features": defaults, "features": enabled,
