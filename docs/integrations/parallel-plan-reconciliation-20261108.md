@@ -673,3 +673,23 @@ actual consumer receipts remain open. The PR23 numerical/inspection chain
 still needs its own integration with the accepted static tree; its original
 qualification is not assigned to a new combined tree automatically. No source
 owner is displaced, no worker created and no adapter/consumer/publication enabled.
+## Alert 44 dependency compatibility — 16 November 2026
+
+The user requested the bounded Paignia compatibility integration needed by
+Innovate's code-scanning alert 44. Chat
+`01a1e448-3a28-7653-a681-cd3fdb41f498` owns this intake in
+`/Volumes/PortableSSD/GitHub/paignia-innovate-compat-44`, based on
+`5103675004d80afc845bbdd067e2fea4e75f6425`. Its source scope is the two
+Paignia crate manifests, `Cargo.lock`, and
+`crates/paignia-solve/tests/error_contract.rs`; this entry records the handoff.
+There is no native tenant-object scope. The existing coordinator and all other
+assignments above retain their separate scopes.
+
+Candidate `8e1e7485f2cd36182c6262c4d1c6e56b72a1b318` preserves the declared
+Rust 1.75 minimum while allowing the Innovate/Kairos consumer to resolve
+separate `thiserror` major versions. Local stable/MSRV provider tests, Clippy,
+doctests and extracted-source checks passed; three Innovate static-provider
+tests passed against the exact local Git commit. This is not hosted acceptance
+or closure of the separate `paste` advisory. The next operation is a scoped PR
+and exact-head hosted validation, followed by receiving-main verification if
+all required checks pass. PR #20 and the other owners remain untouched.

@@ -1,0 +1,120 @@
+{
+  "schema": "paignia.test-oracle.correlated-equilibrium/1",
+  "task": "T17.06 / S03",
+  "qualification": "synthetic_reference_only",
+  "provenance": {
+    "author": "Paignia numerical-oracle lane, 2026-11-15",
+    "license": "Apache-2.0",
+    "derivation": "Original rational examples and explicit primal/dual certificates; no optimizer output or implementation copied.",
+    "definition_reference": "https://people.duke.edu/~rnau/Nau_et_al_2004_Geometry_of_Nash_and_Correlated_Equilibria.pdf#page=4",
+    "upstream_obligation": "https://github.com/edithatogo/kairos/blob/cad43b592893579ccbea40343548fda7acd83fd0/conductor/scientific-completion.md",
+    "optimizer_executed": false
+  },
+  "assumptions": {
+    "coordinates": "Two players, complete rational matrices A and B. Joint z is flattened row-major. No probability normalization or payoff imputation.",
+    "incentives": "Cz>=0: for each recommended row i and alternative k, sum_j z_ij*(A_ij-A_kj)>=0; analogously for each recommended column j and alternative l. Row constraints first in increasing (i,k), then column constraints in increasing (j,l); self deviations omitted.",
+    "residuals": "weighted_max_gain=max(0,max(-Cz)); conditional gains divide each negative incentive slack by its positive recommendation mass. Zero-mass recommendations have no conditional ratio and are recorded as null.",
+    "objective": "Maximize the explicitly supplied linear c^T z. These examples choose A+B; this synthetic choice is not a production objective default or a consumer valuation policy.",
+    "optimality_proof": "With lambda>=0 and d=upper_bound*1-c-C^T*lambda>=0, any feasible z satisfies c^T z<=upper_bound. Feasible witness equality proves optimality without running an LP solver.",
+    "tolerance": "0, exact rational arithmetic. No production status or tolerance semantics are defined."
+  },
+  "optimal_cases": [
+    {
+      "id": "correlation_welfare_gap",
+      "A": [["0", "7"], ["2", "6"]],
+      "B": [["0", "2"], ["7", "6"]],
+      "objective": [["0", "9"], ["9", "12"]],
+      "joint": [["0", "1/4"], ["1/4", "1/2"]],
+      "expected_incentives": ["1/4", "0", "1/4", "0"],
+      "upper_bound": "21/2",
+      "dual_multipliers": ["0", "3/4", "0", "3/4"],
+      "expected_dual_slacks": ["21/2", "0", "0", "0"],
+      "proof": "Incentives are -2*z00+z01, 2*z10-z11, -2*z00+z10, 2*z01-z11. Adding 3/4 of constraints 1 and 3 to the objective gives (21/2)*(z01+z10+z11)<=21/2. The stated joint attains 21/2. Pure Nash off-diagonals have welfare 9; the interior Nash product has welfare 28/3."
+    },
+    {
+      "id": "dominance_zero_recommendations",
+      "A": [["2", "2"], ["1", "1"]],
+      "B": [["2", "1"], ["2", "1"]],
+      "objective": [["4", "3"], ["3", "2"]],
+      "joint": [["1", "0"], ["0", "0"]],
+      "expected_incentives": ["1", "0", "1", "0"],
+      "upper_bound": "4",
+      "dual_multipliers": ["0", "0", "0", "0"],
+      "expected_dual_slacks": ["0", "1", "1", "2"],
+      "proof": "Pure dominant-action profile is obedient and attains the largest cell objective, 4. Unused recommendations have mass zero and impose zero weighted constraints, not division by zero."
+    },
+    {
+      "id": "rectangular_2x3",
+      "A": [["1", "-1", "0"], ["-1", "1", "0"]],
+      "B": [["-1", "1", "-2"], ["1", "-1", "-2"]],
+      "objective": [["0", "0", "-2"], ["0", "0", "-2"]],
+      "joint": [["1/4", "1/4", "0"], ["1/4", "1/4", "0"]],
+      "expected_incentives": ["0", "0", "0", "1", "0", "1", "0", "0"],
+      "upper_bound": "0",
+      "dual_multipliers": ["0", "0", "0", "0", "0", "0", "0", "0"],
+      "expected_dual_slacks": ["0", "0", "2", "0", "0", "2"],
+      "proof": "The matching-pennies product on the first two columns is obedient; the dominated third column is never recommended. Every cell objective is at most zero."
+    },
+    {
+      "id": "negative_single_action",
+      "A": [["-3"]],
+      "B": [["-4"]],
+      "objective": [["-7"]],
+      "joint": [["1"]],
+      "expected_incentives": [],
+      "upper_bound": "-7",
+      "dual_multipliers": [],
+      "expected_dual_slacks": ["0"],
+      "proof": "One possible outcome and no deviation constraints; objective -7 is retained, never replaced by zero."
+    }
+  ],
+  "controls": [
+    {
+      "id": "feasible_nash_product_is_suboptimal",
+      "game": "correlation_welfare_gap",
+      "joint": [["1/9", "2/9"], ["2/9", "4/9"]],
+      "expected_incentives": ["0", "0", "0", "0"],
+      "objective": "28/3",
+      "weighted_max_gain": "0",
+      "conditional_max_gain": "0"
+    },
+    {
+      "id": "product_of_ce_marginals_breaks_obedience",
+      "game": "correlation_welfare_gap",
+      "joint": [["1/16", "3/16"], ["3/16", "9/16"]],
+      "expected_incentives": ["1/16", "-3/16", "1/16", "-3/16"],
+      "objective": "81/8",
+      "weighted_max_gain": "3/16",
+      "conditional_max_gain": "1/4"
+    },
+    {
+      "id": "higher_objective_infeasible_point",
+      "game": "correlation_welfare_gap",
+      "joint": [["0", "0"], ["0", "1"]],
+      "expected_incentives": ["0", "-1", "0", "-1"],
+      "objective": "12",
+      "weighted_max_gain": "1",
+      "conditional_max_gain": "1"
+    },
+    {
+      "id": "asymmetric_column_deviation",
+      "A": [["3", "0"], ["1", "2"]],
+      "B": [["1", "2"], ["3", "0"]],
+      "objective_matrix": [["4", "2"], ["4", "2"]],
+      "joint": [["1/2", "0"], ["0", "1/2"]],
+      "expected_incentives": ["1", "1", "-1/2", "-3/2"],
+      "objective": "3",
+      "weighted_max_gain": "3/2",
+      "conditional_max_gain": "3"
+    }
+  ],
+  "invalid_joints": [
+    {"id": "negative", "joint": [["-1", "0"], ["0", "2"]]},
+    {"id": "double_mass", "joint": [["1", "0"], ["0", "1"]]},
+    {"id": "zero_mass", "joint": [["0", "0"], ["0", "0"]]},
+    {"id": "dimension", "joint": [["1"]]},
+    {"id": "ragged", "joint": [["1", "0"], ["0"]]},
+    {"id": "nan", "joint": [["NaN", "0"], ["0", "1"]]},
+    {"id": "infinity", "joint": [["1", "0"], ["0", "Infinity"]]}
+  ]
+}
