@@ -290,6 +290,19 @@ Both public increments require independent review before acceptance.
 
 ### [~] T17.03 — consume the packaged crates outside this workspace
 
+- Current-Cargo compatibility correction (17 November): native CI at published
+  `b9bcb435746c72608c36870152972252b7dc0dca` passed Rust 1.75 but stable Cargo
+  1.100 could not create the solver archive: its generated library archive lock
+  tried to resolve unpublished `paignia-core` through crates.io. Packaging both
+  workspace libraries together reproduced the same failure. The focused new
+  unpublished-sibling control first fails at the missing packaging helper.
+  Use Cargo's supported `--exclude-lockfile` only when available; Cargo 1.75
+  already omits library locks. Record this policy and each actual archive's
+  contents. Provider and isolated-consumer lock hashes/dependency identity checks
+  remain required; this qualifies library consumption, not `cargo install
+  --locked` or registry publication. See the official
+  [Cargo package reference](https://doc.rust-lang.org/cargo/commands/cargo-package.html).
+
 - Behavior: build a standalone consumer from local package artifacts without
   importing application code or relying on the provider source tree.
 - Depends on: T17.02.

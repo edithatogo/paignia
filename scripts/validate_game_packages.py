@@ -256,6 +256,23 @@ def unpack_artifact(archive_path: Path, staging: Path, name: str, version: str) 
     return destination
 
 
+def build_library_archives(cargo: str, provider: Path, assembly: Path, names: list[str]) -> str:
+    """Package unpublished libraries without claiming a registry install lock.
+
+    Current Cargo generates an archive lock even for libraries and tries to
+    resolve unpublished sibling packages through the registry. Cargo 1.75
+    omits that library lock. Where supported, explicitly retain that omission;
+    the qualification separately records the provider lock and checks each
+    offline consumer's resolved lock against it. Nothing is published.
+    """
+    help_text = run([cargo, "package", "--help"], provider, echo=False)
+    lock_flags = ["--exclude-lockfile"] if "--exclude-lockfile" in help_text else []
+    for name in names:
+        run([cargo, "package", "--offline", "--locked", "--no-verify", "--allow-dirty",
+             *lock_flags, "-p", name, "--target-dir", str(assembly)], provider)
+    return "explicit-library-lock-omission" if lock_flags else "cargo-library-default"
+
+
 def artifact_qualification(cargo: str) -> dict:
     """Build actual packages and execute each advertised feature profile."""
     package_changes = run(
@@ -290,11 +307,12 @@ def artifact_qualification(cargo: str) -> dict:
     }
     with tempfile.TemporaryDirectory(prefix="paignia-artifacts-") as temporary:
         staging = Path(temporary).resolve()
+        receipt["archive_lockfile_policy"] = build_library_archives(
+            cargo, ROOT, staging / "assembly", list(PACKAGES)
+        )
         extracted: dict[str, Path] = {}
         for name in PACKAGES:
             package = selected[name]
-            run([cargo, "package", "--offline", "--locked", "--no-verify", "--allow-dirty",
-                 "-p", name, "--target-dir", str(staging / "assembly")], ROOT)
             archive = staging / "assembly/package" / f'{name}-{package["version"]}.crate'
             extracted[name] = unpack_artifact(archive, staging / "unpacked", name, package["version"])
             hashes: dict[str, str] = {}
