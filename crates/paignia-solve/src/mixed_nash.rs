@@ -133,7 +133,7 @@ pub struct Diagnostics {
     pub best_response_gains: [f64; 2],
     /// Maximum of the two reported unilateral gains, not their average.
     pub max_gain: f64,
-    /// Sum of the two reported unilateral gains (often called NashConv).
+    /// Sum of the two reported unilateral gains (often called `NashConv`).
     pub sum_gain: f64,
     /// Absolute distance of each supplied probability mass from one.
     pub probability_mass_errors: [f64; 2],
@@ -535,7 +535,7 @@ impl ExpansionSum {
 
 // For a finite nonzero binary64 value, return the exponent of its least
 // significant set bit, including subnormals. The checked product below can
-// therefore reject an exact low part below2^-1074 before FMA rounds it away.
+// therefore reject an exact low part below 2^-1074 before FMA rounds it away.
 fn least_bit_exponent(value: f64) -> i32 {
     let bits = value.to_bits();
     let encoded = i32::try_from((bits >> 52) & 0x7ff).expect("eleven-bit exponent fits i32");
@@ -649,7 +649,7 @@ fn maximum_gain(
                     Player::Column => (game.b[i][action], game.b[i][j]),
                 };
                 // Do not round deviation-current before multiplying: H-(-1)
-                // can lose1 even when the final gain is exactly one half.
+                // can lose 1 even when the final gain is exactly one half.
                 for &part in weight {
                     gain.add_product(part, deviation, "pure deviation sum")?;
                     gain.add_product(-part, current, "pure deviation sum")?;
