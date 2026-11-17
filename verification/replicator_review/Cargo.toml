@@ -1,0 +1,10 @@
+[package]
+name = "paignia-independent-replicator-review"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[dependencies]
+paignia-solve = { path = "../../crates/paignia-solve", version = "=0.1.0" }
