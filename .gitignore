@@ -1,3 +1,4 @@
 /target/
+/verification/*/target/
 __pycache__/
 *.py[cod]
