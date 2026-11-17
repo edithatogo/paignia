@@ -111,6 +111,40 @@ class ArtifactControls(unittest.TestCase):
         self.assertIn('version = "0.1.0"', text)
         self.assertIn('rust-version = "1.75"', text)
 
+    def test_unpublished_sibling_libraries_package_offline_without_registry_resolution(self) -> None:
+        cargo = shutil.which("cargo")
+        if cargo is None:
+            self.fail("cargo is required for the unpublished-sibling packaging control")
+        provider = self.root / "libraries"
+        provider.mkdir()
+        (provider / "Cargo.toml").write_text(
+            '[workspace]\nmembers=["unpublished-a", "unpublished-b"]\nresolver="2"\n'
+        )
+        for name in ["unpublished-a", "unpublished-b"]:
+            package = provider / name
+            (package / "src").mkdir(parents=True)
+            dependency = ('\n[dependencies]\nunpublished-a={path="../unpublished-a", version="=0.1.0"}\n'
+                          if name == "unpublished-b" else "")
+            (package / "Cargo.toml").write_text(
+                f'[package]\nname="{name}"\nversion="0.1.0"\nedition="2021"\n'
+                'publish=false\nlicense="Apache-2.0"\n' + dependency
+            )
+            (package / "src/lib.rs").write_text("pub fn value() -> u8 { 7 }\n")
+        subprocess.run([cargo, "generate-lockfile", "--offline"], cwd=provider,
+                       text=True, capture_output=True, check=True)
+        original_lock = (provider / "Cargo.lock").read_bytes()
+        assembly = self.root / "assembly"
+        packages.build_library_archives(cargo, provider, assembly,
+                                        ["unpublished-a", "unpublished-b"])
+        self.assertEqual((provider / "Cargo.lock").read_bytes(), original_lock)
+        for name in ["unpublished-a", "unpublished-b"]:
+            with tarfile.open(assembly / "package" / f"{name}-0.1.0.crate", "r:gz") as archive:
+                names = archive.getnames()
+                self.assertIn(f"{name}-0.1.0/src/lib.rs", names)
+                manifest = archive.extractfile(f"{name}-0.1.0/Cargo.toml").read().decode()
+                self.assertIn('publish = false', manifest)
+                self.assertNotIn("../unpublished-a", manifest)
+
     def test_provider_file_is_unavailable_to_native_compiler(self) -> None:
         self.check_native_source_isolation()
 
