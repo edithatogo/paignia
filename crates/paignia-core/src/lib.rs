@@ -4,6 +4,8 @@
 //! Paignia extraction seed for a Rust game library independent of Kairos and aligned with
 //! UOGTO.
 
+pub mod result;
+
 use std::collections::{BTreeMap, BTreeSet};
 use thiserror::Error;
 
