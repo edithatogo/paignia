@@ -208,6 +208,90 @@ class EvidenceTests(unittest.TestCase):
         )
         self.assertTrue(self.validate())
 
+    def method_qualification(self) -> dict:
+        return {
+            "schema_version": 1, "scope": "scientific-method-qualification",
+            "obligation": "S02", "capabilities": ["mixed_nash"],
+            "provider_revision": self.provider_revision, "semantic_profile": self.profile,
+            "profile_sha256": self.profile_hash, "result": "passed",
+            "tests_passed": 4, "tests_failed": 0, "tests_skipped": 0,
+            "commands": ["cargo test --locked --test independent_nash_reference"],
+            "execution_evidence": self.reference("method-execution.json", {"passed": 4}),
+            "independent_provenance": {
+                "kind": "analytic-reference", "source": "synthetic independent exact equations",
+                "version": "fixture-v1", "evidence": self.reference("method-reference.json", {"rational_witness": ["1/2", "1/2"]}),
+            },
+        }
+
+    def admit_method(self, method: dict) -> list[str]:
+        self.document["capabilities"] = ["mixed_nash"]
+        self.document["scientific_obligations"]["S02"] = {
+            "status": "supported", "owner": "paignia",
+            "evidence": self.reference("method.json", method),
+        }
+        return self.validate()
+
+    def test_typed_matching_method_qualification_is_structurally_admitted(self) -> None:
+        self.assertEqual(self.admit_method(self.method_qualification()), [])
+
+    def test_method_identity_status_counts_and_provenance_must_match(self) -> None:
+        cases = (
+            ("schema_version", 2), ("scope", "opaque-log"), ("obligation", "S01"),
+            ("capabilities", ["cfr"]), ("capabilities", []),
+            ("provider_revision", "3" * 40), ("semantic_profile", "unsupported"),
+            ("profile_sha256", "4" * 64), ("result", "failed"),
+            ("tests_passed", 0), ("tests_passed", True), ("tests_failed", 1),
+            ("tests_skipped", 1), ("commands", []), ("execution_evidence", None),
+            ("independent_provenance", None),
+        )
+        for field, value in cases:
+            with self.subTest(field=field, value=value):
+                method = self.method_qualification()
+                method[field] = value
+                self.assertTrue(self.admit_method(method))
+
+    def test_independent_reference_requires_source_version_and_content(self) -> None:
+        for field, value in (("kind", []), ("source", ""), ("version", ""), ("evidence", None)):
+            with self.subTest(field=field):
+                method = self.method_qualification()
+                method["independent_provenance"][field] = value
+                self.assertTrue(self.admit_method(method))
+
+    def test_production_provider_is_not_its_own_external_method_reference(self) -> None:
+        method = self.method_qualification()
+        method["independent_provenance"].update(
+            kind="external-implementation", source="https://github.com/EDITHATOGO/PAIGNIA.git/"
+        )
+        self.assertTrue(self.admit_method(method))
+
+    def test_complete_individual_and_combined_feature_matrix_is_admitted(self) -> None:
+        self.package["profiles"][2]["features"] = ["serialization"]
+        self.package["profiles"].append({
+            **self.package["profiles"][0], "profile": "feature:serialization",
+            "default_features": False, "features": ["serialization"],
+        })
+        self.assertEqual(self.validate(), [])
+
+    def test_feature_shapes_and_dependency_shapes_fail_without_raising(self) -> None:
+        for field, value in (("features", {}), ("features", [True]),
+                             ("features", ["x", "x"]), ("default_features", 0),
+                             ("resolved_dependencies", None), ("resolved_dependencies", [{}])):
+            with self.subTest(field=field, value=value):
+                original = self.package["profiles"][0][field]
+                self.package["profiles"][0][field] = value
+                self.assertTrue(self.validate())
+                self.package["profiles"][0][field] = original
+
+    def test_cfr_receipt_cannot_silently_qualify_cfr_plus(self) -> None:
+        method = self.method_qualification()
+        method.update(obligation="S04", capabilities=["cfr"])
+        self.document["capabilities"] = ["cfr_plus"]
+        self.document["scientific_obligations"]["S04"] = {
+            "status": "supported", "owner": "paignia",
+            "evidence": self.reference("method.json", method),
+        }
+        self.assertTrue(self.validate())
+
 
 if __name__ == "__main__":
     unittest.main()

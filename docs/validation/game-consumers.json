@@ -3,6 +3,7 @@
   "provider_revision": null,
   "semantic_profile": "paignia/static-finite-perfect-information-sparse-zero/1.0.0",
   "profile_sha256": null,
+  "profile_contract": null,
   "artifacts": {},
   "package_receipt": null,
   "consumer_receipts": [],
