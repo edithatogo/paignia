@@ -598,6 +598,12 @@ oracle and result contract. Exclusion is not scientific completion.
 - Tests distinguish two valid synthetic receipt records from duplicate, toy,
   mismatched, missing, corrupted, failed or unsupported-method evidence. These
   test records exercise admission only and never count as actual consumers.
+- Tests-first `76b3168` executes 12 tests with 20 errors from the explicit
+  unimplemented validator. The implementation executes 13 passing tests,
+  including malformed-data rejection. The committed real manifest correctly
+  reports ineligible (exit 1): immutable artifacts/profile and both application
+  receipts are absent. This does not complete parent T17.12 or authenticate
+  external claims; owner review of the content-bound receipts remains required.
 
 - Behavior: report bounded release as ineligible until two distinct real consumer
   receipts identify the same qualified static artifacts and passing profile.

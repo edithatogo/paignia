@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import copy
 import hashlib
 import importlib.util
 import json
@@ -31,7 +30,8 @@ class EvidenceTests(unittest.TestCase):
         self.package = {
             "schema_version": 1, "scope": "local-cargo-artifact-consumption",
             "provider_revision": self.provider_revision, "provider_checkout_dependency": False,
-            "worktree_dirty": False, "provider_lock_sha256": "e" * 64,
+            "provider_worktree_dirty": False, "package_inputs_match_revision": True,
+            "provider_tree_sha": "9" * 40, "provider_lock_sha256": "e" * 64,
             "cargo_version": "cargo 1.75.0", "rustc_version": "rustc 1.75.0",
             "artifacts": {name: {"version": "0.1.0", "archive_sha256": digest}
                           for name, digest in self.artifacts.items()},
@@ -113,9 +113,9 @@ class EvidenceTests(unittest.TestCase):
         self.assertTrue(self.validate())
 
     def test_dirty_source_or_incomplete_package_profiles_reject(self) -> None:
-        self.package["worktree_dirty"] = True
+        self.package["provider_worktree_dirty"] = True
         self.assertTrue(self.validate())
-        self.package["worktree_dirty"] = False
+        self.package["provider_worktree_dirty"] = False
         self.package["profiles"].pop()
         self.assertTrue(self.validate())
 
@@ -147,6 +147,12 @@ class EvidenceTests(unittest.TestCase):
         self.document["schema_version"] = 1
         self.receipts[0] = []
         self.assertTrue(self.validate())
+
+    def test_malformed_artifact_map_reports_failure_instead_of_crashing(self) -> None:
+        for value in (None, ["paignia-core"], "not a mapping"):
+            with self.subTest(value=value):
+                self.document["artifacts"] = value
+                self.assertTrue(self.validate())
 
 
 if __name__ == "__main__":
