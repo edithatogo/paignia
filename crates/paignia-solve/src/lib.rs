@@ -1,7 +1,14 @@
 //! Backward induction for finite, acyclic, perfect-information games.
 
+mod replicator;
 mod result;
 
+pub use replicator::{
+    euler_step as replicator_euler_step, rk4_step as replicator_rk4_step,
+    Config as ReplicatorConfig, Method as ReplicatorMethod, Stage as ReplicatorStage,
+    Step as ReplicatorStep, StepError as ReplicatorError,
+    EULER_VERSION as REPLICATOR_EULER_VERSION, RK4_VERSION as REPLICATOR_RK4_VERSION,
+};
 pub use result::{
     solve_specification as backward_induction_result, ComputedPolicy as BackwardInductionResult,
     EmissionError as ResultSolveError,
