@@ -7,6 +7,8 @@
 - [T18 inspection/interdiction game contracts and tobac handoff](tracks/t18_illicit_enforcement_inspection_games_20261110/index.md)
 - [Source transfer map](../docs/architecture/paignia-transfer-map.md)
 
-The native source is transferred from the reimbursement incubator with its
-scientific and consumer qualification work still open. Source provenance is in
-`extraction-manifest.json`; the repository's existence is not a release receipt.
+The native source originated in the reimbursement incubator. The
+[current implementation/review receipt](../docs/validation/t17-review-20261117.md)
+records accepted static package capabilities and the remaining scientific/native
+and external consumer obligations. Source provenance stays in
+`extraction-manifest.json`; registry publication remains disabled.

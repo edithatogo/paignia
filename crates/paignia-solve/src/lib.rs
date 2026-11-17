@@ -1,5 +1,54 @@
 //! Backward induction for finite, acyclic, perfect-information games.
 
+#[cfg(feature = "correlated-equilibrium")]
+mod correlated_equilibrium;
+mod mixed_nash;
+mod replicator;
+mod result;
+
+#[cfg(feature = "correlated-equilibrium")]
+pub use correlated_equilibrium::{
+    evaluate_candidate as evaluate_correlated_equilibrium_candidate,
+    evaluate_certificate as evaluate_correlated_equilibrium_certificate,
+    solve as solve_correlated_equilibrium,
+    BackendDiagnostics as CorrelatedEquilibriumBackendDiagnostics,
+    Candidate as CorrelatedEquilibriumCandidate,
+    CertificateDiagnostics as CorrelatedEquilibriumCertificateDiagnostics,
+    Config as CorrelatedEquilibriumConfig, DualVariables as CorrelatedEquilibriumDualVariables,
+    Error as CorrelatedEquilibriumError, Incentive as CorrelatedEquilibriumIncentive,
+    Interval as CorrelatedEquilibriumInterval, Player as CorrelatedEquilibriumPlayer,
+    PrimalDiagnostics as CorrelatedEquilibriumPrimalDiagnostics,
+    ResultRecord as CorrelatedEquilibriumResult, Status as CorrelatedEquilibriumStatus,
+    Termination as CorrelatedEquilibriumTermination,
+    BACKEND_VERSION as CORRELATED_EQUILIBRIUM_BACKEND_VERSION,
+    MAX_ACTIONS as MAX_CORRELATED_EQUILIBRIUM_ACTIONS,
+    MAX_ITERATIONS as MAX_CORRELATED_EQUILIBRIUM_ITERATIONS,
+    VERSION as CORRELATED_EQUILIBRIUM_VERSION,
+};
+
+pub use mixed_nash::{
+    evaluate_candidate as evaluate_mixed_nash_candidate, solve as solve_mixed_nash,
+    Algorithm as MixedNashAlgorithm, Candidate as MixedNashCandidate,
+    CatalogueCompleteness as MixedNashCatalogueCompleteness, Config as MixedNashConfig,
+    Diagnostics as MixedNashDiagnostics, Error as MixedNashError, GameClass as MixedNashGameClass,
+    Player as MixedNashPlayer, ResultRecord as MixedNashResult, Scope as MixedNashScope,
+    SearchCompleteness as MixedNashSearchCompleteness, Selection as MixedNashSelection,
+    SolutionConcept as MixedNashSolutionConcept, Status as MixedNashStatus,
+    MAX_ACTIONS as MAX_MIXED_NASH_ACTIONS, SUPPORT_ENUMERATION_VERSION,
+};
+
+pub use replicator::{
+    euler_step as replicator_euler_step, rk4_step as replicator_rk4_step,
+    Config as ReplicatorConfig, Method as ReplicatorMethod, Stage as ReplicatorStage,
+    Step as ReplicatorStep, StepError as ReplicatorError,
+    EULER_VERSION as REPLICATOR_EULER_VERSION, RK4_VERSION as REPLICATOR_RK4_VERSION,
+};
+
+pub use result::{
+    solve_specification as backward_induction_result, ComputedPolicy as BackwardInductionResult,
+    EmissionError as ResultSolveError,
+};
+
 use std::collections::BTreeMap;
 use thiserror::Error;
 

@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "provider_revision": "bd880dd756d2ba56cc5f479bc078cea31b53c1d1",
+  "semantic_profile": "paignia/static-finite-perfect-information-sparse-zero/1.0.0",
+  "profile_sha256": "8c20e1969e3e33bf1a8ac6b3ba6073775e06782348b733da73603441a068f59e",
+  "profile_contract": {
+    "path": "docs/architecture/game-runtime-contract-v1.md",
+    "sha256": "8c20e1969e3e33bf1a8ac6b3ba6073775e06782348b733da73603441a068f59e"
+  },
+  "artifacts": {
+    "paignia-core": "c184e24dd9b96c7a2b64614378ff150e559f1ed823312d7265385e0a89fda99e",
+    "paignia-solve": "f2d7974020b0e63c3e023923223af913d4cf076600bc5286637e1ba52e766f1d"
+  },
+  "package_receipt": {
+    "path": "docs/validation/receipts/t17-bd880dd-package-msrv.json",
+    "sha256": "4dedd2b14aad9ffc12e0975202c82091ff678a372bd9312bafff2b97be4e7c01"
+  },
+  "consumer_receipts": [],
+  "capabilities": [
+    "backward_induction"
+  ],
+  "scientific_obligations": {
+    "S01": {
+      "status": "pending",
+      "owner": "edithatogo/kairos Track 110",
+      "replacement_plan": "T17.04 bounded Paignia implementation accepted; retain Kairos source API/caller regression, output migration and retirement receipt. Separate numerical-method qualification is documented in the T17 review receipt."
+    },
+    "S02": {
+      "status": "pending",
+      "owner": "edithatogo/kairos Track 110",
+      "replacement_plan": "T17.05 bounded Paignia implementation accepted; retain Kairos source API/caller regression, output migration and retirement receipt. Separate numerical-method qualification is documented in the T17 review receipt."
+    },
+    "S03": {
+      "status": "pending",
+      "owner": "edithatogo/kairos Track 110",
+      "replacement_plan": "T17.06 bounded Paignia implementation accepted; retain Kairos source API/caller regression, output migration and retirement receipt. Separate numerical-method qualification is documented in the T17 review receipt."
+    },
+    "S04": {
+      "status": "pending",
+      "owner": "edithatogo/paignia",
+      "replacement_plan": "T17.17 after the accepted UOGTO executable information-set profile, then T17.07; retain Kairos Track 110 source history and retirement."
+    }
+  },
+  "limitations": [
+    "No two real application artifact receipts have been received.",
+    "Reimbursement and Innovate currently pin different provider revisions.",
+    "A package smoke test or synthetic admission test is not application acceptance.",
+    "Registry publication and full T17 archival remain separate decisions.",
+    "This candidate advertises backward induction through the exact graph profile; pure/mixed normal-form and ODE inputs need their separate method/input qualification when claimed by applications."
+  ],
+  "release_scope": "Candidate release of the declared finite perfect-information graph profile. Separately qualified normal-form and ODE APIs are not input representations admitted by this graph profile."
+}

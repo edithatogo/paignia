@@ -1,0 +1,203 @@
+"""Controls for actual artifact admission and unavailable provider source."""
+
+from __future__ import annotations
+
+import importlib.util
+import hashlib
+import io
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import tarfile
+import tempfile
+import unittest
+from unittest.mock import patch
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SPEC = importlib.util.spec_from_file_location("game_packages", ROOT / "scripts/validate_game_packages.py")
+assert SPEC is not None and SPEC.loader is not None
+packages = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(packages)
+
+
+class ArtifactControls(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory(prefix="paignia-artifact-tests-")
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+
+    def archive(self, entries: list[tuple[str, bytes, bytes]]) -> Path:
+        path = self.root / "test.crate"
+        with tarfile.open(path, "w:gz") as archive:
+            for name, content, kind in entries:
+                info = tarfile.TarInfo(name)
+                info.type = kind
+                info.size = len(content)
+                if kind == tarfile.SYMTYPE:
+                    info.linkname = "/etc/passwd"
+                archive.addfile(info, io.BytesIO(content))
+        return path
+
+    def test_path_escape_is_rejected(self) -> None:
+        path = self.archive([("example-1.0.0/../escaped", b"bad", tarfile.REGTYPE)])
+        with self.assertRaisesRegex(ValueError, "path"):
+            packages.unpack_artifact(path, self.root / "unpacked", "example", "1.0.0")
+        self.assertFalse((self.root / "escaped").exists())
+
+    def test_retained_archive_is_the_exact_qualified_byte_sequence(self) -> None:
+        archive = self.archive([("example-1.0.0/NOTICE", b"notice", tarfile.REGTYPE)])
+        original = archive.read_bytes()
+        destination = self.root / "qualified"
+        packages.retain_artifacts(
+            {"example": archive},
+            {"example": {"archive_sha256": hashlib.sha256(original).hexdigest()}},
+            destination,
+        )
+        self.assertEqual((destination / archive.name).read_bytes(), original)
+
+    def test_changed_archive_prevents_any_artifact_retention(self) -> None:
+        first = self.root / "first.crate"
+        second = self.root / "second.crate"
+        first.write_bytes(b"qualified first")
+        second.write_bytes(b"changed after qualification")
+        destination = self.root / "rejected"
+        with self.assertRaisesRegex(ValueError, "hash"):
+            packages.retain_artifacts(
+                {"first": first, "second": second},
+                {"first": {"archive_sha256": hashlib.sha256(first.read_bytes()).hexdigest()},
+                 "second": {"archive_sha256": hashlib.sha256(b"qualified second").hexdigest()}},
+                destination,
+            )
+        self.assertFalse(destination.exists())
+
+    def test_symbolic_link_is_rejected(self) -> None:
+        path = self.archive([("example-1.0.0/escape", b"", tarfile.SYMTYPE)])
+        with self.assertRaisesRegex(ValueError, "regular"):
+            packages.unpack_artifact(path, self.root / "unpacked", "example", "1.0.0")
+
+    def test_duplicate_member_is_rejected(self) -> None:
+        path = self.archive([("example-1.0.0/LICENSE", b"one", tarfile.REGTYPE), ("example-1.0.0/LICENSE", b"two", tarfile.REGTYPE)])
+        with self.assertRaisesRegex(ValueError, "duplicate"):
+            packages.unpack_artifact(path, self.root / "unpacked", "example", "1.0.0")
+
+    def test_noncanonical_aliases_cannot_overwrite_an_extracted_file(self) -> None:
+        entries = [
+            ("example-1.0.0/Cargo.toml", b'[package]\nname="example"\nversion="1.0.0"\n', tarfile.REGTYPE),
+            ("example-1.0.0/LICENSE", b"license", tarfile.REGTYPE),
+            ("example-1.0.0/NOTICE", b"notice", tarfile.REGTYPE),
+            ("example-1.0.0/src/lib.rs", b"original", tarfile.REGTYPE),
+        ]
+        for index, alias in enumerate([
+            "example-1.0.0/src/./lib.rs",
+            "example-1.0.0//src/lib.rs",
+            "./example-1.0.0/src/lib.rs",
+        ]):
+            with self.subTest(alias=alias):
+                path = self.archive([*entries, (alias, b"overwritten", tarfile.REGTYPE)])
+                destination = self.root / f"unpacked-{index}"
+                with self.assertRaisesRegex(ValueError, "path|duplicate"):
+                    packages.unpack_artifact(path, destination, "example", "1.0.0")
+                self.assertEqual(
+                    (destination / "example-1.0.0/src/lib.rs").read_bytes(), b"original"
+                )
+
+    def test_directory_entries_cannot_bypass_the_member_limit(self) -> None:
+        path = self.archive([
+            ("example-1.0.0/Cargo.toml", b'[package]\nname="example"\nversion="1.0.0"\n', tarfile.REGTYPE),
+            ("example-1.0.0/LICENSE", b"license", tarfile.REGTYPE),
+            ("example-1.0.0/NOTICE", b"notice", tarfile.REGTYPE),
+            ("example-1.0.0/src/lib.rs", b"original", tarfile.REGTYPE),
+            *[(f"example-1.0.0/empty-{index}", b"", tarfile.DIRTYPE) for index in range(10_001)],
+        ])
+        with self.assertRaisesRegex(ValueError, "size"):
+            packages.unpack_artifact(path, self.root / "unpacked", "example", "1.0.0")
+
+    def test_missing_notice_rejects_artifact(self) -> None:
+        path = self.archive([("example-1.0.0/Cargo.toml", b'[package]\nname="example"\nversion="1.0.0"', tarfile.REGTYPE), ("example-1.0.0/src/lib.rs", b"", tarfile.REGTYPE), ("example-1.0.0/LICENSE", b"license", tarfile.REGTYPE)])
+        with self.assertRaisesRegex(ValueError, "NOTICE"):
+            packages.unpack_artifact(path, self.root / "unpacked", "example", "1.0.0")
+
+    def test_unexpected_package_identity_rejects_artifact(self) -> None:
+        path = self.archive([("different-1.0.0/Cargo.toml", b"", tarfile.REGTYPE)])
+        with self.assertRaisesRegex(ValueError, "path"):
+            packages.unpack_artifact(path, self.root / "unpacked", "example", "1.0.0")
+
+    def test_only_exact_nonzero_native_execution_is_accepted(self) -> None:
+        good = "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s\n"
+        packages.require_native_tests(good, 3)
+        for bad in [good.replace("3 passed", "0 passed"), good.replace("3 passed", "2 passed"), good.replace("0 ignored", "1 ignored"), good.replace("0 filtered", "1 filtered"), good.replace("ok.", "FAILED."), good + good]:
+            with self.subTest(output=bad), self.assertRaises(RuntimeError):
+                packages.require_native_tests(bad, 3)
+
+    def test_materialization_keeps_rust_version_distinct_from_version(self) -> None:
+        manifest = self.root / "Cargo.toml"
+        manifest.write_text('[package]\nname="example"\nversion.workspace = true\nrust-version.workspace = true\n')
+        text = packages.standalone_manifest(manifest, {"package": {"version": "0.1.0", "rust-version": "1.75"}})
+        self.assertIn('version = "0.1.0"', text)
+        self.assertIn('rust-version = "1.75"', text)
+
+    def test_unpublished_sibling_libraries_package_offline_without_registry_resolution(self) -> None:
+        cargo = shutil.which("cargo")
+        if cargo is None:
+            self.fail("cargo is required for the unpublished-sibling packaging control")
+        provider = self.root / "libraries"
+        provider.mkdir()
+        (provider / "Cargo.toml").write_text(
+            '[workspace]\nmembers=["unpublished-a", "unpublished-b"]\nresolver="2"\n'
+        )
+        for name in ["unpublished-a", "unpublished-b"]:
+            package = provider / name
+            (package / "src").mkdir(parents=True)
+            dependency = ('\n[dependencies]\nunpublished-a={path="../unpublished-a", version="=0.1.0"}\n'
+                          if name == "unpublished-b" else "")
+            (package / "Cargo.toml").write_text(
+                f'[package]\nname="{name}"\nversion="0.1.0"\nedition="2021"\n'
+                'publish=false\nlicense="Apache-2.0"\n' + dependency
+            )
+            (package / "src/lib.rs").write_text("pub fn value() -> u8 { 7 }\n")
+        subprocess.run([cargo, "generate-lockfile", "--offline"], cwd=provider,
+                       text=True, capture_output=True, check=True)
+        original_lock = (provider / "Cargo.lock").read_bytes()
+        assembly = self.root / "assembly"
+        packages.build_library_archives(cargo, provider, assembly,
+                                        ["unpublished-a", "unpublished-b"])
+        self.assertEqual((provider / "Cargo.lock").read_bytes(), original_lock)
+        for name in ["unpublished-a", "unpublished-b"]:
+            with tarfile.open(assembly / "package" / f"{name}-0.1.0.crate", "r:gz") as archive:
+                names = archive.getnames()
+                self.assertIn(f"{name}-0.1.0/src/lib.rs", names)
+                manifest = archive.extractfile(f"{name}-0.1.0/Cargo.toml").read().decode()
+                self.assertIn('publish = false', manifest)
+                self.assertNotIn("../unpublished-a", manifest)
+
+    def test_provider_file_is_unavailable_to_native_compiler(self) -> None:
+        self.check_native_source_isolation()
+
+    def test_ancestor_cargo_cache_cannot_reexpose_provider_source(self) -> None:
+        with patch.dict(os.environ, {"CARGO_HOME": str(self.root)}):
+            self.check_native_source_isolation()
+
+    def check_native_source_isolation(self) -> None:
+        rustc = shutil.which("rustc")
+        if rustc is None or shutil.which("bwrap") is None:
+            self.fail("rustc and bubblewrap are required for the source-isolation control")
+        provider = self.root / "provider"
+        consumer = self.root / "consumer"
+        provider.mkdir()
+        consumer.mkdir()
+        (provider / "value.txt").write_text("must be unavailable")
+        source = consumer / "main.rs"
+        source.write_text(f'fn main() {{ println!("{{}}", include_str!({str(provider / "value.txt")!r})); }}'.replace("'", '"'))
+        command = packages.isolated_command([rustc, str(source), "-o", str(consumer / "probe")], provider, consumer)
+        denied = subprocess.run(command, cwd=consumer, text=True, capture_output=True)
+        self.assertNotEqual(denied.returncode, 0, denied.stdout)
+        self.assertIn("couldn't read", denied.stderr)
+        source.write_text('fn main() { println!("local source works"); }')
+        allowed = subprocess.run(command, cwd=consumer, text=True, capture_output=True)
+        self.assertEqual(allowed.returncode, 0, allowed.stderr)
+
+
+if __name__ == "__main__":
+    unittest.main()

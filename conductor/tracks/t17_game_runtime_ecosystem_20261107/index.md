@@ -1,8 +1,17 @@
 # T17 Paignia native library and ecosystem handoff
 
-Status: source transfer merged at `12b22ce7571b9c590405bf53c2c1c5862b49cd64`;
-[stable/MSRV native checks passed](https://github.com/edithatogo/paignia/actions/runs/42421109771).
-Scientific methods and package/consumer release qualification remain open.
+Status: active, with eight bounded provider leaves complete: T17.01–.06,
+.13 and .14. The native static contract, package boundary/artifacts, RK4/Euler,
+mixed Nash, optional correlated equilibrium, static conversion and owned
+observations have accepted independent review and integrated compiler/package
+checks. The [17 November receipt](../../../docs/validation/t17-review-20261117.md)
+records exact source, corrections, nonzero test counts and remaining limits.
+
+Nine leaves remain open for information-set/CFR, native adapter/streams/replay,
+real application receipts and valued-payoff work. The
+[concrete package handoff](../../../docs/validation/receipts/t17-bd880dd-handoff.json)
+is ready for application owners. Full-track archival and real-consumer release
+eligibility remain incomplete; all seventeen original IDs stay visible.
 
 - [Specification](spec.md)
 - [Provider implementation plan and external owner entries](plan.md)
@@ -18,6 +27,6 @@ G01–G04 programme. The external entries preserve IDs and dependency references
 without creating duplicate local implementation or completion authority.
 
 The previous incubator T17 and issue #100 retain history and forward to this
-provider plan. S01–S04 stay open here, coordinated with Kairos Track 110's
-source-side regressions and retirement. Source code has one Paignia owner;
+provider plan. Inherited S01–S04 obligations remain individually tracked, including Kairos
+Track 110's separate source-side regressions and retirement. Source code has one Paignia owner;
 application dependency acceptance and actual immutable pins remain consumer work.

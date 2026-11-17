@@ -4,6 +4,33 @@
 //! Paignia extraction seed for a Rust game library independent of Kairos and aligned with
 //! UOGTO.
 
+mod conversion;
+mod observation;
+mod result;
+
+pub use conversion::{
+    convert as convert_static_game, restore as restore_static_game,
+    AdmissionError as StaticConversionError, Binding as StaticIdentityBinding,
+    ChanceRule as StaticChanceRule, Conversion as StaticGameConversion,
+    IdentityMap as StaticIdentityMap, IdentityRole as StaticIdentityRole,
+    PayoffRule as StaticPayoffRule, Record as StaticGameRecord, STATIC_CONVERSION_SCHEMA_VERSION,
+};
+
+pub use observation::{
+    build as build_policy_observation, Binding as PolicyObservationBinding,
+    Error as PolicyObservationError, Observation as PolicyObservation,
+    RejectedNodeKind as PolicyObservationNodeKind, Request as PolicyObservationRequest,
+    Revision as ObservationRevision, SCHEMA_VERSION as POLICY_OBSERVATION_SCHEMA_VERSION,
+};
+
+pub use result::{
+    Algorithm as ResultAlgorithm, AlgorithmRecord, CatalogueClaim, DeclaredDiagnostic,
+    Envelope as ResultEnvelope, EnvelopeError as ResultEnvelopeError, GameClass as ResultGameClass,
+    InformationStructure as ResultInformationStructure, SelectionRule as ResultSelectionRule,
+    SolutionConcept as ResultSolutionConcept, StaticPolicy as StaticPolicyResult,
+    Status as ResultStatus, BACKWARD_INDUCTION_ALGORITHM_VERSION, RESULT_ENVELOPE_SCHEMA_VERSION,
+};
+
 use std::collections::{BTreeMap, BTreeSet};
 use thiserror::Error;
 

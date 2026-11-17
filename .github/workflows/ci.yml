@@ -33,40 +33,131 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
           components: rustfmt, clippy
+      - name: Install artifact source isolation
+        run: sudo apt-get update && sudo apt-get install --yes bubblewrap
+      - name: Cache the full locked metadata closure
+        run: cargo fetch --locked
       - name: Format
         run: cargo fmt --all -- --check
       - name: Clippy
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: Clippy with every advertised feature
+        run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
       - name: Native package tests
         run: cargo test --workspace --all-targets --locked
+      - name: Native feature tests and LP backend controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo test --workspace --all-targets --all-features --locked 2>&1 | tee target/all-features.log
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          log = Path("target/all-features.log").read_text()
+          backend = re.search(
+              r"Running[^\n]*tests/clarabel_backend\.rs[^\n]*\n(.*?test result:[^\n]+)",
+              log, re.DOTALL,
+          )
+          required = "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;"
+          if backend is None or required not in backend.group(1):
+              raise SystemExit("Expected all eight optional native LP backend controls without skips or failures")
+          ce = re.search(
+              r"Running[^\n]*tests/correlated_equilibrium\.rs[^\n]*\n(.*?test result:[^\n]+)",
+              log, re.DOTALL,
+          )
+          required_ce = "test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;"
+          if ce is None or required_ce not in ce.group(1):
+              raise SystemExit("Expected all 27 optional native CE controls without skips or failures")
+          PY
       - name: Native role-separation doctests
         shell: bash
         run: |
           set -euo pipefail
-          cargo test --locked -p paignia-core --doc 2>&1 | tee doctests.log
+          cargo test --locked -p paignia-core --doc 2>&1 | tee target/doctests.log
           python3 - <<'PY'
           from pathlib import Path
           import re
           summaries = re.findall(
               r"^test result: ok\. (\d+) passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;",
-              Path("doctests.log").read_text(),
+              Path("target/doctests.log").read_text(),
               re.MULTILINE,
           )
-          if len(summaries) != 1 or int(summaries[0]) < 3:
-              raise SystemExit("Expected at least the three role-separation doctests without skips or failures")
+          if len(summaries) != 1 or int(summaries[0]) < 4:
+              raise SystemExit("Expected the three role-separation and one observation-boundary doctests without skips or failures")
           PY
       - name: Source ownership and package boundary
-        run: python3 scripts/validate_extraction.py
+        run: python3 scripts/validate_extraction.py --receipt target/static-dependency-boundary.json
+      - name: Native solver API doctests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo test --locked -p paignia-solve --doc --all-features 2>&1 | tee target/solver-doctests.log
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          summaries = re.findall(
+              r"^test result: ok\. (\d+) passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;",
+              Path("target/solver-doctests.log").read_text(),
+              re.MULTILINE,
+          )
+          if len(summaries) != 1 or int(summaries[0]) < 1:
+              raise SystemExit("Expected the native mixed Nash API example without skips or failures")
+          PY
+      - name: Package and consumer evidence regression controls
+        run: python3 -B -m unittest discover -s tests
+      - name: Retained independent public-interface and numerical controls
+        shell: bash
+        env:
+          CARGO_TARGET_DIR: target/independent-review-build
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          import subprocess
+          targets = [
+              ("result_contract_review", 9, []),
+              ("replicator_review", 10, []),
+              ("mixed_nash_review", 14, []),
+              ("conversion_review", 6, []),
+              ("correlated_equilibrium_review", 13, ["--features", "correlated-equilibrium"]),
+              ("policy_observation_review", 6, []),
+          ]
+          logs = Path("target/independent-review-logs")
+          logs.mkdir(parents=True, exist_ok=True)
+          for target, expected, flags in targets:
+              command = ["cargo", "test", "--locked", "--manifest-path",
+                         f"verification/{target}/Cargo.toml", "--test", "review", *flags]
+              run = subprocess.run(command, text=True, stdout=subprocess.PIPE,
+                                   stderr=subprocess.STDOUT, check=False)
+              (logs / f"{target}.log").write_text(run.stdout)
+              print(run.stdout, end="")
+              summaries = re.findall(
+                  r"^test result: ok\. (\d+) passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;",
+                  run.stdout, re.MULTILINE,
+              )
+              if run.returncode or summaries != [str(expected)]:
+                  raise SystemExit(f"Expected exactly {expected} passing independent tests for {target}")
+          PY
       - name: Isolated extracted-source consumer
-        run: python3 scripts/validate_game_packages.py --receipt target/extracted-package-smoke.json
+        run: python3 scripts/validate_game_packages.py --source-smoke --receipt target/extracted-package-smoke.json
+      - name: Cargo artifacts with provider source unavailable
+        run: python3 scripts/validate_game_packages.py --receipt target/cargo-artifact-qualification.json --artifact-dir target/qualified-packages
       - name: Native API documentation
         env:
           RUSTDOCFLAGS: -D warnings
-        run: cargo doc --workspace --no-deps --locked
+        run: cargo doc --workspace --no-deps --all-features --locked
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: extracted-package-smoke-${{ matrix.toolchain }}
-          path: target/extracted-package-smoke.json
+          name: native-package-qualification-${{ matrix.toolchain }}
+          path: |
+            target/static-dependency-boundary.json
+            target/extracted-package-smoke.json
+            target/cargo-artifact-qualification.json
+            target/qualified-packages/*.crate
+            target/all-features.log
+            target/solver-doctests.log
+            target/independent-review-logs/*.log
           if-no-files-found: error
           retention-days: 30
 

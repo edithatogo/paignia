@@ -1,0 +1,11 @@
+[package]
+name = "observation-independent-review"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.75"
+publish = false
+
+[dependencies]
+paignia-core = { path = "../../crates/paignia-core" }
+
+[workspace]

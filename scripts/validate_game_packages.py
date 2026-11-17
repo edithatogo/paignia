@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Build an isolated consumer from extracted source packages, without a registry.
+"""Qualify real .crate artifacts in native consumers with provider source masked.
 
-This is an extracted-source smoke check. It does not claim published .crate
-artifacts, a released API, scientific qualification or two real consumers.
+Linux bubblewrap makes the provider checkout unavailable during resolution,
+compilation and tests. No registry publication, scientific-method qualification
+or real-application receipt is inferred. --source-smoke retains the historical
+copy-based development check under its explicitly weaker scope.
 """
 
 from __future__ import annotations
@@ -10,10 +12,12 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-from pathlib import Path
+import os
+from pathlib import Path, PurePosixPath
 import re
 import shutil
 import subprocess
+import tarfile
 import tempfile
 import tomllib
 
@@ -65,14 +69,484 @@ fn invalid_graph_is_rejected() {
 }
 '''
 
+ARTIFACT_SOLVER_TEST = CONSUMER_TEST + r'''
 
-def run(command: list[str], cwd: Path) -> str:
+#[test]
+fn pure_coordination_preserves_both_equilibria() {
+    use paignia_solve::{pure_nash_equilibria, NormalFormGame, SolverConfig};
+    let row = PlayerId("row".into());
+    let column = PlayerId("column".into());
+    let a = ActionId("a".into());
+    let b = ActionId("b".into());
+    let mut payoffs = BTreeMap::new();
+    for x in [&a, &b] {
+        for y in [&a, &b] {
+            let value = if x == y { 1.0 } else { 0.0 };
+            payoffs.insert(
+                BTreeMap::from([(row.clone(), x.clone()), (column.clone(), y.clone())]),
+                BTreeMap::from([(row.clone(), value), (column.clone(), value)]),
+            );
+        }
+    }
+    let game = NormalFormGame {
+        players: vec![row.clone(), column.clone()],
+        strategies: BTreeMap::from([(row.clone(), vec![a.clone(), b.clone()]),
+                                    (column.clone(), vec![a.clone(), b.clone()])]),
+        payoffs,
+    };
+    let actual = pure_nash_equilibria(&game, SolverConfig::default()).unwrap();
+    let expected = vec![
+        BTreeMap::from([(row.clone(), a.clone()), (column.clone(), a)]),
+        BTreeMap::from([(row, b.clone()), (column, b)]),
+    ];
+    assert_eq!(actual, expected);
+}
+
+#[test]
+fn artifact_emits_a_source_bound_native_result() {
+    use paignia_core::{GameInstanceId, GameSpecification, GameSpecificationId,
+        ResultIdentityRecord, ResultStatus, SolverRunId, STATIC_GAME_PROFILE_V1};
+    use paignia_solve::{backward_induction_result, SolverConfig};
+    let source = GameSpecification {
+        schema_version: "1.0.0".into(), id: "urn:artifact:spec".into(),
+        game: Game { root: NodeId("terminal".into()), nodes: BTreeMap::from([
+            (NodeId("terminal".into()), Node::Terminal {
+                payoffs: BTreeMap::from([(PlayerId("p".into()), -2.0)]),
+            }),
+        ]) },
+    };
+    let instance = GameInstanceId("urn:artifact:instance".into());
+    let ids = ResultIdentityRecord { schema_version: "1.0.0".into(),
+        specification_id: GameSpecificationId(source.id.clone()),
+        game_instance_id: instance.clone(), solver_run_id: SolverRunId("urn:artifact:run".into()),
+        session_id: None, policy_artifact_id: None, solver_trace_id: None,
+    };
+    let result = backward_induction_result(&source, STATIC_GAME_PROFILE_V1, ids, SolverConfig::default()).unwrap();
+    assert_eq!(result.envelope.status, ResultStatus::Completed);
+    result.envelope.validate_against(&source, &instance).unwrap();
+    assert_eq!(result.envelope.solutions[0].expected_payoffs[&PlayerId("p".into())], -2.0);
+    assert_eq!(result.diagnostic_trace.len(), 1);
+}
+
+#[test]
+fn artifact_rk4_matches_the_independent_four_stage_witness() {
+    use paignia_solve::{replicator_rk4_step, ReplicatorConfig, ReplicatorMethod};
+    let result = replicator_rk4_step(&[0.25, 0.75], 0.0, 0.5,
+        ReplicatorConfig { mass_tolerance: 1e-12 }, |_, _| Ok(vec![1.0, 0.0])).unwrap();
+    let expected = 408885515741609973.0_f64 / 1152921504606846976.0_f64;
+    assert!((result.population[0] - expected).abs() < 2e-15);
+    assert_eq!(result.method, ReplicatorMethod::ClassicalRk4);
+    assert_eq!(result.fitness_evaluations, 4);
+    assert!((result.population.iter().sum::<f64>() - 1.0).abs() < 1e-12);
+}
+
+#[test]
+fn artifact_mixed_nash_preserves_a_mixed_witness_and_positive_deviation() {
+    use paignia_solve::{solve_mixed_nash, evaluate_mixed_nash_candidate,
+        MixedNashAlgorithm, MixedNashCatalogueCompleteness, MixedNashConfig};
+    let a = vec![vec![1.0, -1.0], vec![-1.0, 1.0]];
+    let b = vec![vec![-1.0, 1.0], vec![1.0, -1.0]];
+    let result = solve_mixed_nash(&a, &b, MixedNashAlgorithm::SupportEnumeration,
+                                  MixedNashConfig::default()).unwrap();
+    assert_eq!(result.candidates.len(), 1);
+    assert_eq!(result.candidates[0].row_strategy, vec![0.5, 0.5]);
+    assert_eq!(result.candidates[0].column_strategy, vec![0.5, 0.5]);
+    assert_eq!(result.catalogue_completeness,
+               MixedNashCatalogueCompleteness::FiniteVerifiedWitnessesOnly);
+    let large = 18014398509481984.0_f64;
+    let bad = evaluate_mixed_nash_candidate(
+        &[vec![large, 1.0, -large], vec![0.0, 0.0, 0.0]],
+        &[vec![0.0, 0.0, 0.0], vec![0.0, 0.0, 0.0]],
+        &[0.0, 1.0], &[0.25, 0.5, 0.25], MixedNashConfig::default()).unwrap();
+    assert_eq!(bad.diagnostics.best_response_gains[0].to_bits(), 0.5_f64.to_bits());
+    assert!(!bad.diagnostics.within_tolerance);
+}
+'''
+
+ARTIFACT_CE_TEST = r'''
+
+#[test]
+fn artifact_correlated_equilibrium_recovers_the_independent_lp_optimum() {
+    use paignia_solve::{solve_correlated_equilibrium, CorrelatedEquilibriumConfig,
+        CorrelatedEquilibriumStatus, CorrelatedEquilibriumTermination};
+    let row = vec![vec![0.0, 7.0], vec![2.0, 6.0]];
+    let column = vec![vec![0.0, 2.0], vec![7.0, 6.0]];
+    let objective = vec![vec![0.0, 9.0], vec![9.0, 12.0]];
+    let result = solve_correlated_equilibrium(&row, &column, &objective,
+        CorrelatedEquilibriumConfig::default()).unwrap();
+    assert_eq!(result.status(), CorrelatedEquilibriumStatus::ApproximateOptimum);
+    assert_eq!(result.termination(), CorrelatedEquilibriumTermination::Solved);
+    let candidate = result.accepted_candidate().unwrap();
+    assert!(candidate.primal.within_tolerance);
+    assert!(candidate.certificate.within_tolerance);
+    // The independently frozen primal/dual optimum is 21/2, above every Nash product.
+    assert!((candidate.primal.objective.lower - 10.5).abs() < 1e-8);
+    assert!((candidate.primal.objective.upper - 10.5).abs() < 1e-8);
+    assert!(candidate.certificate.objective_gap_abs_upper <= 1e-8);
+}
+
+#[test]
+fn artifact_correlated_equilibrium_exposes_an_exhausted_budget() {
+    use paignia_solve::{solve_correlated_equilibrium, CorrelatedEquilibriumConfig,
+        CorrelatedEquilibriumStatus, CorrelatedEquilibriumTermination};
+    let result = solve_correlated_equilibrium(
+        &[vec![0.0, 7.0], vec![2.0, 6.0]],
+        &[vec![0.0, 2.0], vec![7.0, 6.0]],
+        &[vec![0.0, 9.0], vec![9.0, 12.0]],
+        CorrelatedEquilibriumConfig { max_iterations: 0, ..Default::default() }).unwrap();
+    assert_eq!(result.status(), CorrelatedEquilibriumStatus::BackendTerminated);
+    assert_eq!(result.termination(), CorrelatedEquilibriumTermination::MaxIterations);
+    assert!(result.accepted_candidate().is_none());
+}
+'''
+
+ARTIFACT_CORE_TEST = r'''
+use std::collections::BTreeMap;
+use paignia_core::{Game, Node, NodeId, PlayerId};
+
+#[test]
+fn validates_a_finite_terminal_game() {
+    let root = NodeId("https://example.invalid/game#terminal".into());
+    let game = Game { root: root.clone(), nodes: BTreeMap::from([
+        (root, Node::Terminal { payoffs: BTreeMap::from([(PlayerId("p".into()), -2.0)]) }),
+    ]) };
+    game.validate().unwrap();
+}
+
+#[test]
+fn rejects_missing_root() {
+    let game = Game { root: NodeId("absent".into()), nodes: BTreeMap::new() };
+    assert!(game.validate().is_err());
+}
+
+#[test]
+fn explicit_static_identity_mapping_round_trips_from_the_artifact() {
+    use paignia_core::{convert_static_game, restore_static_game, GameInstanceId,
+        GameSpecification, ResultInformationStructure, ResultSelectionRule, StaticChanceRule,
+        StaticGameRecord, StaticIdentityBinding, StaticIdentityMap, StaticIdentityRole,
+        StaticPayoffRule, STATIC_GAME_PROFILE_V1};
+    let source = StaticGameRecord {
+        schema_version: "1.0.0".into(), semantic_profile: STATIC_GAME_PROFILE_V1.into(),
+        information_structure: ResultInformationStructure::PerfectInformation,
+        chance_rule: StaticChanceRule::AllowZeroAndValidateEveryBranch,
+        payoff_rule: StaticPayoffRule::IntentionalSparseZero,
+        selection_rule: ResultSelectionRule::InputOrderPairwiseToleranceThenLexicographic,
+        selection_tolerance: 0.0,
+        specification: GameSpecification { schema_version: "1.0.0".into(), id: "urn:spec".into(),
+            game: Game { root: NodeId("terminal".into()), nodes: BTreeMap::from([
+                (NodeId("terminal".into()), Node::Terminal { payoffs: BTreeMap::new() }),
+            ]) },
+        },
+        instance_id: GameInstanceId("urn:instance".into()), session_id: None,
+        policy_artifact_id: None, solver_run_id: None, solver_trace_id: None,
+    };
+    let mapping = StaticIdentityMap { schema_version: "1.0.0".into(), bindings: vec![
+        StaticIdentityBinding { role: StaticIdentityRole::Specification, source: "urn:spec".into(), target: "urn:converted:spec".into() },
+        StaticIdentityBinding { role: StaticIdentityRole::Instance, source: "urn:instance".into(), target: "urn:converted:instance".into() },
+        StaticIdentityBinding { role: StaticIdentityRole::Node, source: "terminal".into(), target: "converted-terminal".into() },
+    ] };
+    let converted = convert_static_game(&source, &mapping, STATIC_GAME_PROFILE_V1).unwrap();
+    assert_eq!(converted.record.specification.game.root.0, "converted-terminal");
+    assert_eq!(restore_static_game(&converted).unwrap(), source);
+}
+
+#[test]
+fn artifact_policy_observation_preserves_order_and_rejects_a_changed_binding() {
+    use paignia_core::{build_policy_observation, ActionEdge, ActionId, GameInstanceId,
+        GameSessionId, GameSpecification, GameSpecificationId, ObservationRevision,
+        PolicyObservationBinding, PolicyObservationRequest, STATIC_GAME_PROFILE_V1};
+    let source = GameSpecification { schema_version: "1.0.0".into(), id: "urn:spec".into(),
+        game: Game { root: NodeId("decision".into()), nodes: BTreeMap::from([
+            (NodeId("decision".into()), Node::Decision { player: PlayerId("p".into()),
+                edges: vec![
+                    ActionEdge { action: ActionId("z".into()), target: NodeId("end".into()) },
+                    ActionEdge { action: ActionId("a".into()), target: NodeId("end".into()) },
+                ],
+            }),
+            (NodeId("end".into()), Node::Terminal { payoffs: BTreeMap::new() }),
+        ]) },
+    };
+    let expected = PolicyObservationBinding {
+        specification_id: GameSpecificationId("urn:spec".into()),
+        game_instance_id: GameInstanceId("urn:instance".into()),
+        session_id: GameSessionId("urn:session".into()), player_id: PlayerId("p".into()),
+        decision_node_id: NodeId("decision".into()), revision: ObservationRevision(7),
+    };
+    let mut request = PolicyObservationRequest { schema_version: "1.0.0".into(),
+        semantic_profile: STATIC_GAME_PROFILE_V1.into(), binding: expected.clone() };
+    let observation = build_policy_observation(&source, &expected, &request).unwrap();
+    assert_eq!(observation.legal_actions, vec![ActionId("z".into()), ActionId("a".into())]);
+    assert_eq!(observation.binding, expected);
+    request.binding.revision = ObservationRevision(8);
+    assert!(build_policy_observation(&source, &expected, &request).is_err());
+}
+'''
+
+
+def run(command: list[str], cwd: Path, *, echo: bool = True) -> str:
     result = subprocess.run(command, cwd=cwd, text=True, capture_output=True, check=True)
-    if result.stdout:
+    if echo and result.stdout:
         print(result.stdout, end="")
-    if result.stderr:
+    if echo and result.stderr:
         print(result.stderr, end="")
     return result.stdout
+
+
+def require_native_tests(output: str, expected: int) -> None:
+    """Reject absent, filtered, skipped, failed or duplicated test summaries."""
+    summaries = re.findall(
+        r"^test result: ok\. (\d+) passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;",
+        output, re.MULTILINE,
+    )
+    if expected <= 0 or summaries != [str(expected)]:
+        raise RuntimeError(f"expected exactly {expected} native tests without skips or failures")
+
+
+def isolated_command(command: list[str], provider: Path, staging: Path) -> list[str]:
+    """Mask the provider checkout for the complete child process tree.
+
+The host filesystem is read-only except the temporary consumer and Cargo cache.
+This is an acceptance guard, not an untrusted-code execution security boundary.
+"""
+    bubblewrap = shutil.which("bwrap")
+    if bubblewrap is None:
+        raise RuntimeError("bubblewrap is required; provider-unavailable artifact execution was not performed")
+    provider, staging = provider.resolve(), staging.resolve()
+    if staging.is_relative_to(provider):
+        raise ValueError("artifact consumer must be outside the provider checkout")
+    (staging / "build-tmp").mkdir(exist_ok=True)
+    wrapped = [bubblewrap, "--die-with-parent", "--ro-bind", "/", "/",
+               "--bind", str(staging), str(staging),
+               "--proc", "/proc", "--dev", "/dev"]
+    cargo_home = Path(os.environ.get("CARGO_HOME", str(Path.home() / ".cargo"))).resolve()
+    if cargo_home.exists():
+        if cargo_home.is_relative_to(provider):
+            raise ValueError("Cargo cache must be outside the masked provider checkout")
+        wrapped.extend(["--bind", str(cargo_home), str(cargo_home)])
+    # A cache can be an ancestor of the provider. Apply the mask after every
+    # writable bind so rebinding that ancestor cannot restore source access.
+    wrapped.extend(["--tmpfs", str(provider),
+                    "--setenv", "CARGO_TARGET_DIR", str(staging / "target"),
+                    "--setenv", "CARGO_NET_OFFLINE", "true",
+                    "--setenv", "TMPDIR", str(staging / "build-tmp"), *command])
+    return wrapped
+
+
+def unpack_artifact(archive_path: Path, staging: Path, name: str, version: str) -> Path:
+    """Unpack a bounded package without links, duplicate members or path escape."""
+    expected_root = f"{name}-{version}"
+    destination = staging / expected_root
+    seen: set[str] = set()
+    total = 0
+    with tarfile.open(archive_path, "r:gz") as archive:
+        for member in archive:
+            # Tar directories may have one trailing slash; otherwise require
+            # canonical spelling before PurePosixPath can collapse aliases.
+            spelling = member.name[:-1] if member.isdir() and member.name.endswith("/") else member.name
+            path = PurePosixPath(spelling)
+            if (path.is_absolute() or any(part in {"", ".", ".."} for part in spelling.split("/"))
+                    or not path.parts or path.parts[0] != expected_root
+                    or "\\" in member.name or "\x00" in member.name):
+                raise ValueError(f"invalid artifact path: {member.name}")
+            canonical = path.as_posix()
+            if canonical in seen:
+                raise ValueError(f"duplicate artifact member: {member.name}")
+            seen.add(canonical)
+            if len(seen) > 10_000:
+                raise ValueError("artifact exceeds the bounded package size")
+            if member.isdir():
+                continue
+            if not member.isfile():
+                raise ValueError(f"artifact member is not a regular file: {member.name}")
+            total += member.size
+            if member.size < 0 or total > 64 * 1024 * 1024:
+                raise ValueError("artifact exceeds the bounded package size")
+            output = staging.joinpath(*path.parts)
+            output.parent.mkdir(parents=True, exist_ok=True)
+            content = archive.extractfile(member)
+            if content is None:
+                raise ValueError(f"missing artifact member content: {member.name}")
+            with output.open("wb") as target:
+                shutil.copyfileobj(content, target)
+    for required in ("Cargo.toml", "LICENSE", "NOTICE", "src/lib.rs"):
+        if not (destination / required).is_file():
+            raise ValueError(f"artifact lacks required {required}")
+    package = tomllib.loads((destination / "Cargo.toml").read_text())["package"]
+    if package["name"] != name or package["version"] != version:
+        raise ValueError("artifact manifest identity does not match its requested package")
+    return destination
+
+
+def build_library_archives(cargo: str, provider: Path, assembly: Path, names: list[str]) -> str:
+    """Package unpublished libraries without claiming a registry install lock.
+
+    Current Cargo generates an archive lock even for libraries and tries to
+    resolve unpublished sibling packages through the registry. Cargo 1.75
+    omits that library lock. Where supported, explicitly retain that omission;
+    the qualification separately records the provider lock and checks each
+    offline consumer's resolved lock against it. Nothing is published.
+    """
+    help_text = run([cargo, "package", "--help"], provider, echo=False)
+    lock_flags = ["--exclude-lockfile"] if "--exclude-lockfile" in help_text else []
+    for name in names:
+        run([cargo, "package", "--offline", "--locked", "--no-verify", "--allow-dirty",
+             *lock_flags, "-p", name, "--target-dir", str(assembly)], provider)
+    return "explicit-library-lock-omission" if lock_flags else "cargo-library-default"
+
+
+def retain_artifacts(archives: dict[str, Path], artifacts: dict, destination: Path) -> None:
+    """Retain the exact qualified bytes, checking the entire set before writing."""
+    payloads: dict[str, bytes] = {}
+    for name, archive in archives.items():
+        content = archive.read_bytes()
+        if hashlib.sha256(content).hexdigest() != artifacts[name]["archive_sha256"]:
+            raise ValueError(f"qualified artifact hash changed before retention: {name}")
+        if archive.name in payloads:
+            raise ValueError("qualified artifact filenames must be distinct")
+        payloads[archive.name] = content
+    if not payloads:
+        raise ValueError("there are no qualified artifacts to retain")
+    destination.mkdir(parents=True, exist_ok=True)
+    for name, content in payloads.items():
+        with tempfile.NamedTemporaryFile(dir=destination, delete=False) as temporary:
+            temporary.write(content)
+            temporary_path = Path(temporary.name)
+        try:
+            temporary_path.replace(destination / name)
+        finally:
+            temporary_path.unlink(missing_ok=True)
+
+
+def artifact_qualification(cargo: str, artifact_dir: Path | None = None) -> dict:
+    """Build actual packages and execute each advertised feature profile."""
+    package_changes = run(
+        ["git", "status", "--porcelain", "--untracked-files=all", "--",
+         "Cargo.toml", "Cargo.lock", "crates"], ROOT, echo=False,
+    )
+    if package_changes.strip():
+        raise ValueError("commit the package sources/manifests/lock before artifact qualification")
+    metadata = json.loads(run(
+        [cargo, "metadata", "--format-version", "1", "--locked", "--offline", "--no-deps"],
+        ROOT, echo=False,
+    ))
+    selected = {p["name"]: p for p in metadata["packages"] if p["name"] in PACKAGES}
+    if set(selected) != set(PACKAGES):
+        raise ValueError("expected both native packages before packaging")
+    provider_lock = (ROOT / "Cargo.lock").read_bytes()
+    locked = {(p["name"], p["version"], p.get("source"))
+              for p in tomllib.loads(provider_lock.decode())["package"]}
+    receipt: dict = {
+        "scope": "local-cargo-artifact-consumption", "schema_version": 1,
+        "registry_publication": False, "two_real_consumer_acceptance": False,
+        "provider_revision": run(["git", "rev-parse", "HEAD"], ROOT, echo=False).strip(),
+        "provider_tree_sha": run(["git", "rev-parse", "HEAD^{tree}"], ROOT, echo=False).strip(),
+        "provider_worktree_dirty": bool(run(["git", "status", "--porcelain", "--untracked-files=all"], ROOT, echo=False).strip()),
+        "package_inputs_match_revision": True,
+        "provider_lock_sha256": hashlib.sha256(provider_lock).hexdigest(),
+        "cargo_version": run([cargo, "--version"], ROOT, echo=False).strip(),
+        "rustc_version": run(["rustc", "--version"], ROOT, echo=False).strip(),
+        "artifacts": {}, "profiles": [],
+        "provider_checkout_dependency": False,
+        "source_isolation": "bubblewrap masks the provider checkout during offline resolution, compilation and tests",
+    }
+    with tempfile.TemporaryDirectory(prefix="paignia-artifacts-") as temporary:
+        staging = Path(temporary).resolve()
+        receipt["archive_lockfile_policy"] = build_library_archives(
+            cargo, ROOT, staging / "assembly", list(PACKAGES)
+        )
+        extracted: dict[str, Path] = {}
+        archives: dict[str, Path] = {}
+        for name in PACKAGES:
+            package = selected[name]
+            archive = staging / "assembly/package" / f'{name}-{package["version"]}.crate'
+            archives[name] = archive
+            extracted[name] = unpack_artifact(archive, staging / "unpacked", name, package["version"])
+            hashes: dict[str, str] = {}
+            source = Path(package["manifest_path"]).parent
+            for file in sorted(extracted[name].rglob("*")):
+                if not file.is_file():
+                    continue
+                relative = file.relative_to(extracted[name]).as_posix()
+                content = file.read_bytes()
+                hashes[relative] = hashlib.sha256(content).hexdigest()
+                if relative in {"Cargo.toml", ".cargo_vcs_info.json", "Cargo.lock"}:
+                    continue
+                original = source / ("Cargo.toml" if relative == "Cargo.toml.orig" else relative)
+                if not original.is_file() or content != original.read_bytes():
+                    raise ValueError(f"artifact source/provenance mismatch: {name}/{relative}")
+            normalized = tomllib.loads((extracted[name] / "Cargo.toml").read_text())["package"]
+            for field in ("license", "rust-version", "edition", "publish"):
+                expected = package[{"rust-version": "rust_version"}.get(field, field)]
+                if field == "publish" and expected == []:
+                    expected = False
+                if normalized.get(field) != expected:
+                    raise ValueError(f"artifact changed package field: {name}/{field}")
+            receipt["artifacts"][name] = {
+                "version": package["version"], "archive_sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
+                "files_sha256": hashes, "lock_in_archive": "Cargo.lock" in hashes,
+            }
+        for name in PACKAGES:
+            features = sorted(feature for feature in selected[name]["features"] if feature != "default")
+            profiles = [("minimal", False, []), ("default", True, []),
+                        *[(f"feature:{feature}", False, [feature]) for feature in features],
+                        ("all", True, features)]
+            for index, (label, defaults, enabled) in enumerate(profiles):
+                consumer = staging / f"consumer-{name}-{index}"
+                (consumer / "src").mkdir(parents=True)
+                (consumer / "tests").mkdir()
+                (consumer / "src/lib.rs").write_text("//! Standalone artifact consumer.\n")
+                dependencies = [name] if name == "paignia-core" else list(PACKAGES)
+                lines = ['[package]', f'name = "artifact-{name}"', 'version = "0.0.0"',
+                         'edition = "2021"', 'publish = false', '[workspace]', '[dependencies]']
+                for dependency in dependencies:
+                    lines.append(
+                        f'{dependency} = {{ path = {json.dumps(str(extracted[dependency]))}, '
+                        f'version = {json.dumps("=" + selected[dependency]["version"])}, '
+                        f'default-features = {str(defaults if dependency == name else False).lower()}, '
+                        f'features = {json.dumps(enabled if dependency == name else [])} }}'
+                    )
+                lines.extend(['[patch.crates-io]',
+                              f'paignia-core = {{ path = {json.dumps(str(extracted["paignia-core"]))} }}'])
+                (consumer / "Cargo.toml").write_text("\n".join(lines) + "\n")
+                tests = ARTIFACT_CORE_TEST if name == "paignia-core" else ARTIFACT_SOLVER_TEST
+                count = 4 if name == "paignia-core" else 6
+                if name == "paignia-solve" and "correlated-equilibrium" in enabled:
+                    tests += ARTIFACT_CE_TEST
+                    count += 2
+                (consumer / "tests/artifact_consumer.rs").write_text(tests)
+                shutil.copy2(ROOT / "Cargo.lock", consumer / "Cargo.lock")
+                manifest = str(consumer / "Cargo.toml")
+                def isolated(command: list[str], *, echo: bool = True) -> str:
+                    return run(isolated_command(command, ROOT, staging), consumer, echo=echo)
+                isolated([cargo, "generate-lockfile", "--offline", "--manifest-path", manifest])
+                resolved_text = isolated([cargo, "metadata", "--format-version", "1", "--offline", "--locked",
+                                          "--manifest-path", manifest], echo=False)
+                resolved = json.loads(resolved_text)
+                for package in resolved["packages"]:
+                    if package["name"] == f"artifact-{name}":
+                        continue
+                    identity = (package["name"], package["version"], package.get("source"))
+                    if identity not in locked:
+                        raise ValueError(f"artifact consumer dependency drift: {identity}")
+                    if package["name"] in PACKAGES:
+                        expected = extracted[package["name"]] / "Cargo.toml"
+                        if Path(package["manifest_path"]) != expected or package.get("source") is not None:
+                            raise ValueError("consumer did not resolve the exact unpacked artifact")
+                output = isolated([cargo, "test", "--offline", "--locked", "--manifest-path", manifest,
+                                   "--test", "artifact_consumer"])
+                require_native_tests(output, count)
+                receipt["profiles"].append({
+                    "package": name, "profile": label, "default_features": defaults, "features": enabled,
+                    "tests_passed": count,
+                    "consumer_lock_sha256": hashlib.sha256((consumer / "Cargo.lock").read_bytes()).hexdigest(),
+                    "resolved_graph_sha256": hashlib.sha256(resolved_text.encode()).hexdigest(),
+                    "resolved_dependencies": [{key: p.get(key) for key in ("name", "version", "source")}
+                                              for p in resolved["packages"]],
+                })
+        if artifact_dir is not None:
+            retain_artifacts(archives, receipt["artifacts"], artifact_dir)
+            receipt["retained_artifact_files"] = sorted(path.name for path in archives.values())
+    return receipt
 
 
 def standalone_manifest(source: Path, workspace: dict) -> str:
@@ -107,13 +581,8 @@ def standalone_manifest(source: Path, workspace: dict) -> str:
     return text
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--receipt", type=Path, help="optional JSON result from successful native execution")
-    args = parser.parse_args()
-    cargo = shutil.which("cargo")
-    if cargo is None:
-        parser.exit(1, "cargo is required; extracted native consumer was not executed\n")
+def source_smoke(cargo: str) -> dict:
+    """Retain the historical weaker copy-based development check explicitly."""
     workspace = tomllib.loads((ROOT / "Cargo.toml").read_text())["workspace"]
     receipt: dict = {
         "scope": "extracted-source-package-smoke",
@@ -158,16 +627,33 @@ def main() -> int:
              "--test", "extracted_consumer"],
             consumer,
         )
-        if "test result: ok. 2 passed; 0 failed" not in output:
-            raise RuntimeError("expected both native consumer tests to execute and pass")
+        require_native_tests(output, 2)
         receipt["tests_passed"] = 2
         receipt["cargo_version"] = run([cargo, "--version"], consumer).strip()
         receipt["provider_checkout_dependency"] = False
         receipt["manifest_resolution"] = "workspace fields materialized; sibling path+version dependencies; offline lockfile"
+    return receipt
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--receipt", type=Path, help="optional JSON result from successful native execution")
+    parser.add_argument("--artifact-dir", type=Path, help="retain exact .crate archives only after every artifact profile passes")
+    parser.add_argument("--source-smoke", action="store_true", help="run only the historical copied-source smoke")
+    args = parser.parse_args()
+    if args.source_smoke and args.artifact_dir is not None:
+        parser.error("--artifact-dir requires actual artifact qualification, not --source-smoke")
+    cargo = shutil.which("cargo")
+    if cargo is None:
+        parser.exit(1, "cargo is required; native package consumer was not executed\n")
+    receipt = source_smoke(cargo) if args.source_smoke else artifact_qualification(cargo, args.artifact_dir)
     if args.receipt:
         args.receipt.parent.mkdir(parents=True, exist_ok=True)
         args.receipt.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
-    print("Extracted source-package smoke passed (2 native tests; no registry publication claimed)")
+    if args.source_smoke:
+        print("Extracted source-package smoke passed (2 native tests; no artifact acceptance)")
+    else:
+        print(f'Cargo artifact qualification passed ({len(receipt["profiles"])} isolated profiles; no registry publication)')
     return 0
 
 

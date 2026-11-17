@@ -7,57 +7,95 @@ native seed was transferred from
 Paignia is now the implementation home; domain applications consume it as a
 dependency. Static solving has no Kairos or host-language runtime dependency.
 
-**Status: pre-release native seed.** Source transfer is not scientific or release
-qualification. The initial CI tests both stable Rust and the declared Rust 1.75
-minimum. Registry publication is disabled in the package manifests; no published
-package or qualified general solver suite is claimed.
+**Status: pre-release native libraries.** The bounded native static contract,
+resolved dependency boundary and local Cargo artifact consumption are qualified
+on Rust 1.75 and stable. Independent review accepts bounded RK4/Euler, mixed-Nash
+support enumeration, optional correlated equilibrium, static identity conversion
+and owned policy observations. The [current T17 receipt](docs/validation/t17-review-20261117.md)
+records exact source, checks and limits. Registry publication remains disabled;
+two real application receipts and the remaining track obligations are open.
 
 The initial source transfer is merged in [PR #2](https://github.com/edithatogo/paignia/pull/2)
 at `12b22ce7571b9c590405bf53c2c1c5862b49cd64`.
 [Native CI for that revision](https://github.com/edithatogo/paignia/actions/runs/42421109771)
 passed on stable Rust and Rust 1.75: formatting, Clippy, 15 library tests,
 documentation and the two-test extracted-source consumer described below.
-Those results qualify this development baseline, not the pending package or
-scientific-method release claims.
+That is the historical transfer baseline. The current receipt above records
+subsequent contract, package and numerical work without relabelling the old run.
 
 ## Packages and current implementation
 
 | Package | Current implementation | Dependencies |
 |---|---|---|
-| `paignia-core` | Finite acyclic game graphs, string IDs, chance/decision/terminal nodes, specification metadata and validation. | Rust standard library only. |
-| `paignia-solve` | Backward induction for perfect-information games, chance expectations and bounded pure-Nash enumeration. Explicit tolerance, tie policy and diagnostic trace. | `paignia-core` only. |
+| `paignia-core` | Finite acyclic graphs; exact static-profile admission; typed identity roles; source-bound native result envelopes; reversible static identity conversion; owned policy observations. | `thiserror`; no Kairos, Voiage, application or host-language runtime. |
+| `paignia-solve` | Backward induction/chance expectations, bounded pure/mixed Nash, opt-in result emission, RK4/Euler and optional correlated-equilibrium programs. | `paignia-core`, `thiserror`; the explicit `correlated-equilibrium` feature adds pinned Clarabel 0.11.1 with its qualified closure. Default consumers do not acquire it. |
 
-Information sets, general mixed Nash, general correlated-equilibrium methods,
-CFR/CFR+, qualified RK4, learning and native simulation adapters remain planned.
-The inherited S01–S04 scientific obligations are open; none is implemented by
-copying a legacy method name. `Solution.trace` is a solver diagnostic over
-hypothetical alternatives, not a causal simulation event stream.
+Information sets, CFR/CFR+, learning and native simulation adapters remain open.
+The [mixed-Nash contract](docs/validation/mixed-nash.md) limits enumeration to
+verified finite witnesses from equal-cardinality nonsingular supports, and
+explicitly rejects Lemke–Howson. It does not promise a complete catalogue.
+The [correlated-equilibrium contract](docs/validation/correlated-equilibrium.md)
+requires actual primal/dual admission of unchanged raw LP coordinates; it reports
+an approximate result and preserves solver termination. The
+[RK4 contract](docs/validation/replicator-rk4.md) states its smooth-segment,
+representable-time and simplex admission limits. Its implementation does not
+close the external Kairos caller/retirement part of S01. `Solution.trace` is
+solver analysis over hypothetical alternatives, not a causal simulation stream.
+
+[Static conversion](docs/architecture/game-semantic-conversion-v1.md) preserves
+the declared graph semantics and decision selection order. The
+[observation DTO](docs/architecture/policy-observation-v1.md) exposes owned
+declared context and ordered legal actions. Matching caller-supplied context
+establishes consistency; the host owns actual session authority and freshness.
 
 Known seed behavior remains explicit: chance edges may have probability zero;
 extensive-form missing player payoffs currently act as zero; ties use the
-configured tolerance and lexical action ordering. T17.01 owns the stronger
-versioned result/semantic contract. Do not infer broader support from the names
-of UOGTO classes or from this repository's existence.
+configured pairwise tolerance in stored edge order, followed by lexical action
+ordering. Near-tie chains can depend on input order. The [native result contract](docs/architecture/game-result-contract-v1.md)
+names that behavior explicitly; it does not promise an exact equilibrium or an
+exhaustive catalogue. UOGTO names alone do not establish implementation support.
 
 ## Build and verify
 
 ```bash
+cargo fetch --locked
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 cargo test --workspace --all-targets --locked
-cargo doc --workspace --no-deps --locked
+cargo test --workspace --all-targets --all-features --locked
+cargo test --locked -p paignia-core --doc
+cargo test --locked -p paignia-solve --doc --all-features
+python3 -B -m unittest discover -s tests
+cargo doc --workspace --no-deps --all-features --locked
 python3 scripts/validate_extraction.py
 python3 scripts/validate_game_packages.py
 ```
 
-The source-package smoke script copies the package files into a temporary tree
-outside this workspace, materializes inherited Cargo metadata/lints, and builds
-a separate native consumer using explicit local path-plus-version dependencies
-and an offline generated lockfile. Two native tests check the analytic expected
-payoff of a chance decision and rejection of an invalid graph. It uses Python
-only as development orchestration; all game execution remains Rust. This check
-is **extracted-source consumption**, not registry artifact publication, a full
-release receipt, or two real application consumers.
+The package guard creates actual `.crate` archives, verifies normalized metadata,
+source and attribution, then resolves and tests their unpacked contents in
+separate consumers. Linux `bubblewrap` makes the provider checkout unavailable
+throughout offline resolution, compilation and execution. The receipt records
+artifact hashes, compiler versions, the provider lock and each consumer's
+resolved dependency graph/lock. Minimal, default, individual advertised features
+and all-feature profiles execute separately. Python 3.11+ orchestrates these
+checks; all game execution is Rust. `cargo fetch --locked` caches the full
+metadata closure, including platform-specific packages that a native build
+does not download. Boundary inspection and artifact consumers then run offline.
+
+Library archive locks are omitted where needed for unpublished sibling packages;
+provider and isolated-consumer locks remain checked. This is library artifact
+consumption, not a `cargo install --locked` or registry-publication receipt.
+`--source-smoke` retains the older two-test copied-source check under its weaker,
+explicit scope. Neither check supplies the two required real application cases.
+
+Use `--artifact-dir target/qualified-packages` with `--receipt` to retain the
+exact archives after every profile passes. Hashes are rechecked before any
+archive is copied. CI retains both archives alongside the receipt and native
+logs in its compiler-specific qualification artifact, so application owners
+can test those bytes directly against their own models and expected outcomes.
+The [application-owner handoff](docs/validation/game-consumer-handoff.md) gives
+the required receipt fields and reproducible qualification procedure.
 
 Consume an exact reviewed Git revision until release artifacts are qualified.
 Keep domain game definitions and payoff construction in the consumer. The

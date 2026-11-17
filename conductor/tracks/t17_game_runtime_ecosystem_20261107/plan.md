@@ -1,4 +1,4 @@
-# T17 implementation plan — bounded seed started, qualification pending
+# T17 implementation plan — static profile qualified, full track active
 
 Each leaf changes one behavior and touches at most five files. Paths are
 repository-relative unless prefixed with a consumer name. New paths and test
@@ -25,13 +25,42 @@ Dependency lines control execution; phase headings group related work. The
 bounded static path is T17.01–T17.03, two selected real consumer cases in
 T17.09–T17.10, then T17.12. It does not require the optional native adapter or
 all future numerical methods. Additional capabilities require their own named
-receipts. All leaves remain open; partial qualification does not close T17.
+receipts. Leaf status below records bounded acceptance; partial qualification
+does not close T17.
 The [naming supplement](paignia-identity-and-promotion.md) records the bounded
 seed rename and source-level consumer slices without adding competing leaves.
 
+## Current acceptance — 17 November 2026
+
+[Accepted source and Conductor review](../../../docs/validation/t17-review-20261117.md):
+`bd880dd756d2ba56cc5f479bc078cea31b53c1d1`, hosted native run
+[44060831778](https://github.com/edithatogo/paignia/actions/runs/44060831778).
+Both Rust 1.75 and stable 1.100 pass 232 default / 267 all-feature native tests,
+five doctests, 58 retained independent native controls, 54 Python guards and
+seven artifact profiles (40 executions of 12 distinct cases). Frozen numerical
+39 / inspection 28 controls and privacy pass. Offline security remains queued.
+
+**Completed bounded provider leaves:** T17.01, .02, .03, .04, .05, .06, .13, .14.
+Their independent specialist reviews and final integrated gates are accepted.
+The unchanged specification assigns corrected reusable methods to Paignia;
+Kairos Track 110 separately retains source regression, migration and retirement.
+Native wire serialization, a general normal-form envelope and a mandatory Gambit
+run were not added as unsupported extra prerequisites.
+
+**Nine leaves remain open:** .07, .08, .09, .10, .11, .12, .15, .16 and .17.
+Their external contracts and real application evidence remain necessary. The
+package handoff now binds actual immutable source/profile/archive evidence;
+the eligibility guard's sole current error is the missing two application
+receipts. Registry publication stays disabled and full-track archival is ineligible.
+
+Earlier dated paragraphs retain historical source, failure and review evidence,
+including then-future paths and then-pending PR/merge wording. The current
+checkboxes and linked receipt control status. No old result is relabelled as
+new execution, and no remaining requirement is withdrawn to close the track.
+
 ## Phase A — package boundary
 
-### [~] T17.integration-20261117 — receive merged work and resume maturity
+### [x] T17.integration-20261117 — receive merged work and resume maturity
 
 - User instruction: implement T17, address blockers, review, apply fixes and
   archive only after its actual completion criteria are met. The receiving
@@ -67,7 +96,7 @@ seed rename and source-level consumer slices without adding competing leaves.
   on CPython 3.12.14. No fixture or numerical claim changes; this restores an
   existing shared gate rather than starting T18 production implementation.
 
-### [~] T17.01 — expose a versioned generic game/result contract
+### [x] T17.01 — expose a versioned generic game/result contract
 
 - Behavior: validate the declared semantic and result schema version, rejecting
   unsupported versions explicitly while preserving UOGTO identifiers.
@@ -90,7 +119,7 @@ seed rename and source-level consumer slices without adding competing leaves.
   traces and realized causal traces are different record types. Core references
   no Kairos state, clock or simulation RNG; unknown information structures reject.
 
-#### [~] T17.01.profile — admit the existing static input profile explicitly
+#### [x] T17.01.profile — admit the existing static input profile explicitly
 
 - One behavior: `GameSpecification::validate_for_profile` admits only the exact
   versioned finite, perfect-information, intentional sparse-zero input profile,
@@ -128,7 +157,7 @@ seed rename and source-level consumer slices without adding competing leaves.
   The reviewer has no residual assignment and can be archived. This is scoped
   agent-review acceptance, not a formal GitHub approval or full T17.01 closure.
 
-#### [~] T17.01.profile-controls — retain accepted admission regressions
+#### [x] T17.01.profile-controls — retain accepted admission regressions
 
 - One behavior: pin existing input-profile admission using selected probes from
   the accepted independent review; no production or solver behavior changes.
@@ -148,7 +177,7 @@ seed rename and source-level consumer slices without adding competing leaves.
   [PR16](https://github.com/edithatogo/paignia/pull/16) records the exact-head
   hosted handoff; it remains draft and does not close T17.01.
 
-#### [~] T17.01.identities — admit a versioned result identity record
+#### [x] T17.01.identities — admit a versioned result identity record
 
 - One behavior: reject unsupported identity-schema versions or blank supplied
   identities without rewriting their strings. Specification, instantiated game
@@ -188,7 +217,7 @@ seed rename and source-level consumer slices without adding competing leaves.
   ownership or aggregating overlapping test counts. This accepts the bounded
   component, not full T17.01, conversion or consumer qualification.
 
-#### [~] T17.01.reviewed-integration — qualify the reviewed static components on main
+#### [x] T17.01.reviewed-integration — qualify the reviewed static components on main
 
 - One behavior: integrate the unchanged PR14/16/21 static-contract source and
   tests with current main `c7367b93244add88bb76f0ae34fcd244787ebab6`.
@@ -208,7 +237,7 @@ seed rename and source-level consumer slices without adding competing leaves.
   and preserves PR14/16/21 ancestry. Post-merge workflow execution was queued
   at this source snapshot; its final receiving receipt belongs to PR24.
 
-#### [~] T17.01.doctest-ci — execute existing role-separation doctests in CI
+#### [x] T17.01.doctest-ci — execute existing role-separation doctests in CI
 
 - One behavior: run `cargo test --locked -p paignia-core --doc` in both hosted
   compiler jobs; no existing command, permission, trigger or check is removed.
@@ -222,7 +251,7 @@ seed rename and source-level consumer slices without adding competing leaves.
   and MSRV each execute 52 native, three doctests and two source-consumer tests;
   privacy passes. Receiving-main integration is recorded separately on PR25.
 
-#### [~] T17.01.diagnostics — admit finite declared diagnostic magnitudes
+#### [x] T17.01.diagnostics — admit finite declared diagnostic magnitudes
 
 - One behavior: validate an exact versioned component containing a residual or
   exploitability magnitude and a caller-supplied tolerance. Reject non-finite
@@ -261,7 +290,17 @@ seed rename and source-level consumer slices without adding competing leaves.
   **Fresh independent public-contract review is still required for this new
   component.** Accepted PR21 reviews do not cover it; no new reviewer is created.
 
-### [~] T17.02 — reject Kairos in the static package dependency closure
+#### [x] T17.01.envelope/emission — admit and emit the selected native result
+
+The native envelope adds 31 source/instance/policy admission tests. The opt-in
+emitter adds nine controls, including typed budget/output failures and overflow
+in an unchosen branch. It retains the declared legacy selection behavior.
+Independent review accepted the combined interface and nine external controls,
+retained in `verification/result_contract_review`. It establishes a computed
+native record, not an exact-equilibrium or serialization claim. Integrated
+stable/MSRV evidence is pinned in the current receipt above.
+
+### [x] T17.02 — reject Kairos in the static package dependency closure
 
 - Behavior: fail the boundary guard if either generic crate gains a direct or
   transitive Kairos dependency; permit it only in the optional adapter package.
@@ -279,7 +318,20 @@ seed rename and source-level consumer slices without adding competing leaves.
   build dependency. Keep optimization in solver/backend scope and avoid making
   semantic tooling, serialization or native integration mandatory in game core.
 
-### [~] T17.03 — consume the packaged crates outside this workspace
+### [x] T17.03 — consume the packaged crates outside this workspace
+
+- Current-Cargo compatibility correction (17 November): native CI at published
+  `b9bcb435746c72608c36870152972252b7dc0dca` passed Rust 1.75 but stable Cargo
+  1.100 could not create the solver archive: its generated library archive lock
+  tried to resolve unpublished `paignia-core` through crates.io. Packaging both
+  workspace libraries together reproduced the same failure. The focused new
+  unpublished-sibling control first fails at the missing packaging helper.
+  Use Cargo's supported `--exclude-lockfile` only when available; Cargo 1.75
+  already omits library locks. Record this policy and each actual archive's
+  contents. Provider and isolated-consumer lock hashes/dependency identity checks
+  remain required; this qualifies library consumption, not `cargo install
+  --locked` or registry publication. See the official
+  [Cargo package reference](https://doc.rust-lang.org/cargo/commands/cargo-package.html).
 
 - Behavior: build a standalone consumer from local package artifacts without
   importing application code or relying on the provider source tree.
@@ -345,52 +397,63 @@ oracle and result contract. Exclusion is not scientific completion.
   caller/retirement, comparator/backend and package/consumer obligations remain.
   T17.13 remains held; no T18/native simulation or consumer activation follows.
 
-### [ ] T17.04 — implement the declared four-stage replicator step (S01)
+### [x] T17.04 — implement the declared four-stage replicator step (S01)
+
+- Acceptance: 28 author tests and ten independent native controls; actual RK4 artifact calls and both compiler profiles pass. T17.04 provider implementation is complete; Kairos Track 110/S01 source disposition remains external.
 
 - Behavior: advance supported continuous replicator dynamics by the declared
   four-stage RK4 update, retaining the legacy Euler result under its own version.
+- 17 November implementation scope: solver module/export, `replicator.rs`,
+  `replicator_rk4.rs` tests and the method document. Consume the frozen independent
+  oracle literals unchanged. Test four stage times, logistic fourth-order
+  refinement, explicit simplex/non-finite failures and one-sided discontinuity
+  segments. Upstream retirement and full-track acceptance remain separate.
 - Depends on: T17.01; exact upstream API/caller inventory recorded first.
 - Execution: specialist, numerical integration.
 - Files (4): `crates/paignia-solve/src/lib.rs`,
-  `crates/paignia-solve/src/replicator.rs` (future),
-  `crates/paignia-solve/tests/replicator_rk4.rs` (future),
-  `docs/validation/replicator-rk4.md` (future).
+  `crates/paignia-solve/src/replicator.rs`,
+  `crates/paignia-solve/tests/replicator_rk4.rs`,
+  `docs/validation/replicator-rk4.md`.
 - Check: `cargo test --locked -p paignia-solve --test replicator_rk4`
-  (future target). Use analytic logistic evolution and step-refinement order;
+  (native target). Use analytic logistic evolution and step-refinement order;
   include time-varying fitness, discontinuity handling, positivity/conservation,
   and a negative control that fails for Euler relabelled as RK4.
 
-### [ ] T17.05 — return a qualified mixed-Nash result (S02)
+### [x] T17.05 — return a qualified mixed-Nash result (S02)
+
+- Acceptance: corrected 39-test method, 14 independent controls, unchanged tolerances, actual artifact witness/cancellation calls and both compilers pass. T17.05 is complete for finite verified support witnesses; Kairos S02 source disposition remains external.
 
 - Behavior: solve the explicitly supported game class with the named mixed-Nash
   algorithm, returning explicit unsupported/nonconverged statuses elsewhere.
 - Depends on: T17.01; exact upstream API/caller inventory recorded first.
 - Execution: specialist, equilibrium algorithms.
 - Files (5): `crates/paignia-solve/src/lib.rs`,
-  `crates/paignia-solve/src/mixed_nash.rs` (future),
-  `crates/paignia-solve/tests/mixed_nash.rs` (future),
-  `fixtures/conformance/mixed-nash-v1.json` (future),
-  `docs/validation/mixed-nash.md` (future).
+  `crates/paignia-solve/src/mixed_nash.rs`,
+  `crates/paignia-solve/tests/mixed_nash.rs`,
+  `verification/numerical_oracles/mixed_nash_v1.json`,
+  `docs/validation/mixed-nash.md`.
 - Check: `cargo test --locked -p paignia-solve --test mixed_nash`
-  (future target). Freeze independent fixtures and residual tolerances for
+  (native target). Freeze independent fixtures and residual tolerances for
   dominance, matching pennies, coordination, degeneracy, multiple equilibria,
   and rectangular games. Include the upstream dominant-action counterexample.
   Account explicitly for support-enumeration and Lemke–Howson promises; an
   unimplemented algorithm stays unsupported, never silently substituted.
 
-### [ ] T17.06 — solve the declared correlated-equilibrium program (S03)
+### [x] T17.06 — solve the declared correlated-equilibrium program (S03)
+
+- Acceptance: qualified optional Clarabel 0.11.1, 27 method controls, eight backend probes, 13 independent controls and actual enabled-feature artifact optimum/nonconvergence calls pass on both compilers. Approximate raw-coordinate admission is explicit; Kairos S03 source disposition remains external.
 
 - Behavior: return a distribution satisfying the actual incentive constraints
   and declared objective, with solver status and residuals.
 - Depends on: T17.01; qualified solver-backend decision before dependency work.
 - Execution: specialist, optimization and equilibrium constraints.
 - Files (5): `crates/paignia-solve/src/lib.rs`,
-  `crates/paignia-solve/src/correlated_equilibrium.rs` (future),
-  `crates/paignia-solve/tests/correlated_equilibrium.rs` (future),
-  `fixtures/conformance/correlated-equilibrium-v1.json` (future),
-  `docs/validation/correlated-equilibrium.md` (future).
-- Check: `cargo test --locked -p paignia-solve --test correlated_equilibrium`
-  (future target). Compare feasibility, incentive residuals, and objective with
+  `crates/paignia-solve/src/correlated_equilibrium.rs`,
+  `crates/paignia-solve/tests/correlated_equilibrium.rs`,
+  `verification/numerical_oracles/correlated_equilibrium_v1.json`,
+  `docs/validation/correlated-equilibrium.md`.
+- Check: `cargo test --locked -p paignia-solve --test correlated_equilibrium --features correlated-equilibrium`
+  (native target). Compare feasibility, incentive residuals, and objective with
   independent solutions, including a case distinguishing a correlated optimum
   from a product distribution. Evaluate existing Clarabel capability before
   custom optimization; any dependency/lock change gets a separate bounded leaf.
@@ -440,8 +503,15 @@ oracle and result contract. Exclusion is not scientific completion.
   stochastic stream isolation or checkpoint resume. The adapter depends on game
   core and Kairos; static solving stays independent and still passes T17.02.
 
-### [ ] T17.13 — reject semantically lossy game-profile conversions
+### [x] T17.13 — reject semantically lossy game-profile conversions
 
+- Acceptance: 29 author tests, six independent policy-invariance/identity controls, actual artifact round trip and both compiler profiles pass. Static .13 is complete; native handle/lifetime acceptance remains .08.
+
+- Current bounded claim: convert explicit neutral identity records under the
+  accepted static profile. Preserve role-specific identity bijections, full
+  source/target strings, graph and edge order, numeric bits and sparse-zero
+  semantics. Reject unknown/duplicate/colliding mappings and action renaming
+  that changes lexical selection order. No native handles or ontology parser.
 - Behavior: convert the supported versioned game representation without silently
   losing identity or changing the declared game semantics.
 - Depends on: T17.01 for static semantics/identity; the source map supplies the
@@ -450,11 +520,11 @@ oracle and result contract. Exclusion is not scientific completion.
   prerequisite for .13. Static semantic acceptance does not wait for it.
 - Execution: specialist, public conversion and compatibility contract.
 - Files (4): `crates/paignia-core/src/lib.rs`,
-  `crates/paignia-core/src/conversion.rs` (future),
-  `crates/paignia-core/tests/semantic_conversion.rs` (future),
-  `docs/architecture/game-semantic-conversion-v1.md` (future).
+  `crates/paignia-core/src/conversion.rs`,
+  `crates/paignia-core/tests/semantic_conversion.rs`,
+  `docs/architecture/game-semantic-conversion-v1.md`.
 - Check: `cargo test --locked -p paignia-core --test semantic_conversion`
-  (future target). Preserve specification/instance/session/trace namespaces,
+  (native target). Preserve specification/instance/session/trace namespaces,
   full UOGTO and legacy Kairos IRIs, and versioned neutral identity records;
   reject collisions, unknown identities and unsupported mappings. Core accepts
   explicit DTOs, never Kairos types or runtime references. Round-trip the
@@ -466,18 +536,20 @@ oracle and result contract. Exclusion is not scientific completion.
   handles, stale native lifetimes and causal dispatch against Kairos; those checks
   must not be represented as completed by a static DTO round trip.
 
-### [ ] T17.14 — expose only the declared player observation to a live policy
+### [x] T17.14 — expose only the declared player observation to a live policy
+
+- Acceptance: 32 author tests, six independent projection/isolation controls, the no-world-field compile-fail test and actual artifact action-order/binding checks pass on both compilers. Caller-declared consistency grants no native authority or freshness.
 
 - Behavior: construct a policy input containing only the player's permitted
   information and legal actions for the selected executable profile.
 - Depends on: T17.01; T17.17 additionally applies when information sets are claimed.
 - Execution: specialist, game information and public policy contract.
 - Files (4): `crates/paignia-core/src/lib.rs`,
-  `crates/paignia-core/src/observation.rs` (future),
-  `crates/paignia-core/tests/policy_observation.rs` (future),
-  `docs/architecture/policy-observation-v1.md` (future).
+  `crates/paignia-core/src/observation.rs`,
+  `crates/paignia-core/tests/policy_observation.rs`,
+  `docs/architecture/policy-observation-v1.md`.
 - Check: `cargo test --locked -p paignia-core --test policy_observation`
-  (future target). Two hidden states with the same lawful observation yield the
+  (native target). Two hidden states with the same lawful observation yield the
   same policy input/legal-action set; opponent-private values and full-world
   references cannot leak through it. Bind session, player/information-set and
   observation revision, rejecting unsupported information structures explicitly.
@@ -585,6 +657,34 @@ oracle and result contract. Exclusion is not scientific completion.
 ## Phase E — bounded evidence and release eligibility
 
 ### [ ] T17.12 — require two real consumers for bounded release eligibility
+
+#### [x] T17.12.guard — validate received evidence without inventing acceptance
+
+- Implement a deterministic fail-closed validator for actual package receipts,
+  two distinct external application receipts with matching provider artifacts
+  and semantic profile, and explicit S01–S04 dispositions. Receipt files are
+  content-hashed; publication and full-track completion are separate decisions.
+- Scope: `scripts/validate_game_consumer_evidence.py`, its focused test file,
+  `docs/validation/game-consumers.json`, and this plan. Current real application
+  receipts are absent; the checked-in report must remain ineligible.
+- Tests distinguish two valid synthetic receipt records from duplicate, toy,
+  mismatched, missing, corrupted, failed or unsupported-method evidence. These
+  test records exercise admission only and never count as actual consumers.
+- Tests-first `76b3168` executes 12 tests with 20 errors from the explicit
+  unimplemented validator. The initial implementation executes 13 passing tests,
+  including malformed-data rejection. The committed real manifest correctly
+  reports ineligible (exit 1): immutable artifacts/profile and both application
+  receipts are absent. This does not complete parent T17.12 or authenticate
+  external claims; owner review of the content-bound receipts remains required.
+  Independent review subsequently found identity canonicalization, profile
+  binding, scientific-method evidence and feature-coverage gaps. Corrected
+  admission now passes 30 controls; the real manifest remains ineligible.
+- Current evidence: `docs/validation/receipts/t17-bd880dd-handoff.json` binds a
+  clean immutable provider, exact profile and both qualified archive bytes,
+  independently matched to the downloaded hosted artifact. The current guard
+  runs and returns exit 1 solely for the missing two real application receipts.
+  Its selected release capability is backward induction through the graph
+  profile; separate bimatrix/ODE claims retain their method/input requirements.
 
 - Behavior: report bounded release as ineligible until two distinct real consumer
   receipts identify the same qualified static artifacts and passing profile.

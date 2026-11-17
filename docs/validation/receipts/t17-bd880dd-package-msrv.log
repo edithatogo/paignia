@@ -1,0 +1,145 @@
+   Packaging paignia-core v0.1.0 (/workspace/scratch/8cd3c3c17a21/paignia-qualified-provider/crates/paignia-core)
+    Packaged 12 files, 173.4KiB (33.0KiB compressed)
+   Packaging paignia-solve v0.1.0 (/workspace/scratch/8cd3c3c17a21/paignia-qualified-provider/crates/paignia-solve)
+    Packaged 15 files, 188.5KiB (41.8KiB compressed)
+
+running 4 tests
+test rejects_missing_root ... ok
+test explicit_static_identity_mapping_round_trips_from_the_artifact ... ok
+test validates_a_finite_terminal_game ... ok
+test artifact_policy_observation_preserves_order_and_rejects_a_changed_binding ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.27
+   Compiling quote v1.0.47
+   Compiling thiserror v1.0.69
+   Compiling syn v2.0.119
+   Compiling thiserror-impl v1.0.69
+   Compiling paignia-core v0.1.0 (/tmp/paignia-artifacts-lv5j2ldh/unpacked/paignia-core-0.1.0)
+   Compiling artifact-paignia-core v0.0.0 (/tmp/paignia-artifacts-lv5j2ldh/consumer-paignia-core-0)
+    Finished test [unoptimized + debuginfo] target(s) in 4.70s
+     Running tests/artifact_consumer.rs (/tmp/paignia-artifacts-lv5j2ldh/target/debug/deps/artifact_consumer-ea7fb3cd846e394a)
+
+running 4 tests
+test artifact_policy_observation_preserves_order_and_rejects_a_changed_binding ... ok
+test rejects_missing_root ... ok
+test validates_a_finite_terminal_game ... ok
+test explicit_static_identity_mapping_round_trips_from_the_artifact ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Compiling artifact-paignia-core v0.0.0 (/tmp/paignia-artifacts-lv5j2ldh/consumer-paignia-core-1)
+    Finished test [unoptimized + debuginfo] target(s) in 0.44s
+     Running tests/artifact_consumer.rs (/tmp/paignia-artifacts-lv5j2ldh/target/debug/deps/artifact_consumer-ea7fb3cd846e394a)
+
+running 4 tests
+test rejects_missing_root ... ok
+test validates_a_finite_terminal_game ... ok
+test artifact_policy_observation_preserves_order_and_rejects_a_changed_binding ... ok
+test explicit_static_identity_mapping_round_trips_from_the_artifact ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Compiling artifact-paignia-core v0.0.0 (/tmp/paignia-artifacts-lv5j2ldh/consumer-paignia-core-2)
+    Finished test [unoptimized + debuginfo] target(s) in 0.36s
+     Running tests/artifact_consumer.rs (/tmp/paignia-artifacts-lv5j2ldh/target/debug/deps/artifact_consumer-ea7fb3cd846e394a)
+
+running 6 tests
+test artifact_rk4_matches_the_independent_four_stage_witness ... ok
+test artifact_emits_a_source_bound_native_result ... ok
+test invalid_graph_is_rejected ... ok
+test artifact_mixed_nash_preserves_a_mixed_witness_and_positive_deviation ... ok
+test pure_coordination_preserves_both_equilibria ... ok
+test chance_expectation_and_selected_action ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Compiling paignia-solve v0.1.0 (/tmp/paignia-artifacts-lv5j2ldh/unpacked/paignia-solve-0.1.0)
+   Compiling artifact-paignia-solve v0.0.0 (/tmp/paignia-artifacts-lv5j2ldh/consumer-paignia-solve-0)
+    Finished test [unoptimized + debuginfo] target(s) in 1.32s
+     Running tests/artifact_consumer.rs (/tmp/paignia-artifacts-lv5j2ldh/target/debug/deps/artifact_consumer-acf18a4cc16f5506)
+
+running 6 tests
+test artifact_rk4_matches_the_independent_four_stage_witness ... ok
+test invalid_graph_is_rejected ... ok
+test artifact_emits_a_source_bound_native_result ... ok
+test chance_expectation_and_selected_action ... ok
+test artifact_mixed_nash_preserves_a_mixed_witness_and_positive_deviation ... ok
+test pure_coordination_preserves_both_equilibria ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Compiling paignia-solve v0.1.0 (/tmp/paignia-artifacts-lv5j2ldh/unpacked/paignia-solve-0.1.0)
+   Compiling artifact-paignia-solve v0.0.0 (/tmp/paignia-artifacts-lv5j2ldh/consumer-paignia-solve-1)
+    Finished test [unoptimized + debuginfo] target(s) in 1.27s
+     Running tests/artifact_consumer.rs (/tmp/paignia-artifacts-lv5j2ldh/target/debug/deps/artifact_consumer-3fad581a1af0fc8f)
+
+running 8 tests
+test artifact_rk4_matches_the_independent_four_stage_witness ... ok
+test artifact_emits_a_source_bound_native_result ... ok
+test artifact_mixed_nash_preserves_a_mixed_witness_and_positive_deviation ... ok
+test invalid_graph_is_rejected ... ok
+test artifact_correlated_equilibrium_exposes_an_exhausted_budget ... ok
+test pure_coordination_preserves_both_equilibria ... ok
+test chance_expectation_and_selected_action ... ok
+test artifact_correlated_equilibrium_recovers_the_independent_lp_optimum ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Compiling syn v1.0.109
+   Compiling ident_case v1.0.1
+   Compiling fnv v1.0.7
+   Compiling strsim v0.10.0
+   Compiling serde_core v1.0.229
+   Compiling syn v2.0.119
+   Compiling autocfg v1.5.1
+   Compiling syn v3.0.10
+   Compiling zmij v1.0.23
+   Compiling serde v1.0.229
+   Compiling serde_json v1.0.154
+   Compiling itoa v1.0.19
+   Compiling once_cell v1.21.4
+   Compiling either v1.19.0
+   Compiling num-traits v0.2.19
+   Compiling clarabel v0.11.1
+   Compiling memchr v2.8.3
+   Compiling itertools v0.11.0
+   Compiling cfg-if v1.0.5
+   Compiling lazy_static v1.5.1
+   Compiling amd v0.2.2
+   Compiling serde_derive v1.0.229
+   Compiling thiserror-impl v1.0.69
+   Compiling enum_dispatch v0.3.13
+   Compiling darling_core v0.14.4
+   Compiling thiserror v1.0.69
+   Compiling paignia-core v0.1.0 (/tmp/paignia-artifacts-lv5j2ldh/unpacked/paignia-core-0.1.0)
+   Compiling darling_macro v0.14.4
+   Compiling darling v0.14.4
+   Compiling derive_builder_core v0.11.2
+   Compiling serde-big-array v0.5.1
+   Compiling derive_builder_macro v0.11.2
+   Compiling derive_builder v0.11.2
+   Compiling paignia-solve v0.1.0 (/tmp/paignia-artifacts-lv5j2ldh/unpacked/paignia-solve-0.1.0)
+   Compiling artifact-paignia-solve v0.0.0 (/tmp/paignia-artifacts-lv5j2ldh/consumer-paignia-solve-2)
+    Finished test [unoptimized + debuginfo] target(s) in 8.48s
+     Running tests/artifact_consumer.rs (/tmp/paignia-artifacts-lv5j2ldh/target/debug/deps/artifact_consumer-5dc8b4503defbad0)
+
+running 8 tests
+test artifact_rk4_matches_the_independent_four_stage_witness ... ok
+test artifact_emits_a_source_bound_native_result ... ok
+test artifact_mixed_nash_preserves_a_mixed_witness_and_positive_deviation ... ok
+test invalid_graph_is_rejected ... ok
+test artifact_correlated_equilibrium_exposes_an_exhausted_budget ... ok
+test chance_expectation_and_selected_action ... ok
+test pure_coordination_preserves_both_equilibria ... ok
+test artifact_correlated_equilibrium_recovers_the_independent_lp_optimum ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Compiling paignia-solve v0.1.0 (/tmp/paignia-artifacts-lv5j2ldh/unpacked/paignia-solve-0.1.0)
+   Compiling artifact-paignia-solve v0.0.0 (/tmp/paignia-artifacts-lv5j2ldh/consumer-paignia-solve-3)
+    Finished test [unoptimized + debuginfo] target(s) in 2.11s
+     Running tests/artifact_consumer.rs (/tmp/paignia-artifacts-lv5j2ldh/target/debug/deps/artifact_consumer-e9ab4afd3db9f78d)
+Cargo artifact qualification passed (7 isolated profiles; no registry publication)

@@ -1,0 +1,11 @@
+[package]
+name = "paignia-independent-result-review"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[dependencies]
+paignia-core = { path = "../../crates/paignia-core", version = "=0.1.0" }
+paignia-solve = { path = "../../crates/paignia-solve", version = "=0.1.0" }
