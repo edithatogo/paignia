@@ -1,5 +1,5 @@
 //! Original rational controls copied from the independently frozen fixture:
-//! verification/numerical_oracles/mixed_nash_v1.json, SHA-256
+//! `verification/numerical_oracles/mixed_nash_v1.json`, SHA-256
 //! 9545116fc6aa4b1026bf6b2a6a9b509af92d8ed6ca2204e68bcdccf8e2e126e3.
 //! Constants are local so extracted Cargo packages run these tests without a
 //! repository-relative fixture, Python runtime, or a second production solver.
