@@ -6,10 +6,9 @@ Read the [Voiage handoff](voiage-handoff.md) and the concurrently authored
 [scientific-contract refinements](../../conductor/refinements/scientific-contracts-20261108.md).
 Existing owner plans retain task status and acceptance authority.
 
-Current reconciliation is in [accepted reviews and serial integration](#accepted-reviews-and-serial-integration--16-november-2026)
-and the [diagnostic implementation receipt](#diagnostic-implementation-receipt--16-november-2026).
-The 15 November update records the bounded T17.01 input-profile slice.
-The earlier snapshots remain historical evidence.
+Current reconciliation is in [provider acceptance and remaining owners](#provider-acceptance-and-remaining-owners--17-november-2026).
+The earlier 8–16 November snapshots remain historical source, planning and
+review evidence; they do not override the current Conductor acceptance receipt.
 
 ## Source change reconciled
 
@@ -693,3 +692,99 @@ tests passed against the exact local Git commit. This is not hosted acceptance
 or closure of the separate `paste` advisory. The next operation is a scoped PR
 and exact-head hosted validation, followed by receiving-main verification if
 all required checks pass. PR #20 and the other owners remain untouched.
+
+
+## Provider acceptance and remaining owners — 17 November 2026
+
+The current [T17 implementation and Conductor review](../validation/t17-review-20261117.md)
+accepts eight bounded provider leaves at
+`bd880dd756d2ba56cc5f479bc078cea31b53c1d1`: .01–.06, .13 and .14.
+[Native CI 44060831778](https://github.com/edithatogo/paignia/actions/runs/44060831778)
+passes Rust 1.75 and stable 1.100, including actual artifacts and the retained
+independent numerical/interface controls. PR32 repaired the receiving MSRV and
+CI composition; [PR34](https://github.com/edithatogo/paignia/pull/34) carries the
+reviewed maturity work. The unchanged specification continues to control scope.
+
+The former T17.01/T17.13 hold is resolved for the accepted native static profile.
+Static conversion and owned permitted-action observations have now passed their
+own public-interface reviews and actual artifact execution. Native generations,
+authority, stochastic streams and causal replay remain different acceptance
+claims; no static DTO test is reused as native lifecycle evidence.
+
+### Live external snapshot
+
+Main refs were cross-checked through Git and GitHub on 17 November 2026 at
+approximately 09:59 UTC. This is a dated snapshot, not a claim that an active
+external branch cannot advance afterward.
+
+| Owner | Exact main revision | Remaining input or receipt |
+| --- | --- | --- |
+| [Kairos](https://github.com/edithatogo/kairos/commit/a1f6283575ad26918230adc122a99b5c08fc4da3) | `a1f6283575ad26918230adc122a99b5c08fc4da3` | K01.port native operation/identity/lifetime acceptance and Track 110 source disposition |
+| [UOGTO](https://github.com/edithatogo/UOGTO/commit/0d325e61c5e176768445d7467b2f4592fc24db42) | `0d325e61c5e176768445d7467b2f4592fc24db42` | Accepted executable information-set profile and semantic consumer receipts |
+| [Reimbursement](https://github.com/edithatogo/new-drug-reimbursement-game/commit/ce99fbcf6bee195c24df1d741d4c4ac8eccc117d) | `ce99fbcf6bee195c24df1d741d4c4ac8eccc117d` | T17.09 real-model/artifact qualification and T17.11 valued-payoff contract |
+| [Innovate](https://github.com/edithatogo/innovate/commit/cc2e4da4af9c848043b31f1191c9d96212048276) | `cc2e4da4af9c848043b31f1191c9d96212048276` | G01–G04 application acceptance and matching immutable package/profile receipt |
+
+Kairos's [execution-port document](https://github.com/edithatogo/kairos/blob/a1f6283575ad26918230adc122a99b5c08fc4da3/conductor/contracts/game-execution-port.md)
+remains a design input rather than a released Rust trait/ABI or accepted native
+implementation. [Track 114](https://github.com/edithatogo/kairos/blob/a1f6283575ad26918230adc122a99b5c08fc4da3/conductor/tracks/114-dependency-and-consumer-contracts/plan.md)
+keeps 114.1.5/K01.games and 114.1.10/K01.port unchecked, with API-governance and
+core-scheduler ownership. T17.08 then .15/.16 require that input and their own
+real dispatch, stream and checkpoint implementation. The
+[scientific register](https://github.com/edithatogo/kairos/blob/a1f6283575ad26918230adc122a99b5c08fc4da3/conductor/scientific-completion.md)
+retains Track 110's S01–S04 source obligations. Paignia's corrected reusable
+methods do not silently replace or retire their old Kairos callers.
+
+UOGTO's [current semantic-contract metadata](https://github.com/edithatogo/UOGTO/blob/0d325e61c5e176768445d7467b2f4592fc24db42/conductor/tracks/semantic_game_contracts_20261107/metadata.json)
+marks SGC.07 complete and seven leaves pending, with static-semantic and dynamic
+acceptance pending. The planned `docs/contracts/executable-game-subset-v1.md`,
+`validation/game-rust-roundtrip-receipt.json` and
+`validation/semantic-game-consumer-receipt.json` are absent from that exact tree.
+[Issue 123](https://github.com/edithatogo/UOGTO/issues/123) remains open.
+T17.17's accepted information-set representation and T17.07 CFR/CFR+ follow
+that executable semantic contract; UOGTO labels alone are not implementations.
+
+Reimbursement's [current plan](https://github.com/edithatogo/new-drug-reimbursement-game/blob/ce99fbcf6bee195c24df1d741d4c4ac8eccc117d/conductor/tracks/t17_game_runtime_ecosystem_20261107/plan.md)
+keeps .09 in progress and .11 pending. Its planned
+`docs/validation/paignia-consumer-receipt.json` and
+`scripts/validate_paignia_consumer.py` are absent.
+[Issue 100](https://github.com/edithatogo/new-drug-reimbursement-game/issues/100)
+retains the limitation of the existing synthetic finite offer/response test.
+The historical August Kairos maintainer receipt binds an older provider and
+conditional scope; it is not current Paignia artifact/application acceptance.
+
+Innovate has three concrete [static provider tests](https://github.com/edithatogo/innovate/blob/cc2e4da4af9c848043b31f1191c9d96212048276/rust/crates/innovate-games/tests/static_provider.rs).
+Its [registry](https://github.com/edithatogo/innovate/blob/cc2e4da4af9c848043b31f1191c9d96212048276/conductor/tracks.md)
+and [existing Paignia handoff](https://github.com/edithatogo/innovate/blob/cc2e4da4af9c848043b31f1191c9d96212048276/conductor/archive/ecosystem_decision_integration_20261107/paignia-handoff.md)
+keep G01–G04 and external Paignia acceptance open. Archiving its surrounding
+planning track did not produce the missing matching-artifact receipt.
+
+### Active pin owners and concrete handoff
+
+| Consumer source | Paignia pin at the snapshot |
+| --- | --- |
+| Reimbursement main | `12b22ce7571b9c590405bf53c2c1c5862b49cd64` |
+| Innovate main | `5103675004d80afc845bbdd067e2fea4e75f6425` |
+| Innovate PR674, head `ce7bd2acad48c1c41fc86584474bf93d1d29572b` | `ad3e1932469fcdfe3c13a5182a4e79b4448e4fbf` |
+
+[Innovate PR674](https://github.com/edithatogo/innovate/pull/674) remains the
+active owner of its pin/security integration. It was open and draft at the
+snapshot, with a failed readiness check and other native/security checks still
+running or queued. This provider change does not supersede that migration or
+claim consumer acceptance. Kairos PR383, UOGTO's semantic work and reimbursement
+PR103/104 likewise retain their own scopes; no external repository was edited.
+
+The [qualified handoff index](../validation/receipts/t17-bd880dd-handoff.json)
+now supplies the exact durable provider pin, profile hash, both actual archives,
+canonical and hosted receipts, and verified archive-byte equivalence. GitHub's
+raw PR receipt retains its executed merge revision; the canonical receipt was
+separately executed from a clean durable revision. The
+[application-owner guide](../validation/game-consumer-handoff.md) specifies
+real-model evidence and provider-source isolation. The actual release guard
+fails only for the two missing real application receipts. A static application
+case does not need the optional Kairos adapter, every advanced method or another
+application's valuation port, but its own advertised inputs and results must be
+qualified. No application fixture was fabricated to fill this gap.
+
+Full T17 remains active with nine open leaves and the inherited source-side
+obligations. Registry publication remains disabled. The central offline-security
+workflow remains queued for its dedicated infrastructure and has not passed.
