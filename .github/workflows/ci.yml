@@ -105,6 +105,40 @@ jobs:
           PY
       - name: Package and consumer evidence regression controls
         run: python3 -B -m unittest discover -s tests
+      - name: Retained independent public-interface and numerical controls
+        shell: bash
+        env:
+          CARGO_TARGET_DIR: target/independent-review-build
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          import subprocess
+          targets = [
+              ("result_contract_review", 9, []),
+              ("replicator_review", 10, []),
+              ("mixed_nash_review", 14, []),
+              ("conversion_review", 6, []),
+              ("correlated_equilibrium_review", 13, ["--features", "correlated-equilibrium"]),
+              ("policy_observation_review", 6, []),
+          ]
+          logs = Path("target/independent-review-logs")
+          logs.mkdir(parents=True, exist_ok=True)
+          for target, expected, flags in targets:
+              command = ["cargo", "test", "--locked", "--manifest-path",
+                         f"verification/{target}/Cargo.toml", "--test", "review", *flags]
+              run = subprocess.run(command, text=True, stdout=subprocess.PIPE,
+                                   stderr=subprocess.STDOUT, check=False)
+              (logs / f"{target}.log").write_text(run.stdout)
+              print(run.stdout, end="")
+              summaries = re.findall(
+                  r"^test result: ok\. (\d+) passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;",
+                  run.stdout, re.MULTILINE,
+              )
+              if run.returncode or summaries != [str(expected)]:
+                  raise SystemExit(f"Expected exactly {expected} passing independent tests for {target}")
+          PY
       - name: Isolated extracted-source consumer
         run: python3 scripts/validate_game_packages.py --source-smoke --receipt target/extracted-package-smoke.json
       - name: Cargo artifacts with provider source unavailable
@@ -123,6 +157,7 @@ jobs:
             target/qualified-packages/*.crate
             target/all-features.log
             target/solver-doctests.log
+            target/independent-review-logs/*.log
           if-no-files-found: error
           retention-days: 30
 
