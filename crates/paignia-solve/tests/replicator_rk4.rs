@@ -1,6 +1,6 @@
 //! Production checks against independently derived rational/logistic witnesses.
 //!
-//! Frozen source: verification/numerical_oracles/replicator_rk4_v1.json,
+//! Frozen source: `verification/numerical_oracles/replicator_rk4_v1.json`,
 //! SHA-256 e793f8f4d2121e58d4195ee2967bfb61fbe533377863a18b3926a08b3210d5e3.
 
 use paignia_solve::{
@@ -16,9 +16,8 @@ fn config() -> ReplicatorConfig {
     }
 }
 
-fn constant(_: f64, _: &[f64]) -> Result<Vec<f64>, String> {
-    Ok(vec![1.0, 0.0])
-}
+type Fitness = fn(f64, &[f64]) -> Result<Vec<f64>, String>;
+const CONSTANT: Fitness = |_, _| Ok(vec![1.0, 0.0]);
 
 fn integrate<F>(
     mut population: Vec<f64>,
@@ -88,8 +87,8 @@ fn frozen_four_stage_witness_and_method_identity_are_preserved() {
 
 #[test]
 fn separately_named_euler_is_not_rk4() {
-    let euler = replicator_euler_step(&[0.25, 0.75], 0.0, 0.5, config(), constant).unwrap();
-    let rk4 = replicator_rk4_step(&[0.25, 0.75], 0.0, 0.5, config(), constant).unwrap();
+    let euler = replicator_euler_step(&[0.25, 0.75], 0.0, 0.5, config(), CONSTANT).unwrap();
+    let rk4 = replicator_rk4_step(&[0.25, 0.75], 0.0, 0.5, config(), CONSTANT).unwrap();
     assert_eq!(REPLICATOR_EULER_VERSION, "1.0.0");
     assert_eq!(euler.method, ReplicatorMethod::ForwardEuler);
     assert_eq!(euler.method.id(), "paignia/replicator-forward-euler");
@@ -140,7 +139,7 @@ fn check_refinement(a: f64, b: f64, counts: [u32; 3], analytic: &str) {
 #[test]
 fn euler_negative_control_fails_the_finest_rk4_accuracy_bound() {
     let target = "0.475366886418671691097653482610462410143978975060974436435118025053784674434418651672751763".parse::<f64>().unwrap();
-    let result = integrate(vec![0.25, 0.75], 0.0, 1.0, 32, constant, true);
+    let result = integrate(vec![0.25, 0.75], 0.0, 1.0, 32, CONSTANT, true);
     assert!((result[0] - target).abs() > 1e-4);
 }
 
@@ -296,7 +295,7 @@ fn bad_population_dimensions_fail_before_callback() {
 fn nonfinite_or_out_of_range_population_is_not_repaired() {
     for value in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
         assert!(matches!(
-            replicator_rk4_step(&[value, 0.75], 0.0, 0.1, config(), constant),
+            replicator_rk4_step(&[value, 0.75], 0.0, 0.1, config(), CONSTANT),
             Err(ReplicatorError::NonFinitePopulation {
                 stage: ReplicatorStage::Initial,
                 index: 0
@@ -305,7 +304,7 @@ fn nonfinite_or_out_of_range_population_is_not_repaired() {
     }
     for value in [-0.1, -f64::from_bits(1), 1.1] {
         assert!(matches!(
-            replicator_rk4_step(&[value, 0.75], 0.0, 0.1, config(), constant),
+            replicator_rk4_step(&[value, 0.75], 0.0, 0.1, config(), CONSTANT),
             Err(ReplicatorError::PopulationOutOfBounds {
                 stage: ReplicatorStage::Initial,
                 index: 0
@@ -318,7 +317,7 @@ fn nonfinite_or_out_of_range_population_is_not_repaired() {
 fn wrong_mass_and_zero_mass_are_not_normalized() {
     for population in [[0.25, 0.5], [0.0, 0.0], [1.0, 1.0]] {
         assert_eq!(
-            replicator_rk4_step(&population, 0.0, 0.1, config(), constant),
+            replicator_rk4_step(&population, 0.0, 0.1, config(), CONSTANT),
             Err(ReplicatorError::PopulationMass {
                 stage: ReplicatorStage::Initial
             })
@@ -335,7 +334,7 @@ fn invalid_mass_tolerances_reject() {
                 0.0,
                 0.1,
                 ReplicatorConfig { mass_tolerance },
-                constant
+                CONSTANT
             ),
             Err(ReplicatorError::InvalidMassTolerance)
         );
@@ -345,7 +344,7 @@ fn invalid_mass_tolerances_reject() {
 #[test]
 fn mass_tolerance_is_an_admission_budget_not_a_normalization_command() {
     let population = [0.25, 0.75 - 2e-13];
-    let result = replicator_rk4_step(&population, 0.0, 0.0, config(), constant).unwrap();
+    let result = replicator_rk4_step(&population, 0.0, 0.0, config(), CONSTANT).unwrap();
     assert_eq!(result.population, population);
     assert!(result.mass_error > 0.0 && result.mass_error < MASS_TOLERANCE);
     assert!(replicator_rk4_step(
@@ -355,7 +354,7 @@ fn mass_tolerance_is_an_admission_budget_not_a_normalization_command() {
         ReplicatorConfig {
             mass_tolerance: 0.0
         },
-        constant
+        CONSTANT
     )
     .is_err());
 }
@@ -364,7 +363,7 @@ fn mass_tolerance_is_an_admission_budget_not_a_normalization_command() {
 fn nonfinite_time_and_invalid_steps_reject() {
     for time in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
         assert_eq!(
-            replicator_rk4_step(&[0.25, 0.75], time, 0.1, config(), constant),
+            replicator_rk4_step(&[0.25, 0.75], time, 0.1, config(), CONSTANT),
             Err(ReplicatorError::InvalidTime)
         );
     }
@@ -376,7 +375,7 @@ fn nonfinite_time_and_invalid_steps_reject() {
         -f64::from_bits(1),
     ] {
         assert_eq!(
-            replicator_rk4_step(&[0.25, 0.75], 0.0, step, config(), constant),
+            replicator_rk4_step(&[0.25, 0.75], 0.0, step, config(), CONSTANT),
             Err(ReplicatorError::InvalidStep)
         );
     }
@@ -464,7 +463,7 @@ fn callback_failure_is_typed_and_keeps_its_stage() {
 #[test]
 fn oversized_steps_fail_without_clipping_or_normalizing() {
     let input = [0.25_f64, 0.75];
-    let result = replicator_rk4_step(&input, 0.0, 16.0, config(), constant);
+    let result = replicator_rk4_step(&input, 0.0, 16.0, config(), CONSTANT);
     assert!(matches!(
         result,
         Err(ReplicatorError::PopulationOutOfBounds {
@@ -472,8 +471,8 @@ fn oversized_steps_fail_without_clipping_or_normalizing() {
             ..
         })
     ));
-    assert_eq!(input, [0.25, 0.75]);
-    assert!(replicator_euler_step(&input, 0.0, 16.0, config(), constant).is_err());
+    assert_eq!(input.map(f64::to_bits), [0.25, 0.75].map(f64::to_bits));
+    assert!(replicator_euler_step(&input, 0.0, 16.0, config(), CONSTANT).is_err());
 }
 
 #[test]
@@ -512,7 +511,7 @@ fn nonfinite_intermediate_arithmetic_is_an_explicit_failure() {
 #[test]
 fn legacy_euler_keeps_the_same_input_and_callback_failure_rules() {
     assert_eq!(
-        replicator_euler_step(&[0.25, 0.75], 0.0, -1.0, config(), constant),
+        replicator_euler_step(&[0.25, 0.75], 0.0, -1.0, config(), CONSTANT),
         Err(ReplicatorError::InvalidStep)
     );
     assert_eq!(

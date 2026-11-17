@@ -112,23 +112,47 @@ pub fn rk4_step<F>(
     time: f64,
     step: f64,
     config: Config,
-    _fitness: F,
+    mut fitness: F,
 ) -> Result<Step, StepError>
 where
     F: FnMut(f64, &[f64]) -> Result<Vec<f64>, String>,
 {
-    // Explicit tests-first identity prototype; no numerical implementation yet.
-    Ok(Step {
-        method: Method::ClassicalRk4,
-        method_version: RK4_VERSION,
-        start_time: time,
-        end_time: time + step,
-        step_size: step,
-        mass_tolerance: config.mass_tolerance,
-        population: population.to_vec(),
-        mass_error: (population.iter().sum::<f64>() - 1.0).abs(),
-        fitness_evaluations: 0,
-    })
+    let end = validate_inputs(population, time, step, config)?;
+    if step == 0.0 {
+        return Ok(record(
+            Method::ClassicalRk4,
+            population.to_vec(),
+            time,
+            time,
+            step,
+            config,
+            0,
+        ));
+    }
+    let midpoint = time + step / 2.0;
+    if !midpoint.is_finite() || midpoint <= time || midpoint >= end {
+        return Err(StepError::UnrepresentableStageTime);
+    }
+    let k1 = slope(population, time, Stage::First, &mut fitness)?;
+    let second = stage_population(population, &k1, step / 2.0, Stage::Second, config)?;
+    let k2 = slope(&second, midpoint, Stage::Second, &mut fitness)?;
+    let third = stage_population(population, &k2, step / 2.0, Stage::Third, config)?;
+    let k3 = slope(&third, midpoint, Stage::Third, &mut fitness)?;
+    let fourth = stage_population(population, &k3, step, Stage::Fourth, config)?;
+    let k4 = slope(&fourth, end, Stage::Fourth, &mut fitness)?;
+    let weighted: Vec<_> = (0..population.len())
+        .map(|index| k1[index] / 6.0 + k2[index] / 3.0 + k3[index] / 3.0 + k4[index] / 6.0)
+        .collect();
+    let output = stage_population(population, &weighted, step, Stage::Output, config)?;
+    Ok(record(
+        Method::ClassicalRk4,
+        output,
+        time,
+        end,
+        step,
+        config,
+        4,
+    ))
 }
 
 /// Advance one explicitly named, nonprojecting forward-Euler step.
@@ -145,20 +169,182 @@ pub fn euler_step<F>(
     time: f64,
     step: f64,
     config: Config,
-    _fitness: F,
+    mut fitness: F,
 ) -> Result<Step, StepError>
 where
     F: FnMut(f64, &[f64]) -> Result<Vec<f64>, String>,
 {
-    Ok(Step {
-        method: Method::ForwardEuler,
-        method_version: EULER_VERSION,
+    let end = validate_inputs(population, time, step, config)?;
+    if step == 0.0 {
+        return Ok(record(
+            Method::ForwardEuler,
+            population.to_vec(),
+            time,
+            time,
+            step,
+            config,
+            0,
+        ));
+    }
+    let derivative = slope(population, time, Stage::First, &mut fitness)?;
+    let output = stage_population(population, &derivative, step, Stage::Output, config)?;
+    Ok(record(
+        Method::ForwardEuler,
+        output,
+        time,
+        end,
+        step,
+        config,
+        1,
+    ))
+}
+
+fn record(
+    method: Method,
+    population: Vec<f64>,
+    time: f64,
+    end: f64,
+    step: f64,
+    config: Config,
+    fitness_evaluations: u8,
+) -> Step {
+    Step {
+        method,
+        method_version: match method {
+            Method::ClassicalRk4 => RK4_VERSION,
+            Method::ForwardEuler => EULER_VERSION,
+        },
         start_time: time,
-        end_time: time + step,
+        end_time: end,
         step_size: step,
         mass_tolerance: config.mass_tolerance,
-        population: population.to_vec(),
         mass_error: (population.iter().sum::<f64>() - 1.0).abs(),
-        fitness_evaluations: 0,
-    })
+        population,
+        fitness_evaluations,
+    }
+}
+
+fn validate_inputs(
+    population: &[f64],
+    time: f64,
+    step: f64,
+    config: Config,
+) -> Result<f64, StepError> {
+    if !config.mass_tolerance.is_finite() || !(0.0..1.0).contains(&config.mass_tolerance) {
+        return Err(StepError::InvalidMassTolerance);
+    }
+    if population.len() < 2 {
+        return Err(StepError::InvalidDimension {
+            dimension: population.len(),
+        });
+    }
+    if !time.is_finite() {
+        return Err(StepError::InvalidTime);
+    }
+    if !step.is_finite() || step < 0.0 {
+        return Err(StepError::InvalidStep);
+    }
+    validate_population(population, Stage::Initial, config)?;
+    if step == 0.0 {
+        return Ok(time);
+    }
+    let end = time + step;
+    if !end.is_finite() || end <= time {
+        return Err(StepError::UnrepresentableStageTime);
+    }
+    Ok(end)
+}
+
+fn validate_population(population: &[f64], stage: Stage, config: Config) -> Result<(), StepError> {
+    for (index, value) in population.iter().enumerate() {
+        if !value.is_finite() {
+            return Err(StepError::NonFinitePopulation { stage, index });
+        }
+        if !(0.0..=1.0).contains(value) {
+            return Err(StepError::PopulationOutOfBounds { stage, index });
+        }
+    }
+    let mass = population.iter().sum::<f64>();
+    if !mass.is_finite() || (mass - 1.0).abs() > config.mass_tolerance {
+        return Err(StepError::PopulationMass { stage });
+    }
+    Ok(())
+}
+
+fn slope<F>(
+    population: &[f64],
+    time: f64,
+    stage: Stage,
+    fitness: &mut F,
+) -> Result<Vec<f64>, StepError>
+where
+    F: FnMut(f64, &[f64]) -> Result<Vec<f64>, String>,
+{
+    let values = fitness(time, population)
+        .map_err(|message| StepError::FitnessCallback { stage, message })?;
+    if values.len() != population.len() {
+        return Err(StepError::FitnessDimension {
+            stage,
+            expected: population.len(),
+            actual: values.len(),
+        });
+    }
+    for (index, value) in values.iter().enumerate() {
+        if !value.is_finite() {
+            return Err(StepError::NonFiniteFitness { stage, index });
+        }
+    }
+    let mean = population
+        .iter()
+        .zip(&values)
+        .map(|(x, f)| x * f)
+        .sum::<f64>();
+    if !mean.is_finite() {
+        return Err(StepError::NonFiniteArithmetic {
+            stage,
+            operation: "mean fitness",
+        });
+    }
+    population
+        .iter()
+        .zip(values)
+        .map(|(x, f)| {
+            // A zero-frequency strategy has exactly zero derivative. Avoid
+            // forming 0 * infinity if two finite extreme fitnesses differ
+            // beyond the finite range.
+            let derivative = if *x == 0.0 { *x } else { x * (f - mean) };
+            if !derivative.is_finite() {
+                return Err(StepError::NonFiniteArithmetic {
+                    stage,
+                    operation: "replicator derivative",
+                });
+            }
+            Ok(derivative)
+        })
+        .collect()
+}
+
+fn stage_population(
+    initial: &[f64],
+    derivative: &[f64],
+    amount: f64,
+    stage: Stage,
+    config: Config,
+) -> Result<Vec<f64>, StepError> {
+    let population = initial
+        .iter()
+        .zip(derivative)
+        .map(|(x, dx)| {
+            let next = x + amount * dx;
+            if !next.is_finite() {
+                return Err(StepError::NonFiniteArithmetic {
+                    stage,
+                    operation: "population update",
+                });
+            }
+            Ok(next)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    validate_population(&population, stage, config)?;
+    Ok(population)
 }
