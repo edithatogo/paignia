@@ -39,8 +39,27 @@ jobs:
         run: cargo fmt --all -- --check
       - name: Clippy
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: Clippy with every advertised feature
+        run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
       - name: Native package tests
         run: cargo test --workspace --all-targets --locked
+      - name: Native feature tests and LP backend controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo test --workspace --all-targets --all-features --locked 2>&1 | tee target/all-features.log
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          log = Path("target/all-features.log").read_text()
+          backend = re.search(
+              r"Running[^\n]*tests/clarabel_backend\.rs[^\n]*\n(.*?test result:[^\n]+)",
+              log, re.DOTALL,
+          )
+          required = "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;"
+          if backend is None or required not in backend.group(1):
+              raise SystemExit("Expected all eight optional native LP backend controls without skips or failures")
+          PY
       - name: Native role-separation doctests
         shell: bash
         run: |
@@ -68,7 +87,7 @@ jobs:
       - name: Native API documentation
         env:
           RUSTDOCFLAGS: -D warnings
-        run: cargo doc --workspace --no-deps --locked
+        run: cargo doc --workspace --no-deps --all-features --locked
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: native-package-qualification-${{ matrix.toolchain }}
@@ -76,6 +95,7 @@ jobs:
             target/static-dependency-boundary.json
             target/extracted-package-smoke.json
             target/cargo-artifact-qualification.json
+            target/all-features.log
           if-no-files-found: error
           retention-days: 30
 
