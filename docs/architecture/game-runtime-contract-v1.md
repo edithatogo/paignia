@@ -1,12 +1,14 @@
 # Static input and result metadata components — T17.01
 
-Status: bounded components. The input profile, result identity record and
-scalar diagnostic admission have distinct leaves and exact-head review gates.
-The complete T17.01 result envelope, identity-to-source binding and conversion
-contract remain pending. Their bounded increments are in the
-[T17 plan](../../conductor/tracks/t17_game_runtime_ecosystem_20261107/plan.md),
-under the [current ownership map](../integrations/parallel-plan-reconciliation-20261108.md#continued-bounded-work--16-november-2026).
-It is not a release or downstream conversion receipt.
+Status on 17 November 2026: the selected native T17.01 contract is accepted.
+The components below, [native result envelope](game-result-contract-v1.md) and
+[solver emitter](solver-result-v1.md) have integrated stable/Rust 1.75 execution
+and independent public-contract review, recorded in the
+[current receipt](../validation/t17-review-20261117.md). The selected profile is
+finite, perfect-information and intentionally sparse-zero; broader profiles,
+wire formats, static conversion and application release have separate scope.
+Earlier component-specific limitations below describe what each validator does
+by itself; they do not reinstate a completed review gate or block bounded .13.
 
 ## Exact admission boundary
 
@@ -92,13 +94,13 @@ This input profile supplies no new solver-result guarantee. In particular:
   dense payoff catalogue or finite intermediate/aggregate solver arithmetic.
 - Solver diagnostic traversal is not causal execution history. Profile admission
   creates no instance/session/policy/trace identity and no simulation state.
-- Algorithm/version, supported solution concept, termination, residuals,
-  catalogue completeness, serialization and result-schema admission still need
-  the remaining T17.01 work and relevant independent method evidence.
+- Algorithm/version, solution concept, termination and catalogue admission
+  are supplied by the separate native result envelope and opt-in emitter.
+  Method-specific computed diagnostics require their own numerical evidence;
+  the backward-induction emitter does not fabricate them.
 
-T17.13 conversion source work therefore remains blocked on accepted, pinned
-T17.01 semantics. Static qualification and optional dynamic qualification stay
-independent. No simulation adapter, RNG/replay integration, external provider pin
+Bounded T17.13 static conversion may now consume the accepted native profile.
+Static qualification and optional dynamic qualification stay independent. No simulation adapter, RNG/replay integration, external provider pin
 or registry publication is enabled by this profile. UOGTO semantics, Kairos
 execution, application valuation and Voiage arithmetic retain their owners.
 
@@ -128,7 +130,7 @@ ownership-map receipt; this command list alone is not evidence of execution.
 ## Result identity record v1 — T17.01.identities
 
 `ResultIdentityRecord::validate()` admits an explicit **identity component** for
-a future result envelope. `RESULT_IDENTITY_SCHEMA_VERSION` is exactly `1.0.0`;
+the separate native result envelope. `RESULT_IDENTITY_SCHEMA_VERSION` is exactly `1.0.0`;
 the component's `schema_version` must match the entire literal. Input schema and
 semantic-profile admission remain separate. No result payload, algorithm,
 solution concept, status, residual or catalogue is admitted by this method.
@@ -182,15 +184,12 @@ cargo test --locked -p paignia-core --test runtime_contract
 cargo test --locked -p paignia-core --doc
 ```
 
-Full T17.01 still needs the versioned result envelope and wire representation,
-supported game/information/algorithm/solution semantics, unsupported versus
-proved absence versus nonconvergence, finite residual/exploitability diagnostics
-and justified tolerances, versioned tie/selection with reorder controls, and
-evidence-backed catalogue coverage with multiplicity-preserving serialization.
-Source binding and semantic conversion also remain unqualified. **T17.13 source
-work remains held**; T18 native comparisons retain their separate information,
-method and result prerequisites. Static and optional dynamic acceptance remain
-independent. This component grants no capability or downstream activation.
+The native envelope now supplies source binding, supported representation and
+method metadata, status/catalogue consistency and versioned selection semantics.
+Wire serialization and general normal-form catalogue round trips are outside
+this selected profile. Static semantic conversion remains its own T17.13 work;
+T18 comparisons retain their specific information, method and result contracts.
+This identity component alone grants no execution or downstream activation.
 
 ## Result diagnostic record v1 — T17.01.diagnostics
 
@@ -211,8 +210,8 @@ aggregation, game/solution scope, candidate and source binding, computation and
 justification of tolerance. Neither category by itself fixes those meanings.
 The type defines no wire tags or serialization format and performs no solver
 calculation. A diagnostic undefined for a method belongs outside that method's
-result; a zero-valued record must not stand in for missing evidence. The future
-enclosing result contract must enforce applicability and presence.
+result; a zero-valued record must not stand in for missing evidence. The enclosing native result contract controls structural applicability and
+presence; method-specific numerical contracts define computed diagnostics.
 
 Validation order is exact schema, `value`, then `tolerance`. Each numeric field
 is checked for finiteness before negativity. Positive/negative infinity and all
@@ -256,9 +255,8 @@ The published tests-first no-check prototype actually ran 46 contract tests:
 final execution evidence belong to the owning plan and PR receipt. Synthetic
 cases are development controls, not numerical qualification.
 
-Full T17.01 envelope/source bindings, game/information/solution/algorithm/status,
-method-defined diagnostics and production tolerances, selection, completeness
-and multiplicity-preserving serialization remain open. **T17.13 remains held**
-until the required full semantics are accepted and pinned. T18 and all
-method/package/dependency/actual-consumer prerequisites remain separate. No
-adapter, consumer or publication is enabled by this component.
+The native result envelope and emitter now complete the selected T17.01 profile.
+Method-defined numerical diagnostics and broader result/serialization profiles
+remain separate extensions. T17.13 may proceed against the pinned native
+semantics; its conversion receipt, T18 prerequisites, real application
+acceptance and optional native execution remain distinct obligations.

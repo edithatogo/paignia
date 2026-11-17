@@ -5,10 +5,12 @@ caller-constructed static result. Its source is `crates/paignia-core/src/result.
 with public types re-exported from the crate root. Existing game, identity,
 diagnostic, solver and error APIs retain their signatures and behavior.
 
-This is the T17.01 native-envelope slice. It does not close T17.01, qualify a
-numerical method, implement a wire format, or change an application pin. A
-subsequent solver-emission slice must establish how actual solver outputs enter
-the envelope; the existing solver does not create it automatically.
+Together with the input profile, identity/diagnostic components and the
+[opt-in solver emitter](solver-result-v1.md), this satisfies the bounded native
+T17.01 contract. The [17 November acceptance receipt](../validation/t17-review-20261117.md)
+pins independent review and integrated compiler evidence. Legacy solver entry
+points retain their existing return type. No wire format, general equilibrium
+catalogue or application acceptance is implied.
 
 ## Admitted profile
 
@@ -161,8 +163,9 @@ sparse payloads. These are public-contract tests, not independent numerical
 validation. The parent integration receipt owns final compiler profiles,
 complete workspace checks and independent review.
 
-Serialization, multiplicity round trips for a genuinely enumerating method,
-solver-produced envelopes, computed diagnostics, immutable content binding,
-semantic conversion and real consumer receipts remain explicit follow-ups.
-The generic core adds no simulation, optimization, serialization or application
-dependency for this slice.
+The opt-in emitter now constructs and admits actual native solver records.
+Serialization, broader enumerating-method envelopes and immutable content
+attestation are separate extensions, not additional requirements for the
+selected native profile. Static conversion and real consumer receipts retain
+their own T17 leaves. Undefined method diagnostics remain absent. The generic
+core adds no simulation, optimization, serialization or application dependency.
