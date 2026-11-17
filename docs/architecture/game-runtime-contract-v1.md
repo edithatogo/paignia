@@ -1,7 +1,7 @@
-# Static input and result identity components — T17.01
+# Static input and result metadata components — T17.01
 
-Status: bounded candidate components. The input profile and separate result
-identity-record admission have distinct leaves and exact-head review gates.
+Status: bounded components. The input profile, result identity record and
+scalar diagnostic admission have distinct leaves and exact-head review gates.
 The complete T17.01 result envelope, identity-to-source binding and conversion
 contract remain pending. Their bounded increments are in the
 [T17 plan](../../conductor/tracks/t17_game_runtime_ecosystem_20261107/plan.md),
@@ -191,3 +191,74 @@ Source binding and semantic conversion also remain unqualified. **T17.13 source
 work remains held**; T18 native comparisons retain their separate information,
 method and result prerequisites. Static and optional dynamic acceptance remain
 independent. This component grants no capability or downstream activation.
+
+## Result diagnostic record v1 — T17.01.diagnostics
+
+`ResultDiagnosticRecord::validate()` admits one **scalar diagnostic component**.
+It checks only the component schema and numeric domains; it does not admit a
+complete solver result. `RESULT_DIAGNOSTIC_SCHEMA_VERSION` is exactly `1.0.0`.
+This new public component requires fresh independent review at its own head.
+
+| Field | Native type | Declared meaning |
+| --- | --- | --- |
+| `schema_version` | `String` | Exact whole component-version literal `1.0.0`; no ranges, aliases or fallback |
+| `kind` | `ResultDiagnosticKind` | Caller-declared `Residual` or `Exploitability` category; no metric formula or supported algorithm is inferred |
+| `value` | `f64` | Required finite, nonnegative diagnostic magnitude |
+| `tolerance` | `f64` | Required finite, nonnegative caller-supplied tolerance in the metric's intended units |
+
+The enclosing method contract must define the metric, norm, scale, units,
+aggregation, game/solution scope, candidate and source binding, computation and
+justification of tolerance. Neither category by itself fixes those meanings.
+The type defines no wire tags or serialization format and performs no solver
+calculation. A diagnostic undefined for a method belongs outside that method's
+result; a zero-valued record must not stand in for missing evidence. The future
+enclosing result contract must enforce applicability and presence.
+
+Validation order is exact schema, `value`, then `tolerance`. Each numeric field
+is checked for finiteness before negativity. Positive/negative infinity and all
+NaNs reject; a negative finite magnitude rejects. Both signs of zero are legal,
+including zero tolerance. Positive subnormals and all finite positive values,
+through `f64::MAX`, are structurally admitted. No number is rounded, clamped,
+normalized, replaced by an absolute value or assigned a default. The record is
+borrowed and retains the original strings, kind and binary64 bits on success or
+failure, including signed zero and rejected NaN payloads.
+
+| Failure | Structured variant | Code / path |
+| --- | --- | --- |
+| Unsupported complete version string | `ResultDiagnosticValidationError::UnsupportedSchemaVersion { value }` | `unsupported_result_diagnostic_schema` / `schema_version` |
+| First non-finite numeric field | `ResultDiagnosticValidationError::NonFiniteNumber { path }` | `non_finite_result_diagnostic` / `value` or `tolerance` |
+| First finite negative numeric field | `ResultDiagnosticValidationError::NegativeNumber { path }` | `negative_result_diagnostic` / `value` or `tolerance` |
+
+The error enum is separate from legacy input and identity errors; its error
+source is absent. Schema failure preserves the unsupported string. Field order
+is an admission rule, not a memory-layout or wire-order promise. The enum and
+record are public native data, so construction alone does not guarantee validity
+and mutation requires revalidation.
+
+**Admission does not compare `value` with `tolerance` or determine convergence.**
+A finite magnitude exceeding its supplied tolerance is a structurally valid
+record. A successful check cannot establish equilibrium, prove absence, select
+an algorithm/status, justify a tolerance, certify a metric calculation or close
+a scientific-method obligation. In particular, this component does not reuse
+the input profile's inherited chance-mass tolerance as a production diagnostic
+policy. No solver automatically emits the new record, and no existing solver
+result, struct, public error variant or dependency changes.
+
+Eleven added native contract tests cover exact version/schema precedence, both
+categories, non-finite and negative fields, deterministic first errors, public
+mutation and separate error codes/sources. A 72-case finite boundary matrix
+preserves signed zero/subnormal/extreme values bitwise; a magnitude above its
+zero tolerance is explicitly admitted without a convergence claim. Existing
+input/identity tests and three identity compile-fail doctests remain intact.
+
+The published tests-first no-check prototype actually ran 46 contract tests:
+39 passed and seven admission checks failed (exit 101). Its exact revision and
+final execution evidence belong to the owning plan and PR receipt. Synthetic
+cases are development controls, not numerical qualification.
+
+Full T17.01 envelope/source bindings, game/information/solution/algorithm/status,
+method-defined diagnostics and production tolerances, selection, completeness
+and multiplicity-preserving serialization remain open. **T17.13 remains held**
+until the required full semantics are accepted and pinned. T18 and all
+method/package/dependency/actual-consumer prerequisites remain separate. No
+adapter, consumer or publication is enabled by this component.

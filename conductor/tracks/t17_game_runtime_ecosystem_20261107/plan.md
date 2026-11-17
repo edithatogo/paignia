@@ -165,16 +165,28 @@ seed rename and source-level consumer slices without adding competing leaves.
   verification after any scoped development merge. No old run is relabeled.
 - All old heads and histories remain. Full T17.01 and all scientific, package,
   consumer and T17.13 holds are independent of this development integration.
+- [PR24](https://github.com/edithatogo/paignia/pull/24) passed exact-head
+  composition review `5913350938`, hosted stable/MSRV/privacy and local gates.
+  It merged as `969d2d22cc38a205c6087902a88cd1cd535aa96e`; receiving tree
+  `9fa72d34cc8e86b2141298923c248ebfe34cfa65` equals the reviewed/tested tree
+  and preserves PR14/16/21 ancestry. Post-merge workflow execution was queued
+  at this source snapshot; its final receiving receipt belongs to PR24.
 
-#### [ ] T17.01.doctest-ci — execute existing role-separation doctests in CI
+#### [~] T17.01.doctest-ci — execute existing role-separation doctests in CI
 
 - One behavior: run `cargo test --locked -p paignia-core --doc` in both hosted
   compiler jobs; no existing command, permission, trigger or check is removed.
 - Owner: sole coordinator, serially after reviewed integration. One workflow
   path only. This accepts the supplemental review's nonblocking suggestion;
   it does not reopen either completed reviewer or change the public interface.
+- Implemented in [PR25](https://github.com/edithatogo/paignia/pull/25) at
+  `4cb88678e7544e4ff63bc5ab669d2d6546885790`: one added workflow step, preserving
+  all existing jobs/settings. Exact command passes locally; two positive/seven
+  negative summary controls reject zero/partial/skipped execution. Hosted stable
+  and MSRV each execute 52 native, three doctests and two source-consumer tests;
+  privacy passes. Receiving-main integration is recorded separately on PR25.
 
-#### [ ] T17.01.diagnostics — admit finite declared diagnostic magnitudes
+#### [~] T17.01.diagnostics — admit finite declared diagnostic magnitudes
 
 - One behavior: validate an exact versioned component containing a residual or
   exploitability magnitude and a caller-supplied tolerance. Reject non-finite
@@ -182,6 +194,16 @@ seed rename and source-level consumer slices without adding competing leaves.
 - Owner: sole coordinator, serially after the reviewed component integration.
   At most five paths: core lib, existing runtime-contract tests, contract doc,
   this plan and the same ownership map. No solver, dependency, fixture or CI edit.
+- Implementation parent: fixed PR25 head
+  `4cb88678e7544e4ff63bc5ab669d2d6546885790`, which contains the reviewed
+  composition in PR24. Hosted integration jobs are queued at this claim;
+  development proceeds on the fixed proposed stack, with all merges held until
+  their actual current-tree gates and receiving-main verification are satisfied.
+- Component: `ResultDiagnosticRecord`, exact schema `1.0.0`, typed
+  `ResultDiagnosticKind::{Residual, Exploitability}`, `value` and `tolerance`.
+  Check schema first, then value, then tolerance; finite checks precede negative
+  checks within each number. Signed zero is retained and zero tolerance is legal.
+  Admission does not compare value with tolerance or decide convergence.
 - Tests first: unsupported version, NaN/infinity/negative value and tolerance,
   boundary magnitudes and non-mutating admission; required native checks.
   A fresh independent public-contract review is required for the new head.
@@ -189,6 +211,19 @@ seed rename and source-level consumer slices without adding competing leaves.
   binding, convergence, equilibrium certificate or production binary64 tolerance
   policy is established. Full envelope/status/selection/catalogue/serialization
   obligations and T17.13/T18 prerequisites remain open.
+- Implemented candidate in [PR26](https://github.com/edithatogo/paignia/pull/26).
+  Ownership/plan commit `28b3724bbe79b4918e75f3130de59b8a7f35b448` precedes
+  tests-first commit `2fda0b6a687189c58d0ecbbce362a4f79cb59b40`. The explicit
+  no-check prototype actually runs 46 contract tests: 39 pass, seven fail,
+  exit 101. The final validator passes all 46 contract tests, 63 workspace tests
+  (6 core + 46 contract + 11 solver), three compile-fail doctests and two
+  extracted-source tests on Rust 1.75. Format, warnings-denied Clippy,
+  extraction guard and warnings-denied rustdoc pass. Existing source outside the
+  additive diagnostic block, prior tests, solver, manifests/lock and CI remain
+  byte-identical to the fixed parent.
+- Final exact-head hosted results and author review belong to the PR26 receipt.
+  **Fresh independent public-contract review is still required for this new
+  component.** Accepted PR21 reviews do not cover it; no new reviewer is created.
 
 ### [ ] T17.02 — reject Kairos in the static package dependency closure
 

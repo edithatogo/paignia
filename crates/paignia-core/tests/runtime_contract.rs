@@ -1,4 +1,260 @@
-//! T17.01 component admission: static input and role-specific result identities.
+//! T17.01 admission: static input, role-specific identities and diagnostic magnitudes.
+
+mod result_diagnostics {
+    use std::error::Error;
+
+    use paignia_core::{
+        ResultDiagnosticKind, ResultDiagnosticRecord, ResultDiagnosticValidationError,
+        RESULT_DIAGNOSTIC_SCHEMA_VERSION,
+    };
+
+    const KINDS: [ResultDiagnosticKind; 2] = [
+        ResultDiagnosticKind::Residual,
+        ResultDiagnosticKind::Exploitability,
+    ];
+
+    fn record(kind: ResultDiagnosticKind) -> ResultDiagnosticRecord {
+        ResultDiagnosticRecord {
+            schema_version: "1.0.0".into(),
+            kind,
+            value: 0.25,
+            tolerance: 0.5,
+        }
+    }
+
+    fn nonfinite() -> [f64; 5] {
+        [
+            f64::INFINITY,
+            f64::NEG_INFINITY,
+            f64::from_bits(0x7ff8_0000_0000_0001),
+            f64::from_bits(0xfff8_0000_0000_0001),
+            f64::from_bits(0x7ff0_0000_0000_0001),
+        ]
+    }
+
+    fn expect_number_error(record: &ResultDiagnosticRecord, path: &'static str, non_finite: bool) {
+        let before = (record.value.to_bits(), record.tolerance.to_bits());
+        let error = record.validate().unwrap_err();
+        let (expected, code, display) = if non_finite {
+            (
+                ResultDiagnosticValidationError::NonFiniteNumber { path },
+                "non_finite_result_diagnostic",
+                format!("non-finite result diagnostic at {path}"),
+            )
+        } else {
+            (
+                ResultDiagnosticValidationError::NegativeNumber { path },
+                "negative_result_diagnostic",
+                format!("negative result diagnostic at {path}"),
+            )
+        };
+        assert_eq!(error, expected);
+        assert_eq!(error.code(), code);
+        assert_eq!(error.path(), path);
+        assert_eq!(error.to_string(), display);
+        assert!(error.source().is_none());
+        assert_eq!((record.value.to_bits(), record.tolerance.to_bits()), before);
+    }
+
+    #[test]
+    fn component_version_and_both_declared_kinds_are_admitted() {
+        assert_eq!(RESULT_DIAGNOSTIC_SCHEMA_VERSION, "1.0.0");
+        for kind in KINDS {
+            let value = record(kind);
+            assert_eq!(value.validate(), Ok(()));
+            assert_eq!(value.kind, kind);
+            assert_eq!(value.schema_version, "1.0.0");
+        }
+    }
+
+    #[test]
+    fn unsupported_schema_precedes_invalid_numbers_without_rewriting() {
+        for version in [
+            "",
+            "1",
+            "1.0",
+            "1.0.1",
+            "2.0.0",
+            " 1.0.0",
+            "1.0.0\n",
+            "1.0.0+build",
+            "1.0.0-rc.1",
+            "^1.0.0",
+            "1.0.0\0",
+            "１.0.0",
+            "paignia/static-finite-perfect-information-sparse-zero/1.0.0",
+        ] {
+            for kind in KINDS {
+                let mut value = record(kind);
+                value.schema_version = version.into();
+                value.value = f64::from_bits(0x7ff8_0000_0000_0042);
+                value.tolerance = f64::NEG_INFINITY;
+                let error = value.validate().unwrap_err();
+                assert_eq!(
+                    error,
+                    ResultDiagnosticValidationError::UnsupportedSchemaVersion {
+                        value: version.into(),
+                    }
+                );
+                assert_eq!(error.code(), "unsupported_result_diagnostic_schema");
+                assert_eq!(error.path(), "schema_version");
+                assert_eq!(value.schema_version, version);
+                assert_eq!(value.value.to_bits(), 0x7ff8_0000_0000_0042);
+                assert_eq!(value.tolerance.to_bits(), f64::NEG_INFINITY.to_bits());
+                assert_eq!(value.kind, kind);
+            }
+        }
+    }
+
+    #[test]
+    fn nonfinite_magnitudes_reject_for_each_kind() {
+        for kind in KINDS {
+            for invalid in nonfinite() {
+                let mut value = record(kind);
+                value.value = invalid;
+                expect_number_error(&value, "value", true);
+            }
+        }
+    }
+
+    #[test]
+    fn nonfinite_tolerances_reject_for_each_kind() {
+        for kind in KINDS {
+            for invalid in nonfinite() {
+                let mut value = record(kind);
+                value.tolerance = invalid;
+                expect_number_error(&value, "tolerance", true);
+            }
+        }
+    }
+
+    #[test]
+    fn negative_magnitudes_are_not_absorbed_or_clamped() {
+        for kind in KINDS {
+            for invalid in [-1.0, -f64::MAX, -f64::MIN_POSITIVE, -f64::from_bits(1)] {
+                let mut value = record(kind);
+                value.value = invalid;
+                expect_number_error(&value, "value", false);
+            }
+        }
+    }
+
+    #[test]
+    fn negative_tolerances_do_not_become_defaults() {
+        for kind in KINDS {
+            for invalid in [-1.0, -f64::MAX, -f64::MIN_POSITIVE, -f64::from_bits(1)] {
+                let mut value = record(kind);
+                value.tolerance = invalid;
+                expect_number_error(&value, "tolerance", false);
+            }
+        }
+    }
+
+    #[test]
+    fn schema_then_value_then_tolerance_is_the_error_order() {
+        for kind in KINDS {
+            for (magnitude, tolerance, path, non_finite) in [
+                (f64::NEG_INFINITY, -1.0, "value", true),
+                (-1.0, f64::NAN, "value", false),
+                (f64::NAN, f64::NAN, "value", true),
+                (1.0, f64::NEG_INFINITY, "tolerance", true),
+                (1.0, -1.0, "tolerance", false),
+            ] {
+                let mut value = record(kind);
+                value.value = magnitude;
+                value.tolerance = tolerance;
+                expect_number_error(&value, path, non_finite);
+            }
+        }
+    }
+
+    #[test]
+    fn finite_boundary_matrix_is_preserved_bitwise() {
+        let magnitudes = [
+            0.0,
+            -0.0,
+            f64::from_bits(1),
+            f64::MIN_POSITIVE,
+            1.0,
+            f64::MAX,
+        ];
+        let mut admitted = 0;
+        for kind in KINDS {
+            for magnitude in magnitudes {
+                for tolerance in magnitudes {
+                    let mut value = record(kind);
+                    value.value = magnitude;
+                    value.tolerance = tolerance;
+                    assert_eq!(value.validate(), Ok(()));
+                    assert_eq!(value.value.to_bits(), magnitude.to_bits());
+                    assert_eq!(value.tolerance.to_bits(), tolerance.to_bits());
+                    assert_eq!(value.kind, kind);
+                    admitted += 1;
+                }
+            }
+        }
+        assert_eq!(admitted, 72);
+    }
+
+    #[test]
+    fn structural_admission_does_not_decide_convergence() {
+        for kind in KINDS {
+            let mut value = record(kind);
+            value.value = f64::MAX;
+            value.tolerance = 0.0;
+            assert_eq!(value.validate(), Ok(()));
+            assert!(value.value > value.tolerance);
+            assert_eq!(value.value.to_bits(), f64::MAX.to_bits());
+            assert_eq!(value.tolerance.to_bits(), 0.0_f64.to_bits());
+        }
+    }
+
+    #[test]
+    fn typed_error_payload_codes_paths_and_sources_are_stable() {
+        let error = ResultDiagnosticValidationError::UnsupportedSchemaVersion {
+            value: "future\0version".into(),
+        };
+        assert_eq!(error.code(), "unsupported_result_diagnostic_schema");
+        assert_eq!(error.path(), "schema_version");
+        assert_eq!(
+            error.to_string(),
+            "unsupported result diagnostic schema version future\0version"
+        );
+        assert!(error.source().is_none());
+        let object: &dyn Error = &error;
+        assert!(object
+            .downcast_ref::<ResultDiagnosticValidationError>()
+            .is_some());
+        assert!(object
+            .downcast_ref::<paignia_core::ValidationError>()
+            .is_none());
+        for path in ["value", "tolerance"] {
+            let nonfinite = ResultDiagnosticValidationError::NonFiniteNumber { path };
+            let negative = ResultDiagnosticValidationError::NegativeNumber { path };
+            assert_eq!(nonfinite.code(), "non_finite_result_diagnostic");
+            assert_eq!(negative.code(), "negative_result_diagnostic");
+            assert_eq!(nonfinite.path(), path);
+            assert_eq!(negative.path(), path);
+            assert!(nonfinite.source().is_none());
+            assert!(negative.source().is_none());
+        }
+    }
+
+    #[test]
+    fn repeated_admission_and_public_mutation_require_revalidation() {
+        let mut value = record(ResultDiagnosticKind::Residual);
+        assert_eq!(value.validate(), Ok(()));
+        assert_eq!(value.validate(), Ok(()));
+        value.value = -1.0;
+        expect_number_error(&value, "value", false);
+        value.value = 0.0;
+        value.tolerance = f64::NAN;
+        expect_number_error(&value, "tolerance", true);
+        value.tolerance = -0.0;
+        assert_eq!(value.validate(), Ok(()));
+        assert_eq!(value.tolerance.to_bits(), (-0.0_f64).to_bits());
+    }
+}
 
 mod result_identities {
     use std::error::Error;
