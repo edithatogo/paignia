@@ -8,9 +8,18 @@ rust-version.workspace = true
 repository.workspace = true
 publish = false
 
+[features]
+default = []
+correlated-equilibrium = ["dep:clarabel"]
+
 [dependencies]
 paignia-core = { path = "../paignia-core", version = "0.1.0" }
 thiserror = "=1.0.69"
+clarabel = { version = "=0.11.1", default-features = false, features = ["serde"], optional = true }
+
+[[test]]
+name = "clarabel_backend"
+required-features = ["correlated-equilibrium"]
 
 [lints]
 workspace = true

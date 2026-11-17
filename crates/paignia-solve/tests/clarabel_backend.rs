@@ -8,16 +8,28 @@
 #![allow(clippy::float_cmp)]
 
 use clarabel::algebra::CscMatrix;
-use clarabel::solver::{DefaultSettingsBuilder, DefaultSolution, DefaultSolver, IPSolver, NonnegativeConeT, ZeroConeT};
+use clarabel::solver::{
+    DefaultSettingsBuilder, DefaultSolution, DefaultSolver, IPSolver, NonnegativeConeT, ZeroConeT,
+};
 
-fn solve_ce(a: &[Vec<f64>], b: &[Vec<f64>], objective: &[f64], max_iter: u32) -> DefaultSolution<f64> {
+fn solve_ce(
+    a: &[Vec<f64>],
+    b: &[Vec<f64>],
+    objective: &[f64],
+    max_iter: u32,
+) -> DefaultSolution<f64> {
     let rows = a.len();
     let cols = a[0].len();
     let size = rows * cols;
     assert_eq!(b.len(), rows);
     assert_eq!(objective.len(), size);
     assert!(a.iter().chain(b).all(|row| row.len() == cols));
-    assert!(a.iter().chain(b).flatten().chain(objective).all(|x| x.is_finite()));
+    assert!(a
+        .iter()
+        .chain(b)
+        .flatten()
+        .chain(objective)
+        .all(|x| x.is_finite()));
     let mut constraints = vec![vec![1.0; size]];
     for index in 0..size {
         let mut row = vec![0.0; size];
@@ -26,20 +38,26 @@ fn solve_ce(a: &[Vec<f64>], b: &[Vec<f64>], objective: &[f64], max_iter: u32) ->
     }
     for recommendation in 0..rows {
         for deviation in 0..rows {
-            if recommendation == deviation { continue; }
+            if recommendation == deviation {
+                continue;
+            }
             let mut row = vec![0.0; size];
             for column in 0..cols {
-                row[recommendation * cols + column] = a[deviation][column] - a[recommendation][column];
+                row[recommendation * cols + column] =
+                    a[deviation][column] - a[recommendation][column];
             }
             constraints.push(row);
         }
     }
     for recommendation in 0..cols {
         for deviation in 0..cols {
-            if recommendation == deviation { continue; }
+            if recommendation == deviation {
+                continue;
+            }
             let mut row = vec![0.0; size];
             for player_row in 0..rows {
-                row[player_row * cols + recommendation] = b[player_row][deviation] - b[player_row][recommendation];
+                row[player_row * cols + recommendation] =
+                    b[player_row][deviation] - b[player_row][recommendation];
             }
             constraints.push(row);
         }
@@ -65,9 +83,14 @@ fn solve_ce(a: &[Vec<f64>], b: &[Vec<f64>], objective: &[f64], max_iter: u32) ->
     rhs[0] = 1.0;
     let cones = [ZeroConeT(1), NonnegativeConeT(count - 1)];
     let settings = DefaultSettingsBuilder::default()
-        .verbose(false).max_iter(max_iter).tol_feas(1e-10)
-        .tol_gap_abs(1e-10).tol_gap_rel(1e-10)
-        .direct_solve_method("qdldl".to_string()).build().unwrap();
+        .verbose(false)
+        .max_iter(max_iter)
+        .tol_feas(1e-10)
+        .tol_gap_abs(1e-10)
+        .tol_gap_rel(1e-10)
+        .direct_solve_method("qdldl".to_string())
+        .build()
+        .unwrap();
     let mut solver = DefaultSolver::new(&p, &q, &matrix, &rhs, &cones, settings).unwrap();
     solver.solve();
     solver.solution
@@ -88,28 +111,49 @@ fn metrics(a: &[Vec<f64>], b: &[Vec<f64>], objective: &[f64], joint: &[f64]) -> 
     let mut weighted_gain = 0.0f64;
     let mut conditional_gain = 0.0f64;
     for recommendation in 0..rows {
-        let mass: f64 = (0..cols).map(|column| joint[recommendation * cols + column]).sum();
+        let mass: f64 = (0..cols)
+            .map(|column| joint[recommendation * cols + column])
+            .sum();
         for deviation in 0..rows {
-            let gain: f64 = (0..cols).map(|column| joint[recommendation * cols + column]
-                * (a[deviation][column] - a[recommendation][column])).sum();
+            let gain: f64 = (0..cols)
+                .map(|column| {
+                    joint[recommendation * cols + column]
+                        * (a[deviation][column] - a[recommendation][column])
+                })
+                .sum();
             weighted_gain = weighted_gain.max(gain);
-            if mass > 0.0 { conditional_gain = conditional_gain.max(gain / mass); }
+            if mass > 0.0 {
+                conditional_gain = conditional_gain.max(gain / mass);
+            }
         }
     }
     for recommendation in 0..cols {
-        let mass: f64 = (0..rows).map(|row| joint[row * cols + recommendation]).sum();
+        let mass: f64 = (0..rows)
+            .map(|row| joint[row * cols + recommendation])
+            .sum();
         for deviation in 0..cols {
-            let gain: f64 = (0..rows).map(|row| joint[row * cols + recommendation]
-                * (b[row][deviation] - b[row][recommendation])).sum();
+            let gain: f64 = (0..rows)
+                .map(|row| {
+                    joint[row * cols + recommendation]
+                        * (b[row][deviation] - b[row][recommendation])
+                })
+                .sum();
             weighted_gain = weighted_gain.max(gain);
-            if mass > 0.0 { conditional_gain = conditional_gain.max(gain / mass); }
+            if mass > 0.0 {
+                conditional_gain = conditional_gain.max(gain / mass);
+            }
         }
     }
     Metrics {
         mass_error: (joint.iter().sum::<f64>() - 1.0).abs(),
         negative_mass: joint.iter().map(|x| -x).fold(0.0, f64::max),
-        weighted_gain, conditional_gain,
-        objective: objective.iter().zip(joint).map(|(value, probability)| value * probability).sum(),
+        weighted_gain,
+        conditional_gain,
+        objective: objective
+            .iter()
+            .zip(joint)
+            .map(|(value, probability)| value * probability)
+            .sum(),
     }
 }
 
@@ -118,9 +162,9 @@ mod tests {
     use super::*;
     use clarabel::solver::SolverStatus;
 
-    fn certificate_case(id: &str, a: Vec<Vec<f64>>, b: Vec<Vec<f64>>, c: Vec<f64>, upper: f64) {
-        let result = solve_ce(&a, &b, &c, 200);
-        let check = metrics(&a, &b, &c, &result.x);
+    fn certificate_case(id: &str, a: &[Vec<f64>], b: &[Vec<f64>], c: &[f64], upper: f64) {
+        let result = solve_ce(a, b, c, 200);
+        let check = metrics(a, b, c, &result.x);
         println!("{id}: status={:?} iterations={} x={:?} objective={} r_prim={} r_dual={} recomputed={check:?}",
             result.status, result.iterations, result.x, -result.obj_val, result.r_prim, result.r_dual);
         assert_eq!(result.status, SolverStatus::Solved);
@@ -136,26 +180,52 @@ mod tests {
 
     #[test]
     fn correlation_welfare_gap() {
-        certificate_case("correlation_welfare_gap", vec![vec![0., 7.], vec![2., 6.]],
-            vec![vec![0., 2.], vec![7., 6.]], vec![0., 9., 9., 12.], 10.5);
+        certificate_case(
+            "correlation_welfare_gap",
+            &[vec![0., 7.], vec![2., 6.]],
+            &[vec![0., 2.], vec![7., 6.]],
+            &[0., 9., 9., 12.],
+            10.5,
+        );
     }
     #[test]
     fn dominance_zero_recommendations() {
-        certificate_case("dominance_zero_recommendations", vec![vec![2., 2.], vec![1., 1.]],
-            vec![vec![2., 1.], vec![2., 1.]], vec![4., 3., 3., 2.], 4.);
+        certificate_case(
+            "dominance_zero_recommendations",
+            &[vec![2., 2.], vec![1., 1.]],
+            &[vec![2., 1.], vec![2., 1.]],
+            &[4., 3., 3., 2.],
+            4.,
+        );
     }
     #[test]
     fn rectangular_two_by_three() {
-        certificate_case("rectangular_2x3", vec![vec![1., -1., 0.], vec![-1., 1., 0.]],
-            vec![vec![-1., 1., -2.], vec![1., -1., -2.]], vec![0., 0., -2., 0., 0., -2.], 0.);
+        certificate_case(
+            "rectangular_2x3",
+            &[vec![1., -1., 0.], vec![-1., 1., 0.]],
+            &[vec![-1., 1., -2.], vec![1., -1., -2.]],
+            &[0., 0., -2., 0., 0., -2.],
+            0.,
+        );
     }
     #[test]
     fn negative_single_action() {
-        certificate_case("negative_single_action", vec![vec![-3.]], vec![vec![-4.]], vec![-7.], -7.);
+        certificate_case(
+            "negative_single_action",
+            &[vec![-3.]],
+            &[vec![-4.]],
+            &[-7.],
+            -7.,
+        );
     }
     #[test]
     fn max_iterations_is_not_a_solution() {
-        let result = solve_ce(&[vec![0., 7.], vec![2., 6.]], &[vec![0., 2.], vec![7., 6.]], &[0., 9., 9., 12.], 0);
+        let result = solve_ce(
+            &[vec![0., 7.], vec![2., 6.]],
+            &[vec![0., 2.], vec![7., 6.]],
+            &[0., 9., 9., 12.],
+            0,
+        );
         println!("iteration budget: {:?}, x={:?}", result.status, result.x);
         assert_eq!(result.status, SolverStatus::MaxIterations);
         assert_ne!(result.status, SolverStatus::Solved);
@@ -165,22 +235,30 @@ mod tests {
         let a = [vec![0., 7.], vec![2., 6.]];
         let b = [vec![0., 2.], vec![7., 6.]];
         let c = [0., 9., 9., 12.];
-        let result = metrics(&a, &b, &c, &[1./9., 2./9., 2./9., 4./9.]);
+        let result = metrics(&a, &b, &c, &[1. / 9., 2. / 9., 2. / 9., 4. / 9.]);
         assert!(result.weighted_gain < 1e-14);
-        assert!((result.objective - 28./3.).abs() < 1e-14);
+        assert!((result.objective - 28. / 3.).abs() < 1e-14);
         assert!(10.5 - result.objective > 1.0);
     }
     #[test]
     fn products_of_ce_marginals_break_incentives() {
-        let result = metrics(&[vec![0., 7.], vec![2., 6.]], &[vec![0., 2.], vec![7., 6.]],
-            &[0., 9., 9., 12.], &[1./16., 3./16., 3./16., 9./16.]);
-        assert_eq!(result.weighted_gain, 3./16.);
-        assert_eq!(result.conditional_gain, 1./4.);
+        let result = metrics(
+            &[vec![0., 7.], vec![2., 6.]],
+            &[vec![0., 2.], vec![7., 6.]],
+            &[0., 9., 9., 12.],
+            &[1. / 16., 3. / 16., 3. / 16., 9. / 16.],
+        );
+        assert_eq!(result.weighted_gain, 3. / 16.);
+        assert_eq!(result.conditional_gain, 1. / 4.);
     }
     #[test]
     fn infeasible_high_objective_is_rejected_by_incentives() {
-        let result = metrics(&[vec![0., 7.], vec![2., 6.]], &[vec![0., 2.], vec![7., 6.]],
-            &[0., 9., 9., 12.], &[0., 0., 0., 1.]);
+        let result = metrics(
+            &[vec![0., 7.], vec![2., 6.]],
+            &[vec![0., 2.], vec![7., 6.]],
+            &[0., 9., 9., 12.],
+            &[0., 0., 0., 1.],
+        );
         assert_eq!(result.objective, 12.);
         assert_eq!(result.weighted_gain, 1.);
     }
