@@ -263,6 +263,15 @@ seed rename and source-level consumer slices without adding competing leaves.
 
 ### [~] T17.02 — reject Kairos in the static package dependency closure
 
+The independently implemented native envelope is a bounded T17.01 component:
+`result_envelope` adds 31 public-contract tests and source/instance/policy
+admission. It does not prove a computed equilibrium or serialize records.
+T17.01.emission now adds an opt-in solver entry point producing that record from
+the existing backward-induction implementation, while retaining its legacy
+selection semantics and rejecting non-finite output. Scope: solver module/export,
+`src/result.rs`, `tests/result_contract.rs`, method document and this plan.
+Both public increments require independent review before acceptance.
+
 - Behavior: fail the boundary guard if either generic crate gains a direct or
   transitive Kairos dependency; permit it only in the optional adapter package.
 - Depends on: T17.01.
@@ -345,10 +354,15 @@ oracle and result contract. Exclusion is not scientific completion.
   caller/retirement, comparator/backend and package/consumer obligations remain.
   T17.13 remains held; no T18/native simulation or consumer activation follows.
 
-### [ ] T17.04 — implement the declared four-stage replicator step (S01)
+### [~] T17.04 — implement the declared four-stage replicator step (S01)
 
 - Behavior: advance supported continuous replicator dynamics by the declared
   four-stage RK4 update, retaining the legacy Euler result under its own version.
+- 17 November implementation scope: solver module/export, `replicator.rs`,
+  `replicator_rk4.rs` tests and the method document. Consume the frozen independent
+  oracle literals unchanged. Test four stage times, logistic fourth-order
+  refinement, explicit simplex/non-finite failures and one-sided discontinuity
+  segments. Upstream retirement and full-track acceptance remain separate.
 - Depends on: T17.01; exact upstream API/caller inventory recorded first.
 - Execution: specialist, numerical integration.
 - Files (4): `crates/paignia-solve/src/lib.rs`,
