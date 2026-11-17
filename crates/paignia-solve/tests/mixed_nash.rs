@@ -762,11 +762,23 @@ fn exact_dyadic_profitable_deviation_survives_cancellation_and_column_permutatio
     let original_a = [h, 1.0, -h];
     let original_q = [0.25, 0.5, 0.25];
     let b = vec![vec![0.0; 3]; 2];
-    for order in [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]] {
+    for order in [
+        [0, 1, 2],
+        [0, 2, 1],
+        [1, 0, 2],
+        [1, 2, 0],
+        [2, 0, 1],
+        [2, 1, 0],
+    ] {
         let a = vec![order.map(|i| original_a[i]).to_vec(), vec![0.0; 3]];
         let q = order.map(|i| original_q[i]);
-        let candidate = evaluate_mixed_nash_candidate(&a, &b, &[0.0, 1.0], &q, Config::default()).unwrap();
-        assert_eq!(candidate.diagnostics.best_response_gains, [0.5, 0.0], "order={order:?}");
+        let candidate =
+            evaluate_mixed_nash_candidate(&a, &b, &[0.0, 1.0], &q, Config::default()).unwrap();
+        assert_eq!(
+            candidate.diagnostics.best_response_gains,
+            [0.5, 0.0],
+            "order={order:?}"
+        );
         assert!(!candidate.diagnostics.within_tolerance);
     }
 }
@@ -776,7 +788,9 @@ fn exact_dyadic_payoff_and_negative_deviation_survive_cancellation() {
     let h = 2.0_f64.powi(54);
     let a = vec![vec![h, 1.0, -h], vec![0.0; 3]];
     let b = vec![vec![h, -1.0, -h], vec![0.0; 3]];
-    let candidate = evaluate_mixed_nash_candidate(&a, &b, &[1.0, 0.0], &[0.25, 0.5, 0.25], Config::default()).unwrap();
+    let candidate =
+        evaluate_mixed_nash_candidate(&a, &b, &[1.0, 0.0], &[0.25, 0.5, 0.25], Config::default())
+            .unwrap();
     assert_eq!(candidate.diagnostics.expected_payoffs, [0.5, -0.5]);
     assert_eq!(candidate.diagnostics.best_response_gains[0], 0.0);
 }
@@ -788,6 +802,38 @@ fn probability_mass_error_survives_rounding_of_the_total_to_one() {
     let p = [0.5, 0.5, tiny];
     let candidate = evaluate_mixed_nash_candidate(&z, &z, &p, &[1.0], Config::default()).unwrap();
     assert_eq!(candidate.diagnostics.probability_mass_errors[0], tiny);
-    let config = Config { probability_tolerance: 0.0, ..Config::default() };
-    assert!(matches!(evaluate_mixed_nash_candidate(&z, &z, &p, &[1.0], config), Err(Error::InvalidProbabilityMass { .. })));
+    let config = Config {
+        probability_tolerance: 0.0,
+        ..Config::default()
+    };
+    assert!(matches!(
+        evaluate_mixed_nash_candidate(&z, &z, &p, &[1.0], config),
+        Err(Error::InvalidProbabilityMass { .. })
+    ));
+}
+
+#[test]
+fn a_rounded_payoff_difference_cannot_erase_a_profitable_deviation() {
+    let h = 2.0_f64.powi(54);
+    let a = vec![vec![h, -h], vec![-1.0, 0.0]];
+    let b = vec![vec![0.0; 2]; 2];
+    // (H - (-1))/2 + (-H - 0)/2 = 1/2. Rounding H+1 before
+    // accumulation loses the profitable deviation even with an accurate sum.
+    let candidate = evaluate_mixed_nash_candidate(&a, &b, &[0.0, 1.0], &[0.5, 0.5], Config::default()).unwrap();
+    assert_eq!(candidate.diagnostics.best_response_gains, [0.5, 0.0]);
+    assert!(!candidate.diagnostics.within_tolerance);
+}
+
+#[test]
+fn product_roundoff_cannot_erase_a_profitable_deviation() {
+    let h = 2.0_f64.powi(54);
+    let a = vec![vec![h - 4.0, -h, 0.625], vec![0.0; 3]];
+    let b = vec![vec![0.0; 3]; 2];
+    let q = [0.1, 0.1, 0.8];
+    // As binary64 values q[2] = 8*q[0] exactly, so the real sum of
+    // q[0]*(H-4) - q[1]*H + q[2]*(5/8) is exactly q[0].
+    // The rounded products sum to zero without their low remainders.
+    let candidate = evaluate_mixed_nash_candidate(&a, &b, &[0.0, 1.0], &q, Config::default()).unwrap();
+    assert_eq!(candidate.diagnostics.best_response_gains, [q[0], 0.0]);
+    assert!(!candidate.diagnostics.within_tolerance);
 }
