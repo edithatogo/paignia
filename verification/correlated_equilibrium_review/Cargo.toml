@@ -1,0 +1,15 @@
+[package]
+name = "ce-independent-review"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.75"
+publish = false
+
+[features]
+default = []
+correlated-equilibrium = ["paignia-solve/correlated-equilibrium"]
+
+[dependencies]
+paignia-solve = { path = "../../crates/paignia-solve" }
+
+[workspace]
