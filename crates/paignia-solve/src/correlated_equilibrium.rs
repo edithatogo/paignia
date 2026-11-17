@@ -28,7 +28,7 @@ pub struct Config {
     pub dual_tolerance: f64,
     /// Absolute primal/dual gap budget in the caller's objective units.
     pub objective_tolerance: f64,
-    /// Finite iteration budget, from zero to MAX_ITERATIONS inclusive.
+    /// Finite iteration budget, from zero to `MAX_ITERATIONS` inclusive.
     pub max_iterations: u32,
 }
 

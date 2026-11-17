@@ -216,3 +216,26 @@ external application receipts are distinct evidence. This slice does not update
 old scientific fixtures, legacy consumer pins, source retirement records or
 either real application receipt. The S03 completion decision remains subject
 to the coordinated review and recorded migration obligations.
+
+### Local execution and independent review record
+
+The numerical/API candidate at local revision
+026ccb8dcb95550cc1afcaddbf5114a89f6fe81a passes all 167 workspace tests with
+all targets and features enabled on Rust 1.75.0 and stable 1.100.0, including
+the 27 method tests and eight backend probes. The seven isolated extraction
+profiles and seven packaged-consumer profiles also pass; the latter run 26
+existing static/RK4 consumer checks and compile the CE feature. Executing CE
+itself from artifacts is a separate coordinated consumer-gate extension.
+
+Independent public-API review accepts the numerical/API candidate with no
+blocker. Thirteen additional native tests pass on Rust 1.75, including a
+primal-invalid but dual-valid zero-gap certificate, negative dual signs,
+36 three-action dual permutations, rectangular transposition, independent
+payoff/objective units, cancellation and arithmetic-rounding boundaries,
+both-sign half-subnormals, maximum-float identities/overflow, lost mass,
+signed-zero recommendation mass, and five extreme finite backend scales.
+The external review harness has SHA-256
+7a8189e7f9faa03e842dc704670f58cd5389935fc1c57a7c0df7e361c92435ca
+and is retained by the integration coordinator. A following documentation-only
+correction adds the code formatting required by stable Clippy to the iteration
+budget's field documentation; it changes no arithmetic or API.
