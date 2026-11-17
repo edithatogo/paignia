@@ -105,7 +105,16 @@ semantic declarations, zero-weight invalid branches and revalidation on restore.
 cargo test --locked -p paignia-core --test semantic_conversion
 ```
 
-Independent interface review and integrated native/package gates remain required
-for acceptance of this new increment. Serialization, RDF/JSON-LD ingestion,
+Independent interface review accepted source
+`aee7d76f915892edf043deb0a858cb81a354f47f`, running all 29 author controls and
+six separately written native controls. The byte-identical external harness is
+retained at `verification/conversion_review`; it checks all six input orders of
+an order-sensitive tie example before and after admitted renaming. Both CI
+compiler profiles rerun those controls. The actual core artifact consumer
+executes conversion and restoration in every feature profile. The
+[integrated receipt](../validation/t17-review-20261117.md) records the exact
+accepted provider revision and completes bounded T17.13.
+
+Serialization, RDF/JSON-LD ingestion,
 normal-form conversion, information sets, native lifetimes and application
 activation are outside this bounded contract.

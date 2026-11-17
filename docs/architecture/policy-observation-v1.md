@@ -166,9 +166,8 @@ zero pass and 32 fail, exit 101, against an explicit unimplemented builder.
 The implemented constructor passes all 32 focused tests on Rust 1.75.0 and
 stable 1.100.0. The complete workspace at this slice's base executes 164 native
 tests under Rust 1.75.0; formatting, Clippy with warnings denied, and the two-
-crate/six-profile extraction validator pass. Independent interface review and
-the final integration receipt remain separate; no zero-test result is used as
-acceptance.
+crate/six-profile extraction validator pass at that candidate's source revision.
+These historical candidate counts are separate from the final integrated gates.
 
 ```bash
 cargo test --locked -p paignia-core --test policy_observation
@@ -179,3 +178,18 @@ native test, and this contract. Source fixtures, dependencies, runtime integrati
 shared Conductor records and consumer pins are unchanged. Rollback is an ordinary
 revert of these additive commits. Full native/session and information-set
 qualification remain separate from this bounded constructor.
+
+### Integrated acceptance — 17 November 2026
+
+Independent interface review accepted exact source
+`bac35fcc989b01e3e51c166b72c84cc4240ab951` after all 32 author controls and six
+external native controls executed on Rust 1.75. The unchanged six-test harness
+is retained at `verification/policy_observation_review`, SHA-256
+`a16b252db0a14b6b2e7940c7bad138fb24f2996f093cfe818a907ecb6b4ba87a`.
+It includes replacing the entire unexposed graph/root while preserving the DTO,
+equal strings across typed roles, Unicode distinctions, mismatch precedence,
+zero-probability invalid branches and output isolation. Both CI compiler
+profiles rerun it. Every core artifact profile calls the builder and checks
+action order plus revision-mismatch rejection. The
+[integrated receipt](../validation/t17-review-20261117.md) completes T17.14 for
+this declared static profile; it grants no native authority or freshness claim.
