@@ -1,12 +1,17 @@
 # T17 Paignia native library and ecosystem handoff
 
-Status: active. The bounded native T17.01 contract, dependency boundary and
-local Cargo artifact consumption are accepted; the RK4/Euler native slice has
-independent numerical acceptance. Mixed Nash, correlated equilibrium, static
-conversion and policy-observation increments have their own current work/review.
-The [17 November receipt](../../../docs/validation/t17-review-20261117.md) records
-exact accepted source, compiler execution, corrections and remaining limits.
-Full-track archival and real-consumer release eligibility remain incomplete.
+Status: active, with eight bounded provider leaves complete: T17.01–.06,
+.13 and .14. The native static contract, package boundary/artifacts, RK4/Euler,
+mixed Nash, optional correlated equilibrium, static conversion and owned
+observations have accepted independent review and integrated compiler/package
+checks. The [17 November receipt](../../../docs/validation/t17-review-20261117.md)
+records exact source, corrections, nonzero test counts and remaining limits.
+
+Nine leaves remain open for information-set/CFR, native adapter/streams/replay,
+real application receipts and valued-payoff work. The
+[concrete package handoff](../../../docs/validation/receipts/t17-bd880dd-handoff.json)
+is ready for application owners. Full-track archival and real-consumer release
+eligibility remain incomplete; all seventeen original IDs stay visible.
 
 - [Specification](spec.md)
 - [Provider implementation plan and external owner entries](plan.md)
