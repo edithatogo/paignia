@@ -80,6 +80,22 @@ jobs:
           PY
       - name: Source ownership and package boundary
         run: python3 scripts/validate_extraction.py --receipt target/static-dependency-boundary.json
+      - name: Native solver API doctests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo test --locked -p paignia-solve --doc --all-features 2>&1 | tee target/solver-doctests.log
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          summaries = re.findall(
+              r"^test result: ok\. (\d+) passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;",
+              Path("target/solver-doctests.log").read_text(),
+              re.MULTILINE,
+          )
+          if len(summaries) != 1 or int(summaries[0]) < 1:
+              raise SystemExit("Expected the native mixed Nash API example without skips or failures")
+          PY
       - name: Package and consumer evidence regression controls
         run: python3 -B -m unittest discover -s tests
       - name: Isolated extracted-source consumer
@@ -98,6 +114,7 @@ jobs:
             target/extracted-package-smoke.json
             target/cargo-artifact-qualification.json
             target/all-features.log
+            target/solver-doctests.log
           if-no-files-found: error
           retention-days: 30
 

@@ -139,6 +139,28 @@ fn artifact_rk4_matches_the_independent_four_stage_witness() {
     assert_eq!(result.fitness_evaluations, 4);
     assert!((result.population.iter().sum::<f64>() - 1.0).abs() < 1e-12);
 }
+
+#[test]
+fn artifact_mixed_nash_preserves_a_mixed_witness_and_positive_deviation() {
+    use paignia_solve::{solve_mixed_nash, evaluate_mixed_nash_candidate,
+        MixedNashAlgorithm, MixedNashCatalogueCompleteness, MixedNashConfig};
+    let a = vec![vec![1.0, -1.0], vec![-1.0, 1.0]];
+    let b = vec![vec![-1.0, 1.0], vec![1.0, -1.0]];
+    let result = solve_mixed_nash(&a, &b, MixedNashAlgorithm::SupportEnumeration,
+                                  MixedNashConfig::default()).unwrap();
+    assert_eq!(result.candidates.len(), 1);
+    assert_eq!(result.candidates[0].row_strategy, vec![0.5, 0.5]);
+    assert_eq!(result.candidates[0].column_strategy, vec![0.5, 0.5]);
+    assert_eq!(result.catalogue_completeness,
+               MixedNashCatalogueCompleteness::FiniteVerifiedWitnessesOnly);
+    let large = 18014398509481984.0_f64;
+    let bad = evaluate_mixed_nash_candidate(
+        &[vec![large, 1.0, -large], vec![0.0, 0.0, 0.0]],
+        &[vec![0.0, 0.0, 0.0], vec![0.0, 0.0, 0.0]],
+        &[0.0, 1.0], &[0.25, 0.5, 0.25], MixedNashConfig::default()).unwrap();
+    assert_eq!(bad.diagnostics.best_response_gains[0].to_bits(), 0.5_f64.to_bits());
+    assert!(!bad.diagnostics.within_tolerance);
+}
 '''
 
 ARTIFACT_CORE_TEST = r'''
@@ -416,7 +438,7 @@ def artifact_qualification(cargo: str) -> dict:
                             raise ValueError("consumer did not resolve the exact unpacked artifact")
                 output = isolated([cargo, "test", "--offline", "--locked", "--manifest-path", manifest,
                                    "--test", "artifact_consumer"])
-                count = 3 if name == "paignia-core" else 5
+                count = 3 if name == "paignia-core" else 6
                 require_native_tests(output, count)
                 receipt["profiles"].append({
                     "package": name, "profile": label, "default_features": defaults, "features": enabled,
