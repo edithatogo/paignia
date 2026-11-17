@@ -31,6 +31,42 @@ seed rename and source-level consumer slices without adding competing leaves.
 
 ## Phase A — package boundary
 
+### [~] T17.integration-20261117 — receive merged work and resume maturity
+
+- User instruction: implement T17, address blockers, review, apply fixes and
+  archive only after its actual completion criteria are met. The receiving
+  baseline is `5642c5e226949c050d1600e021420cb1335cf492`; all earlier PRs are
+  closed. Earlier pending-review/merge statements below are historical receipts.
+- Immediate bounded correction: restore the Rust 1.75-compatible `thiserror`
+  closure previously accepted in PR27. The later PR20 update introduced
+  `thiserror 2.0.21`, which requires Rust 1.77; hosted job
+  [133915868902](https://github.com/edithatogo/paignia/actions/runs/44047236919/job/133915868902)
+  fails before native tests. Preserve the declared compiler contract and add
+  an explicit Renovate constraint. Scope: two crate manifests, lockfile,
+  `renovate.json` and this receipt.
+- Correction verified locally on Rust 1.75.0: the unchanged baseline first
+  fails with `thiserror-impl 2.0.21` requiring Rust 1.77 (exit 101). Restoring
+  the exact PR27 manifests/lock runs 64 native tests, three compile-fail
+  doctests and two source-consumer tests successfully; formatting, Clippy
+  with warnings denied, extraction and warnings-denied documentation pass.
+  The Renovate rule retains the compatible `thiserror` major until a deliberate
+  compiler migration. Hosted validation remains required for the proposed head.
+- Parallel package implementation owns only the two existing validation scripts
+  and their new focused Python tests. It will add resolved normal/build closure
+  checks and actual unpacked Cargo artifact consumption. Shared CI, native
+  source, metadata and integration remain coordinated here.
+- Required final checks: both declared Rust profiles, native tests/doctests,
+  extraction and package checks, reference fixtures, independent review of new
+  public/numerical interfaces, and a fresh acceptance/status reconciliation.
+  An incomplete external obligation or unimplemented method is not archived as
+  completed; registry publication remains disabled.
+- CI reconciliation: the previously merged inspection-reference job from PR23
+  was absent from the receiving tree, while its fixture files remained. Restore
+  that exact 28-test execution/retention job with the current action pins. All
+  28 unchanged reference tests and the original strict count guard pass locally
+  on CPython 3.12.14. No fixture or numerical claim changes; this restores an
+  existing shared gate rather than starting T18 production implementation.
+
 ### [~] T17.01 — expose a versioned generic game/result contract
 
 - Behavior: validate the declared semantic and result schema version, rejecting
@@ -225,7 +261,7 @@ seed rename and source-level consumer slices without adding competing leaves.
   **Fresh independent public-contract review is still required for this new
   component.** Accepted PR21 reviews do not cover it; no new reviewer is created.
 
-### [ ] T17.02 — reject Kairos in the static package dependency closure
+### [~] T17.02 — reject Kairos in the static package dependency closure
 
 - Behavior: fail the boundary guard if either generic crate gains a direct or
   transitive Kairos dependency; permit it only in the optional adapter package.

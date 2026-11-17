@@ -106,3 +106,40 @@ jobs:
           path: numerical-oracles.log
           if-no-files-found: error
           retention-days: 30
+
+  inspection-oracles:
+    name: Synthetic inspection oracles (CPython 3.12.14)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12.14"
+      - name: Execute all 28 synthetic inspection tests
+        shell: bash
+        env:
+          PYTHONNOUSERSITE: "1"
+        run: |
+          set -euo pipefail
+          python3 --version | tee inspection-oracles.log
+          git rev-parse HEAD 'HEAD^{tree}' | tee -a inspection-oracles.log
+          sha256sum verification/inspection_oracles/* | tee -a inspection-oracles.log
+          python3 -B verification/inspection_oracles/test_inspection.py 2>&1 | tee -a inspection-oracles.log
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          log = Path("inspection-oracles.log").read_text()
+          if not re.search(r"^Ran 28 tests in [0-9.]+s$", log, re.MULTILINE) or "\nOK\n" not in log:
+              raise SystemExit("Expected all 28 inspection tests with no failures, errors or skips")
+          PY
+      - name: Retain synthetic inspection execution evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: synthetic-inspection-oracles-python-3.12.14
+          path: inspection-oracles.log
+          if-no-files-found: error
+          retention-days: 30
