@@ -214,8 +214,8 @@ qualification. Backend feasibility, native implementation tests, independent
 numerical review, packaged feature consumption, hosted compiler profiles and
 external application receipts are distinct evidence. This slice does not update
 old scientific fixtures, legacy consumer pins, source retirement records or
-either real application receipt. The S03 completion decision remains subject
-to the coordinated review and recorded migration obligations.
+either real application receipt. The Paignia method and the external Kairos
+source-disposition parts of S03 have separate completion records below.
 
 ### Local execution and independent review record
 
@@ -239,3 +239,16 @@ The external review harness has SHA-256
 and is retained by the integration coordinator. A following documentation-only
 correction adds the code formatting required by stable Clippy to the iteration
 budget's field documentation; it changes no arithmetic or API.
+
+### Integrated acceptance — 17 November 2026
+
+T17.06 is complete for the declared optional Paignia CE program. The
+[integrated T17 receipt](t17-review-20261117.md) binds the combined source,
+compiler gates and actual artifact consumption. The unchanged 13-control
+external harness is retained at `verification/correlated_equilibrium_review`;
+CI requires 13 executed tests with its feature enabled on both compilers.
+The two artifact profiles enabling CE execute the independently frozen 10.5
+optimum and a zero-budget nonconvergence case. A feature-disabled zero-test run
+is never CE qualification. Kairos Track 110 still owns the old product-of-Nash
+API, its callers, migration and retirement. Real application receipts remain
+application-owned and are not supplied by these mathematical controls.

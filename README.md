@@ -9,8 +9,9 @@ dependency. Static solving has no Kairos or host-language runtime dependency.
 
 **Status: pre-release native libraries.** The bounded native static contract,
 resolved dependency boundary and local Cargo artifact consumption are qualified
-on Rust 1.75 and stable. Independent review accepts the bounded four-stage
-RK4 and separately named Euler methods. The [current T17 receipt](docs/validation/t17-review-20261117.md)
+on Rust 1.75 and stable. Independent review accepts bounded RK4/Euler, mixed-Nash
+support enumeration, optional correlated equilibrium, static identity conversion
+and owned policy observations. The [current T17 receipt](docs/validation/t17-review-20261117.md)
 records exact source, checks and limits. Registry publication remains disabled;
 two real application receipts and the remaining track obligations are open.
 
@@ -26,15 +27,26 @@ subsequent contract, package and numerical work without relabelling the old run.
 
 | Package | Current implementation | Dependencies |
 |---|---|---|
-| `paignia-core` | Finite acyclic game graphs; exact static-profile admission; typed identity roles; source-bound native result-envelope admission. | `thiserror`; no Kairos, Voiage, application or host-language runtime. |
-| `paignia-solve` | Backward induction/chance expectations, bounded pure-Nash enumeration, opt-in versioned result emission, four-stage RK4 and separately named Euler replicator steps. | `paignia-core`, `thiserror`; static execution stays independent of Kairos. |
+| `paignia-core` | Finite acyclic graphs; exact static-profile admission; typed identity roles; source-bound native result envelopes; reversible static identity conversion; owned policy observations. | `thiserror`; no Kairos, Voiage, application or host-language runtime. |
+| `paignia-solve` | Backward induction/chance expectations, bounded pure/mixed Nash, opt-in result emission, RK4/Euler and optional correlated-equilibrium programs. | `paignia-core`, `thiserror`; the explicit `correlated-equilibrium` feature adds pinned Clarabel 0.11.1 with its qualified closure. Default consumers do not acquire it. |
 
-Information sets, mixed Nash, correlated equilibrium, CFR/CFR+, learning and
-native simulation adapters have separate implementation/acceptance work. The
+Information sets, CFR/CFR+, learning and native simulation adapters remain open.
+The [mixed-Nash contract](docs/validation/mixed-nash.md) limits enumeration to
+verified finite witnesses from equal-cardinality nonsingular supports, and
+explicitly rejects Lemke–Howson. It does not promise a complete catalogue.
+The [correlated-equilibrium contract](docs/validation/correlated-equilibrium.md)
+requires actual primal/dual admission of unchanged raw LP coordinates; it reports
+an approximate result and preserves solver termination. The
 [RK4 contract](docs/validation/replicator-rk4.md) states its smooth-segment,
 representable-time and simplex admission limits. Its implementation does not
 close the external Kairos caller/retirement part of S01. `Solution.trace` is
 solver analysis over hypothetical alternatives, not a causal simulation stream.
+
+[Static conversion](docs/architecture/game-semantic-conversion-v1.md) preserves
+the declared graph semantics and decision selection order. The
+[observation DTO](docs/architecture/policy-observation-v1.md) exposes owned
+declared context and ordered legal actions. Matching caller-supplied context
+establishes consistency; the host owns actual session authority and freshness.
 
 Known seed behavior remains explicit: chance edges may have probability zero;
 extensive-form missing player payoffs currently act as zero; ties use the
@@ -49,10 +61,13 @@ exhaustive catalogue. UOGTO names alone do not establish implementation support.
 cargo fetch --locked
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 cargo test --workspace --all-targets --locked
+cargo test --workspace --all-targets --all-features --locked
 cargo test --locked -p paignia-core --doc
+cargo test --locked -p paignia-solve --doc --all-features
 python3 -B -m unittest discover -s tests
-cargo doc --workspace --no-deps --locked
+cargo doc --workspace --no-deps --all-features --locked
 python3 scripts/validate_extraction.py
 python3 scripts/validate_game_packages.py
 ```
@@ -79,6 +94,8 @@ exact archives after every profile passes. Hashes are rechecked before any
 archive is copied. CI retains both archives alongside the receipt and native
 logs in its compiler-specific qualification artifact, so application owners
 can test those bytes directly against their own models and expected outcomes.
+The [application-owner handoff](docs/validation/game-consumer-handoff.md) gives
+the required receipt fields and reproducible qualification procedure.
 
 Consume an exact reviewed Git revision until release artifacts are qualified.
 Keep domain game definitions and payoff construction in the consumer. The

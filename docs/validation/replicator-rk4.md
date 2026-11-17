@@ -5,10 +5,10 @@ separately named forward-Euler update. Both operate on a caller-supplied
 population and fitness callback. They add no simulation scheduler, graph-result
 claim, equilibrium solver, RNG, package dependency or application interpretation.
 
-This implements the bounded production-method slice. Independent numerical
-review, final integration checks and the separate Kairos caller/retirement
-receipt remain acceptance obligations. Source transfer or these local tests
-alone do not close the whole inherited S01 obligation or T17.
+The bounded Paignia implementation has independent numerical acceptance.
+The [integrated T17 receipt](t17-review-20261117.md) records compiler and actual
+artifact gates. Kairos Track 110 retains the separate caller/retirement receipt;
+provider completion does not close that inherited S01 source obligation or T17.
 
 ## Native interface and identity
 
@@ -202,3 +202,14 @@ python3 -B verification/numerical_oracles/test_oracles.py ReplicatorOracleTests
 The standalone package/real-consumer evidence must separately name any claimed
 RK4 capability. An existing graph-only consumer smoke is not a replicator
 method or real application receipt.
+
+### Integrated acceptance — 17 November 2026
+
+Independent review accepted source `e194e90612d14e99da53b8843dc2431d2a4510f4`
+with all 28 author controls, 14 frozen reference controls and ten separately
+written native controls. The unchanged external harness is retained at
+`verification/replicator_review` and now runs on both CI compiler profiles.
+The integrated artifact consumer calls RK4 and checks its independent rational
+four-stage witness in every solver profile. The current receipt binds those
+results to the exact provider revision. T17.04 is complete for this declared
+method; source-side migration and application acceptance remain separately owned.

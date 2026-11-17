@@ -1,8 +1,9 @@
 # Bounded native mixed Nash, version 1.0.0
 
-Status: actual Rust support enumeration and candidate diagnostics implemented;
-independent numerical/API review and broader T17.05/S02 qualification remain
-separate. This method supplies finite binary64 witnesses under explicit
+Status: actual Rust support enumeration and candidate diagnostics implemented
+and accepted by independent numerical/API review. The
+[integrated T17 receipt](t17-review-20261117.md) binds compiler and package gates.
+This method supplies finite binary64 witnesses under explicit
 tolerances. It does not certify an exhaustive equilibrium catalogue.
 
 ## Supported mathematical and native interface
@@ -241,7 +242,8 @@ control fails before the guard is implemented, despite a nonzero main product.
 The corrected focused suite executes 39 passing tests under Rust 1.75.0 and
 stable 1.100.0, with the original acceptance tolerances unchanged. The full
 Rust 1.75 workspace executes 143 passing native tests; Clippy with warnings
-denied also passes. Independent review of the corrected head remains separate.
+denied also passes. The subsequent accepted review is recorded below; these
+earlier counts describe the corresponding historical candidate.
 
 Focused commands:
 
@@ -255,9 +257,20 @@ package checks remain separate evidence from independent specialist numerical
 review. Package consumers that only exercise the graph or pure-Nash methods do
 not qualify this mixed method merely by compiling its crate.
 
-The parent T17.05/S02 remains open for independent acceptance, the external
-feature-aware Kairos caller/retirement record, any required approved comparator
-work, and qualification of every advertised native/package profile. No upstream
-implementation, consumer pin, dependency, manifest, lock, registry, CI or shared
-Conductor status is changed here. The only production owner of this new bounded
-method is Paignia. Rollback is a normal revert of this additive implementation.
+### Integrated acceptance — 17 November 2026
+
+Independent review accepted corrected source
+`671898780dcf2d7ef7a74252fa0da23cffebd0c0` after all 39 author controls and 14
+separately written native controls passed on Rust 1.75. The 14-control harness
+is retained unchanged at `verification/mixed_nash_review`, SHA-256
+`5d06571759a79556e2e5a216a7debf975dc4d1c4b39075ac9579207e3ee0c041`.
+It runs on both CI compiler profiles. Actual package consumers call the method
+and check matching pennies plus the independently derived half-unit cancellation
+regression in every solver profile. Production tolerances were not loosened.
+
+T17.05 is complete for the declared bounded Paignia algorithm. Kairos Track 110
+retains the feature-aware caller, old API/output migration and retirement part
+of S02. Gambit execution is not an added gate: the controlling specification
+requires independent evidence and permits explicit algorithm boundaries, both
+provided here. No consumer pin or old Kairos API is changed by this acceptance.
+Rollback is a normal revert of the additive implementation.
