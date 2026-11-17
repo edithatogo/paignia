@@ -101,6 +101,44 @@ fn pure_coordination_preserves_both_equilibria() {
     ];
     assert_eq!(actual, expected);
 }
+
+#[test]
+fn artifact_emits_a_source_bound_native_result() {
+    use paignia_core::{GameInstanceId, GameSpecification, GameSpecificationId,
+        ResultIdentityRecord, ResultStatus, SolverRunId, STATIC_GAME_PROFILE_V1};
+    use paignia_solve::{backward_induction_result, SolverConfig};
+    let source = GameSpecification {
+        schema_version: "1.0.0".into(), id: "urn:artifact:spec".into(),
+        game: Game { root: NodeId("terminal".into()), nodes: BTreeMap::from([
+            (NodeId("terminal".into()), Node::Terminal {
+                payoffs: BTreeMap::from([(PlayerId("p".into()), -2.0)]),
+            }),
+        ]) },
+    };
+    let instance = GameInstanceId("urn:artifact:instance".into());
+    let ids = ResultIdentityRecord { schema_version: "1.0.0".into(),
+        specification_id: GameSpecificationId(source.id.clone()),
+        game_instance_id: instance.clone(), solver_run_id: SolverRunId("urn:artifact:run".into()),
+        session_id: None, policy_artifact_id: None, solver_trace_id: None,
+    };
+    let result = backward_induction_result(&source, STATIC_GAME_PROFILE_V1, ids, SolverConfig::default()).unwrap();
+    assert_eq!(result.envelope.status, ResultStatus::Completed);
+    result.envelope.validate_against(&source, &instance).unwrap();
+    assert_eq!(result.envelope.solutions[0].expected_payoffs[&PlayerId("p".into())], -2.0);
+    assert_eq!(result.diagnostic_trace.len(), 1);
+}
+
+#[test]
+fn artifact_rk4_matches_the_independent_four_stage_witness() {
+    use paignia_solve::{replicator_rk4_step, ReplicatorConfig, ReplicatorMethod};
+    let result = replicator_rk4_step(&[0.25, 0.75], 0.0, 0.5,
+        ReplicatorConfig { mass_tolerance: 1e-12 }, |_, _| Ok(vec![1.0, 0.0])).unwrap();
+    let expected = 408885515741609973.0_f64 / 1152921504606846976.0_f64;
+    assert!((result.population[0] - expected).abs() < 2e-15);
+    assert_eq!(result.method, ReplicatorMethod::ClassicalRk4);
+    assert_eq!(result.fitness_evaluations, 4);
+    assert!((result.population.iter().sum::<f64>() - 1.0).abs() < 1e-12);
+}
 '''
 
 ARTIFACT_CORE_TEST = r'''
@@ -329,7 +367,7 @@ def artifact_qualification(cargo: str) -> dict:
                             raise ValueError("consumer did not resolve the exact unpacked artifact")
                 output = isolated([cargo, "test", "--offline", "--locked", "--manifest-path", manifest,
                                    "--test", "artifact_consumer"])
-                count = 2 if name == "paignia-core" else 3
+                count = 2 if name == "paignia-core" else 5
                 require_native_tests(output, count)
                 receipt["profiles"].append({
                     "package": name, "profile": label, "default_features": defaults, "features": enabled,
