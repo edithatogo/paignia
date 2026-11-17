@@ -819,7 +819,8 @@ fn a_rounded_payoff_difference_cannot_erase_a_profitable_deviation() {
     let b = vec![vec![0.0; 2]; 2];
     // (H - (-1))/2 + (-H - 0)/2 = 1/2. Rounding H+1 before
     // accumulation loses the profitable deviation even with an accurate sum.
-    let candidate = evaluate_mixed_nash_candidate(&a, &b, &[0.0, 1.0], &[0.5, 0.5], Config::default()).unwrap();
+    let candidate =
+        evaluate_mixed_nash_candidate(&a, &b, &[0.0, 1.0], &[0.5, 0.5], Config::default()).unwrap();
     assert_eq!(candidate.diagnostics.best_response_gains, [0.5, 0.0]);
     assert!(!candidate.diagnostics.within_tolerance);
 }
@@ -833,7 +834,27 @@ fn product_roundoff_cannot_erase_a_profitable_deviation() {
     // As binary64 values q[2] = 8*q[0] exactly, so the real sum of
     // q[0]*(H-4) - q[1]*H + q[2]*(5/8) is exactly q[0].
     // The rounded products sum to zero without their low remainders.
-    let candidate = evaluate_mixed_nash_candidate(&a, &b, &[0.0, 1.0], &q, Config::default()).unwrap();
+    let candidate =
+        evaluate_mixed_nash_candidate(&a, &b, &[0.0, 1.0], &q, Config::default()).unwrap();
     assert_eq!(candidate.diagnostics.best_response_gains, [q[0], 0.0]);
     assert!(!candidate.diagnostics.within_tolerance);
+}
+
+#[test]
+fn a_nonzero_product_with_an_unrepresentable_low_part_fails_explicitly() {
+    let a = vec![vec![f64::MIN_POSITIVE, 0.0]];
+    let b = vec![vec![0.0, 0.0]];
+    let unsafe_q = [0.5 + f64::EPSILON / 2.0, 0.5 - f64::EPSILON / 2.0];
+    // The main product is nonzero, but its exact lowest bit would be2^-1075.
+    assert!(matches!(
+        evaluate_mixed_nash_candidate(&a, &b, &[1.0], &unsafe_q, Config::default()),
+        Err(Error::ArithmeticFailure { .. })
+    ));
+    let boundary_q = [0.5 + f64::EPSILON, 0.5 - f64::EPSILON];
+    let boundary =
+        evaluate_mixed_nash_candidate(&a, &b, &[1.0], &boundary_q, Config::default()).unwrap();
+    assert_eq!(
+        boundary.diagnostics.expected_payoffs[0],
+        f64::MIN_POSITIVE / 2.0 + f64::from_bits(1)
+    );
 }

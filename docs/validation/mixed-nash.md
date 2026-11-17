@@ -98,10 +98,32 @@ g_c=\max(0,\max_b d_c(b)).
 \]
 
 For unit-mass distributions these are the usual best-response payoff minus
-current payoff. Computing differences before the weighted sum avoids losing a
-small gain by subtracting two separately accumulated payoffs with a large
-common offset. With admitted mass roundoff, these formulas on the unchanged
-weights define the diagnostics; no silently normalized profile is substituted.
+current payoff. The evaluator accumulates both sides of each weighted payoff
+difference in one expansion. It does not subtract separately rounded payoff
+totals or round a potentially inexact payoff difference before multiplication.
+With admitted mass roundoff, these formulas on the unchanged weights define the
+diagnostics; no silently normalized profile is substituted.
+
+Payoff, deviation, probability-mass, support-residual and back-substitution
+sums retain low addition parts in a floating-point expansion. Each addition
+uses magnitude-ordered Fast-Two-Sum; see
+[Shewchuk (1997), sections 2.3–2.4](https://people.eecs.berkeley.edu/~jrs/papers/robustr.pdf).
+The low parts remain available when larger terms later cancel. Mass error is
+formed by adding minus one to the expansion before rounding, so a residual
+smaller than half an ulp at one is retained. The mass error is included in a
+typed invalid-mass error even when the displayed rounded total equals one.
+Probability products and their weighted payoff terms retain both the rounded
+product and its fused multiply-add remainder; Rust's
+[`f64::mul_add` contract](https://doc.rust-lang.org/std/primitive.f64.html#method.mul_add)
+provides the single-rounding operation. Before extracting a remainder, the
+implementation finds the least significant set-bit exponent of each nonzero
+operand. Their sum must be at least `-1074`, ensuring that an exact low product
+part cannot silently underflow below the smallest binary64 component. A lower
+exponent causes `ArithmeticFailure` even if the main rounded product is nonzero.
+The `2^-1074` boundary remains admitted. The same checked product accumulation
+is used in support residuals and back substitution. Gaussian systems and final
+diagnostic rounding still have binary64 limits; this supplies no exact
+equilibrium or catalogue certificate.
 
 `best_response_gains` reports `[g_r,g_c]`, `max_gain` is their maximum, and
 `sum_gain` is their sum (often called NashConv). No average-exploitability value
@@ -126,8 +148,9 @@ decisions are not guaranteed invariant to all scaling or action reordering.
 The tests establish these identities on the stated independently controlled
 examples, not universal conditioning guarantees.
 
-Any non-finite intermediate, division failure, or nonzero multiplication or
-division rounded to zero produces a typed `ArithmeticFailure`. Such an error
+Any non-finite intermediate, division failure, nonzero multiplication or
+division rounded to zero, or exact expanded-product low part below `2^-1074`
+produces a typed `ArithmeticFailure`. Such an error
 aborts the call, including any partially collected search results. Thus some
 mathematically valid finite games with extreme dynamic range are explicitly
 outside executable numerical range. Subnormal rounding and ordinary floating-
@@ -191,12 +214,34 @@ one half for each player while the pure dominant profile has gain zero.
 
 Tests-first commit `4098e1d602ec449fd07de8e7bba5555525a7a469` executes 33 tests:
 zero pass, 33 fail, exit 101, against explicit unimplemented methods. The actual
-implementation passes all 33 tests under Rust 1.75.0. The unchanged independent
+initial implementation passes all 33 tests under Rust 1.75.0. The unchanged independent
 Nash oracle runs 12 passing tests on CPython 3.12.14. An initial Clippy run
 identified one missing Markdown code delimiter in the test provenance comment;
 the comment was corrected without changing a scientific assertion. The complete
 workspace runs 137 passing native tests at this source revision, and Clippy with
 warnings denied and the two-crate/six-profile extraction validator pass.
+
+Independent review of implementation `77f329d` found that naive accumulation
+erased a profitable deviation: with `H=2^54`, `A=[[H,1,-H],[0,0,0]]`, zero `B`,
+`p=[0,1]` and `q=[1/4,1/2,1/4]`, the exact gain is `1/2`; the old implementation
+reported zero. Changing column order exposed it. The same defect affected a
+cancelled expected payoff. Review-fix test commit
+`0e64c460047ec21a9ee2ce573ec2ebd340f4db88` executes 36 tests: 33 pass and three
+fail (exit 101). Its additional controls cover all six column permutations,
+cancelled signed expected payoffs, and a probability-mass error of `2^-56`
+hidden when the total is rounded to one first. The expansion sums above address
+these sites together; the declared acceptance tolerances are unchanged.
+
+A sum-only repair still lost a gain of `1/2` when the difference `2^54-(-1)`
+rounded before multiplication, and a gain of `0.1` when rounded weighted
+products cancelled. Both additional tests fail independently (one executed
+failure each, exit 101) before the checked fused-product repair; they are in
+test commit `c3b0d4211d7248de5b53786bc687f39c4ab80334`. A further low-product-range
+control fails before the guard is implemented, despite a nonzero main product.
+The corrected focused suite executes 39 passing tests under Rust 1.75.0 and
+stable 1.100.0, with the original acceptance tolerances unchanged. The full
+Rust 1.75 workspace executes 143 passing native tests; Clippy with warnings
+denied also passes. Independent review of the corrected head remains separate.
 
 Focused commands:
 

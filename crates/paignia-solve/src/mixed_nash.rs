@@ -221,8 +221,12 @@ pub enum Error {
         index: usize,
         value: f64,
     },
-    #[error("{player:?} probability mass {mass} exceeds the configured unit-mass tolerance")]
-    InvalidProbabilityMass { player: Player, mass: f64 },
+    #[error("{player:?} probability mass {mass}, with absolute error {mass_error}, exceeds the configured unit-mass tolerance")]
+    InvalidProbabilityMass {
+        player: Player,
+        mass: f64,
+        mass_error: f64,
+    },
     #[error("unrepresentable arithmetic while computing {operation}")]
     ArithmeticFailure { operation: &'static str },
 }
@@ -445,7 +449,7 @@ fn validate_strategy(
             actual: p.len(),
         });
     }
-    let mut mass = 0.0;
+    let mut sum = ExpansionSum::default();
     for (index, &value) in p.iter().enumerate() {
         if !value.is_finite() || !(0.0..=1.0).contains(&value) {
             return Err(Error::InvalidProbability {
@@ -454,11 +458,19 @@ fn validate_strategy(
                 value,
             });
         }
-        mass += value;
+        sum.add(value, "probability mass")?;
     }
-    let error = (mass - 1.0).abs();
+    let mass = sum.total("probability mass")?;
+    // Form the residual before rounding the total to binary64. Otherwise a
+    // genuine mass error smaller than half an ulp at one would disappear.
+    sum.add(-1.0, "probability mass residual")?;
+    let error = sum.total("probability mass residual")?.abs();
     if error > tolerance {
-        return Err(Error::InvalidProbabilityMass { player, mass });
+        return Err(Error::InvalidProbabilityMass {
+            player,
+            mass,
+            mass_error: error,
+        });
     }
     Ok(error)
 }
@@ -469,6 +481,83 @@ fn finite(value: f64, operation: &'static str) -> Result<f64, Error> {
     } else {
         Err(Error::ArithmeticFailure { operation })
     }
+}
+
+// Retain low addition parts until later cancellation has been resolved. Each
+// magnitude-ordered pair uses Fast-Two-Sum: high = x+y, low = y-(high-x),
+// with |x| >= |y|. See Shewchuk (1997), sections 2.3–2.4, cited in the
+// validation document. Checked fused-product expansions also preserve the
+// multiplication remainders used in payoffs, gains and dot-product residuals.
+// Gaussian systems and final diagnostic rounding remain binary64.
+#[derive(Default)]
+struct ExpansionSum {
+    partials: Vec<f64>,
+}
+
+impl ExpansionSum {
+    fn add_product(&mut self, a: f64, b: f64, operation: &'static str) -> Result<(), Error> {
+        for term in exact_product(a, b, operation)? {
+            self.add(term, operation)?;
+        }
+        Ok(())
+    }
+
+    fn add(&mut self, value: f64, operation: &'static str) -> Result<(), Error> {
+        let mut x = finite(value, operation)?;
+        let mut retained = 0;
+        for read in 0..self.partials.len() {
+            let mut y = self.partials[read];
+            if x.abs() < y.abs() {
+                std::mem::swap(&mut x, &mut y);
+            }
+            let high = finite(x + y, operation)?;
+            let low = finite(y - finite(high - x, operation)?, operation)?;
+            if low != 0.0 {
+                self.partials[retained] = low;
+                retained += 1;
+            }
+            x = high;
+        }
+        self.partials.truncate(retained);
+        if x != 0.0 {
+            self.partials.push(x);
+        }
+        Ok(())
+    }
+
+    fn total(&self, operation: &'static str) -> Result<f64, Error> {
+        self.partials
+            .iter()
+            .rev()
+            .try_fold(0.0, |sum, &part| finite(sum + part, operation))
+    }
+}
+
+// For a finite nonzero binary64 value, return the exponent of its least
+// significant set bit, including subnormals. The checked product below can
+// therefore reject an exact low part below2^-1074 before FMA rounds it away.
+fn least_bit_exponent(value: f64) -> i32 {
+    let bits = value.to_bits();
+    let encoded = i32::try_from((bits >> 52) & 0x7ff).expect("eleven-bit exponent fits i32");
+    let fraction = bits & ((1_u64 << 52) - 1);
+    let (significand, exponent) = if encoded == 0 {
+        (fraction, -1074)
+    } else {
+        (fraction | (1_u64 << 52), encoded - 1075)
+    };
+    exponent + i32::try_from(significand.trailing_zeros()).expect("bit count fits i32")
+}
+
+fn exact_product(a: f64, b: f64, operation: &'static str) -> Result<[f64; 2], Error> {
+    if a == 0.0 || b == 0.0 {
+        return Ok([0.0, 0.0]);
+    }
+    if least_bit_exponent(a) + least_bit_exponent(b) < -1074 {
+        return Err(Error::ArithmeticFailure { operation });
+    }
+    let high = product(a, b, operation)?;
+    let low = finite(a.mul_add(b, -high), operation)?;
+    Ok([high, low])
 }
 
 fn product(a: f64, b: f64, operation: &'static str) -> Result<f64, Error> {
@@ -502,17 +591,16 @@ fn evaluate_validated(
             config.probability_tolerance,
         )?,
     ];
-    let mut weights = vec![vec![0.0; game.columns]; game.rows];
-    let mut utilities = [0.0, 0.0];
+    let mut weights = vec![vec![[0.0, 0.0]; game.columns]; game.rows];
+    let mut utility_sums = [ExpansionSum::default(), ExpansionSum::default()];
     for (i, &row_probability) in p.iter().enumerate() {
         for (j, &column_probability) in q.iter().enumerate() {
-            let weight = product(row_probability, column_probability, "joint probability")?;
+            let weight = exact_product(row_probability, column_probability, "joint probability")?;
             weights[i][j] = weight;
-            for (u, payoff) in utilities.iter_mut().zip([game.a[i][j], game.b[i][j]]) {
-                *u = finite(
-                    *u + product(weight, payoff, "expected payoff term")?,
-                    "expected payoff sum",
-                )?;
+            for part in weight {
+                for (sum, payoff) in utility_sums.iter_mut().zip([game.a[i][j], game.b[i][j]]) {
+                    sum.add_product(part, payoff, "expected payoff sum")?;
+                }
             }
         }
     }
@@ -526,7 +614,10 @@ fn evaluate_validated(
         row_support: positive_indices(p),
         column_support: positive_indices(q),
         diagnostics: Diagnostics {
-            expected_payoffs: utilities,
+            expected_payoffs: [
+                utility_sums[0].total("expected payoff sum")?,
+                utility_sums[1].total("expected payoff sum")?,
+            ],
             best_response_gains: gains,
             max_gain: gains[0].max(gains[1]),
             sum_gain: finite(gains[0] + gains[1], "sum of unilateral gains")?,
@@ -541,7 +632,7 @@ fn evaluate_validated(
 
 fn maximum_gain(
     game: &ValidatedGame<'_>,
-    weights: &[Vec<f64>],
+    weights: &[Vec<[f64; 2]>],
     player: Player,
 ) -> Result<f64, Error> {
     let actions = match player {
@@ -550,25 +641,22 @@ fn maximum_gain(
     };
     let mut maximum: f64 = 0.0;
     for action in 0..actions {
-        let mut gain = 0.0;
+        let mut gain = ExpansionSum::default();
         for (i, row) in weights.iter().enumerate() {
-            for (j, &weight) in row.iter().enumerate() {
-                if weight == 0.0 {
-                    continue;
-                }
-                let difference = match player {
-                    Player::Row => game.a[action][j] - game.a[i][j],
-                    Player::Column => game.b[i][action] - game.b[i][j],
+            for (j, weight) in row.iter().enumerate() {
+                let (deviation, current) = match player {
+                    Player::Row => (game.a[action][j], game.a[i][j]),
+                    Player::Column => (game.b[i][action], game.b[i][j]),
                 };
-                let term = product(
-                    weight,
-                    finite(difference, "pure deviation payoff difference")?,
-                    "pure deviation term",
-                )?;
-                gain = finite(gain + term, "pure deviation sum")?;
+                // Do not round deviation-current before multiplying: H-(-1)
+                // can lose1 even when the final gain is exactly one half.
+                for &part in weight {
+                    gain.add_product(part, deviation, "pure deviation sum")?;
+                    gain.add_product(-part, current, "pure deviation sum")?;
+                }
             }
         }
-        maximum = maximum.max(gain);
+        maximum = maximum.max(gain.total("pure deviation sum")?);
     }
     Ok(maximum)
 }
@@ -723,25 +811,28 @@ fn linear_solution(system: &[Vec<f64>], tolerance: f64) -> Result<Option<(Vec<f6
     }
     let mut solution = vec![0.0; size];
     for row in (0..size).rev() {
-        let mut value = rhs[row];
+        let mut sum = ExpansionSum::default();
+        sum.add(rhs[row], "back substitution sum")?;
         for (j, &known) in solution.iter().enumerate().skip(row + 1) {
-            value = finite(
-                value - product(a[row][j], known, "back substitution product")?,
-                "back substitution difference",
-            )?;
+            sum.add_product(-a[row][j], known, "back substitution sum")?;
         }
-        solution[row] = quotient(value, a[row][row], "back substitution quotient")?;
+        solution[row] = quotient(
+            sum.total("back substitution sum")?,
+            a[row][row],
+            "back substitution quotient",
+        )?;
     }
     let mut residual: f64 = 0.0;
     for (row, equation) in system.iter().enumerate() {
-        let mut value = if row + 1 == size { -1.0 } else { 0.0 };
+        let mut sum = ExpansionSum::default();
+        sum.add(
+            if row + 1 == size { -1.0 } else { 0.0 },
+            "support residual sum",
+        )?;
         for (&coefficient, &probability) in equation.iter().zip(&solution) {
-            value = finite(
-                value + product(coefficient, probability, "support residual product")?,
-                "support residual sum",
-            )?;
+            sum.add_product(coefficient, probability, "support residual sum")?;
         }
-        residual = residual.max(value.abs());
+        residual = residual.max(sum.total("support residual sum")?.abs());
     }
     if residual > tolerance {
         return Ok(None);
