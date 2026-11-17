@@ -163,6 +163,43 @@ fn artifact_mixed_nash_preserves_a_mixed_witness_and_positive_deviation() {
 }
 '''
 
+ARTIFACT_CE_TEST = r'''
+
+#[test]
+fn artifact_correlated_equilibrium_recovers_the_independent_lp_optimum() {
+    use paignia_solve::{solve_correlated_equilibrium, CorrelatedEquilibriumConfig,
+        CorrelatedEquilibriumStatus, CorrelatedEquilibriumTermination};
+    let row = vec![vec![0.0, 7.0], vec![2.0, 6.0]];
+    let column = vec![vec![0.0, 2.0], vec![7.0, 6.0]];
+    let objective = vec![vec![0.0, 9.0], vec![9.0, 12.0]];
+    let result = solve_correlated_equilibrium(&row, &column, &objective,
+        CorrelatedEquilibriumConfig::default()).unwrap();
+    assert_eq!(result.status(), CorrelatedEquilibriumStatus::ApproximateOptimum);
+    assert_eq!(result.termination(), CorrelatedEquilibriumTermination::Solved);
+    let candidate = result.accepted_candidate().unwrap();
+    assert!(candidate.primal.within_tolerance);
+    assert!(candidate.certificate.within_tolerance);
+    // The independently frozen primal/dual optimum is 21/2, above every Nash product.
+    assert!((candidate.primal.objective.lower - 10.5).abs() < 1e-8);
+    assert!((candidate.primal.objective.upper - 10.5).abs() < 1e-8);
+    assert!(candidate.certificate.objective_gap_abs_upper <= 1e-8);
+}
+
+#[test]
+fn artifact_correlated_equilibrium_exposes_an_exhausted_budget() {
+    use paignia_solve::{solve_correlated_equilibrium, CorrelatedEquilibriumConfig,
+        CorrelatedEquilibriumStatus, CorrelatedEquilibriumTermination};
+    let result = solve_correlated_equilibrium(
+        &[vec![0.0, 7.0], vec![2.0, 6.0]],
+        &[vec![0.0, 2.0], vec![7.0, 6.0]],
+        &[vec![0.0, 9.0], vec![9.0, 12.0]],
+        CorrelatedEquilibriumConfig { max_iterations: 0, ..Default::default() }).unwrap();
+    assert_eq!(result.status(), CorrelatedEquilibriumStatus::BackendTerminated);
+    assert_eq!(result.termination(), CorrelatedEquilibriumTermination::MaxIterations);
+    assert!(result.accepted_candidate().is_none());
+}
+'''
+
 ARTIFACT_CORE_TEST = r'''
 use std::collections::BTreeMap;
 use paignia_core::{Game, Node, NodeId, PlayerId};
@@ -211,6 +248,37 @@ fn explicit_static_identity_mapping_round_trips_from_the_artifact() {
     let converted = convert_static_game(&source, &mapping, STATIC_GAME_PROFILE_V1).unwrap();
     assert_eq!(converted.record.specification.game.root.0, "converted-terminal");
     assert_eq!(restore_static_game(&converted).unwrap(), source);
+}
+
+#[test]
+fn artifact_policy_observation_preserves_order_and_rejects_a_changed_binding() {
+    use paignia_core::{build_policy_observation, ActionEdge, ActionId, GameInstanceId,
+        GameSessionId, GameSpecification, GameSpecificationId, ObservationRevision,
+        PolicyObservationBinding, PolicyObservationRequest, STATIC_GAME_PROFILE_V1};
+    let source = GameSpecification { schema_version: "1.0.0".into(), id: "urn:spec".into(),
+        game: Game { root: NodeId("decision".into()), nodes: BTreeMap::from([
+            (NodeId("decision".into()), Node::Decision { player: PlayerId("p".into()),
+                edges: vec![
+                    ActionEdge { action: ActionId("z".into()), target: NodeId("end".into()) },
+                    ActionEdge { action: ActionId("a".into()), target: NodeId("end".into()) },
+                ],
+            }),
+            (NodeId("end".into()), Node::Terminal { payoffs: BTreeMap::new() }),
+        ]) },
+    };
+    let expected = PolicyObservationBinding {
+        specification_id: GameSpecificationId("urn:spec".into()),
+        game_instance_id: GameInstanceId("urn:instance".into()),
+        session_id: GameSessionId("urn:session".into()), player_id: PlayerId("p".into()),
+        decision_node_id: NodeId("decision".into()), revision: ObservationRevision(7),
+    };
+    let mut request = PolicyObservationRequest { schema_version: "1.0.0".into(),
+        semantic_profile: STATIC_GAME_PROFILE_V1.into(), binding: expected.clone() };
+    let observation = build_policy_observation(&source, &expected, &request).unwrap();
+    assert_eq!(observation.legal_actions, vec![ActionId("z".into()), ActionId("a".into())]);
+    assert_eq!(observation.binding, expected);
+    request.binding.revision = ObservationRevision(8);
+    assert!(build_policy_observation(&source, &expected, &request).is_err());
 }
 '''
 
@@ -440,9 +508,12 @@ def artifact_qualification(cargo: str, artifact_dir: Path | None = None) -> dict
                 lines.extend(['[patch.crates-io]',
                               f'paignia-core = {{ path = {json.dumps(str(extracted["paignia-core"]))} }}'])
                 (consumer / "Cargo.toml").write_text("\n".join(lines) + "\n")
-                (consumer / "tests/artifact_consumer.rs").write_text(
-                    ARTIFACT_CORE_TEST if name == "paignia-core" else ARTIFACT_SOLVER_TEST
-                )
+                tests = ARTIFACT_CORE_TEST if name == "paignia-core" else ARTIFACT_SOLVER_TEST
+                count = 4 if name == "paignia-core" else 6
+                if name == "paignia-solve" and "correlated-equilibrium" in enabled:
+                    tests += ARTIFACT_CE_TEST
+                    count += 2
+                (consumer / "tests/artifact_consumer.rs").write_text(tests)
                 shutil.copy2(ROOT / "Cargo.lock", consumer / "Cargo.lock")
                 manifest = str(consumer / "Cargo.toml")
                 def isolated(command: list[str], *, echo: bool = True) -> str:
@@ -463,7 +534,6 @@ def artifact_qualification(cargo: str, artifact_dir: Path | None = None) -> dict
                             raise ValueError("consumer did not resolve the exact unpacked artifact")
                 output = isolated([cargo, "test", "--offline", "--locked", "--manifest-path", manifest,
                                    "--test", "artifact_consumer"])
-                count = 3 if name == "paignia-core" else 6
                 require_native_tests(output, count)
                 receipt["profiles"].append({
                     "package": name, "profile": label, "default_features": defaults, "features": enabled,
