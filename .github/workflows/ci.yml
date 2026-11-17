@@ -21,6 +21,11 @@ jobs:
       matrix:
         toolchain: [stable, "1.75.0"]
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -34,6 +39,22 @@ jobs:
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - name: Native package tests
         run: cargo test --workspace --all-targets --locked
+      - name: Native role-separation doctests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo test --locked -p paignia-core --doc 2>&1 | tee doctests.log
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          summaries = re.findall(
+              r"^test result: ok\. (\d+) passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;",
+              Path("doctests.log").read_text(),
+              re.MULTILINE,
+          )
+          if len(summaries) != 1 or int(summaries[0]) < 3:
+              raise SystemExit("Expected at least the three role-separation doctests without skips or failures")
+          PY
       - name: Source ownership and package boundary
         run: python3 scripts/validate_extraction.py
       - name: Isolated extracted-source consumer
@@ -58,6 +79,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12.14"
       - name: Execute all 39 synthetic oracle tests
@@ -80,6 +102,7 @@ jobs:
       - name: Retain synthetic oracle execution evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: synthetic-numerical-oracles-python-3.12.14
           path: numerical-oracles.log
