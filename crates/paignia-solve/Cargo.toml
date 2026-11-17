@@ -10,7 +10,7 @@ publish = false
 
 [dependencies]
 paignia-core = { path = "../paignia-core", version = "0.1.0" }
-thiserror = "=2.0.21"
+thiserror = "=1.0.69"
 
 [lints]
 workspace = true

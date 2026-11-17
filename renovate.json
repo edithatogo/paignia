@@ -2,5 +2,18 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "local>edithatogo/renovate-config"
+  ],
+  "packageRules": [
+    {
+      "description": "Preserve Rust 1.75 and the qualified mixed-major consumer graph; changing this bound requires a compiler compatibility migration.",
+      "matchManagers": [
+        "cargo"
+      ],
+      "matchPackageNames": [
+        "thiserror",
+        "thiserror-impl"
+      ],
+      "allowedVersions": "<2.0.0"
+    }
   ]
 }
