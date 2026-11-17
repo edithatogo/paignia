@@ -477,7 +477,7 @@ fn supplied_blank_context_is_not_treated_as_absent() {
             Role::PolicyArtifact => record.policy_artifact_id = Some(PolicyArtifactId(" ".into())),
             Role::SolverRun => record.solver_run_id = Some(SolverRunId(" ".into())),
             Role::SolverDiagnosticTrace => {
-                record.solver_trace_id = Some(SolverDiagnosticTraceId(" ".into()))
+                record.solver_trace_id = Some(SolverDiagnosticTraceId(" ".into()));
             }
             _ => unreachable!(),
         }

@@ -9,8 +9,8 @@ mod result;
 
 pub use conversion::{
     convert as convert_static_game, restore as restore_static_game,
-    Binding as StaticIdentityBinding, ChanceRule as StaticChanceRule,
-    Conversion as StaticGameConversion, ConversionError as StaticConversionError,
+    AdmissionError as StaticConversionError, Binding as StaticIdentityBinding,
+    ChanceRule as StaticChanceRule, Conversion as StaticGameConversion,
     IdentityMap as StaticIdentityMap, IdentityRole as StaticIdentityRole,
     PayoffRule as StaticPayoffRule, Record as StaticGameRecord, STATIC_CONVERSION_SCHEMA_VERSION,
 };
