@@ -1,5 +1,12 @@
 //! Backward induction for finite, acyclic, perfect-information games.
 
+mod result;
+
+pub use result::{
+    solve_specification as backward_induction_result, ComputedPolicy as BackwardInductionResult,
+    EmissionError as ResultSolveError,
+};
+
 use std::collections::BTreeMap;
 use thiserror::Error;
 
