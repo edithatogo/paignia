@@ -408,7 +408,10 @@ fn no_witness_before_budget_is_not_no_equilibrium() {
         ..Config::default()
     };
     let result = solve_mixed_nash(&o.a, &o.b, Algorithm::SupportEnumeration, config).unwrap();
-    assert!(result.candidates.is_empty());
+    assert_eq!(
+        result.candidates,
+        Vec::<paignia_solve::MixedNashCandidate>::new()
+    );
     assert_eq!(result.status, Status::BudgetExhausted);
     assert_eq!(result.total_support_pairs, 5);
 }
@@ -424,7 +427,10 @@ fn lemke_howson_is_explicitly_unsupported_without_substitution() {
     assert_eq!(result.catalogue_completeness, Catalogue::NotClaimed);
     assert_eq!(result.scope, None);
     assert_eq!(result.visited_support_pairs, 0);
-    assert!(result.candidates.is_empty());
+    assert_eq!(
+        result.candidates,
+        Vec::<paignia_solve::MixedNashCandidate>::new()
+    );
 }
 
 #[test]
