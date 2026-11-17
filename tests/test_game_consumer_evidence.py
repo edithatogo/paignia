@@ -25,7 +25,8 @@ class EvidenceTests(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.provider_revision = "a" * 40
         self.profile = "paignia/static-finite-perfect-information-sparse-zero/1.0.0"
-        self.profile_hash = "b" * 64
+        profile_contract = self.reference("profile-contract.md", {"profile": self.profile})
+        self.profile_hash = profile_contract["sha256"]
         self.artifacts = {"paignia-core": "c" * 64, "paignia-solve": "d" * 64}
         self.package = {
             "schema_version": 1, "scope": "local-cargo-artifact-consumption",
@@ -36,7 +37,9 @@ class EvidenceTests(unittest.TestCase):
             "artifacts": {name: {"version": "0.1.0", "archive_sha256": digest}
                           for name, digest in self.artifacts.items()},
             "profiles": [{"package": name, "profile": profile, "tests_passed": 2,
-                          "consumer_lock_sha256": "f" * 64, "resolved_graph_sha256": "1" * 64}
+                          "consumer_lock_sha256": "f" * 64, "resolved_graph_sha256": "1" * 64,
+                          "default_features": profile != "minimal", "features": [],
+                          "resolved_dependencies": [{"name": name, "version": "0.1.0", "source": None}]}
                          for name in self.artifacts for profile in ("minimal", "default", "all")],
         }
         self.receipts = [self.consumer("first"), self.consumer("second")]
@@ -44,6 +47,7 @@ class EvidenceTests(unittest.TestCase):
             "schema_version": 1,
             "provider_revision": self.provider_revision,
             "semantic_profile": self.profile, "profile_sha256": self.profile_hash,
+            "profile_contract": profile_contract,
             "artifacts": self.artifacts,
             "capabilities": ["backward_induction", "pure_nash"],
             "scientific_obligations": {key: {"status": "pending", "owner": "paignia",
@@ -153,6 +157,56 @@ class EvidenceTests(unittest.TestCase):
             with self.subTest(value=value):
                 self.document["artifacts"] = value
                 self.assertTrue(self.validate())
+
+    def test_git_suffix_alias_cannot_create_a_second_application(self) -> None:
+        self.receipts[1]["repository"] = "https://github.com/EXAMPLE/FIRST.git/"
+        self.assertTrue(self.validate())
+
+    def test_provider_git_suffix_is_not_an_external_consumer(self) -> None:
+        self.receipts[0]["repository"] = "https://github.com/edithatogo/paignia.git"
+        self.assertTrue(self.validate())
+
+    def test_an_invented_consistent_profile_is_not_admitted(self) -> None:
+        self.document["semantic_profile"] = "invented/unsupported/999"
+        for receipt in self.receipts:
+            receipt["semantic_profile"] = self.document["semantic_profile"]
+        self.assertTrue(self.validate())
+
+    def test_profile_hash_must_bind_the_actual_contract_content(self) -> None:
+        (self.root / "profile-contract.md").write_text("changed profile contract")
+        self.assertTrue(self.validate())
+
+    def test_hash_bound_failed_or_unrelated_method_is_not_support(self) -> None:
+        self.document["capabilities"] = ["mixed_nash"]
+        self.document["scientific_obligations"]["S02"] = {
+            "status": "supported", "owner": "paignia",
+            "evidence": self.reference("failed-method.json", {"schema_version": 1, "result": "failed", "tests_passed": 0, "method": "unrelated"}),
+        }
+        self.assertTrue(self.validate())
+
+    def test_all_features_require_each_individual_profile(self) -> None:
+        self.package["profiles"][2]["features"] = ["serialization"]
+        self.assertTrue(self.validate())
+
+    def test_feature_profiles_require_exact_flags_and_feature_lists(self) -> None:
+        self.package["profiles"][0]["default_features"] = True
+        self.assertTrue(self.validate())
+
+    def test_malformed_method_status_returns_failure_without_raising(self) -> None:
+        for status in ([], {}, 3, None):
+            with self.subTest(status=status):
+                self.document["scientific_obligations"]["S01"]["status"] = status
+                self.assertTrue(self.validate())
+
+    def test_invalid_path_bytes_return_failure_without_raising(self) -> None:
+        self.receipts[0]["execution_evidence"]["path"] = "invalid\x00path"
+        self.assertTrue(self.validate())
+
+    def test_runtime_dependency_leak_cannot_be_a_qualified_static_package(self) -> None:
+        self.package["profiles"][0]["resolved_dependencies"].append(
+            {"name": "kairo-time", "version": "1.0.0", "source": None}
+        )
+        self.assertTrue(self.validate())
 
 
 if __name__ == "__main__":
