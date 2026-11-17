@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "provider_revision": null,
+  "semantic_profile": "paignia/static-finite-perfect-information-sparse-zero/1.0.0",
+  "profile_sha256": null,
+  "artifacts": {},
+  "package_receipt": null,
+  "consumer_receipts": [],
+  "capabilities": ["backward_induction", "pure_nash"],
+  "scientific_obligations": {
+    "S01": {"status": "pending", "owner": "edithatogo/paignia", "replacement_plan": "T17.04"},
+    "S02": {"status": "pending", "owner": "edithatogo/paignia", "replacement_plan": "T17.05"},
+    "S03": {"status": "pending", "owner": "edithatogo/paignia", "replacement_plan": "T17.06"},
+    "S04": {"status": "pending", "owner": "edithatogo/paignia", "replacement_plan": "T17.07"}
+  },
+  "limitations": [
+    "No two real application artifact receipts have been received.",
+    "Reimbursement and Innovate currently pin different provider revisions.",
+    "A package smoke test or synthetic admission test is not application acceptance.",
+    "Registry publication and full T17 archival remain separate decisions."
+  ]
+}

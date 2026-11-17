@@ -586,6 +586,19 @@ oracle and result contract. Exclusion is not scientific completion.
 
 ### [ ] T17.12 — require two real consumers for bounded release eligibility
 
+#### [~] T17.12.guard — validate received evidence without inventing acceptance
+
+- Implement a deterministic fail-closed validator for actual package receipts,
+  two distinct external application receipts with matching provider artifacts
+  and semantic profile, and explicit S01–S04 dispositions. Receipt files are
+  content-hashed; publication and full-track completion are separate decisions.
+- Scope: `scripts/validate_game_consumer_evidence.py`, its focused test file,
+  `docs/validation/game-consumers.json`, and this plan. Current real application
+  receipts are absent; the checked-in report must remain ineligible.
+- Tests distinguish two valid synthetic receipt records from duplicate, toy,
+  mismatched, missing, corrupted, failed or unsupported-method evidence. These
+  test records exercise admission only and never count as actual consumers.
+
 - Behavior: report bounded release as ineligible until two distinct real consumer
   receipts identify the same qualified static artifacts and passing profile.
 - Depends on: T17.03, T17.09 and T17.10. Numerical/native receipts apply only to
