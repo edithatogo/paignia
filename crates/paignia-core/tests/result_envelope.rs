@@ -2,16 +2,16 @@
 
 use std::collections::BTreeMap;
 
-use paignia_core::result::{
-    AlgorithmRecord, CatalogueClaim, DeclaredDiagnostic, ResultAlgorithm, ResultEnvelope,
-    ResultGameClass, ResultInformationStructure, ResultSelectionRule, ResultSolutionConcept,
-    ResultStatus, StaticPolicyResult, BACKWARD_INDUCTION_ALGORITHM_VERSION,
-    RESULT_ENVELOPE_SCHEMA_VERSION,
-};
 use paignia_core::{
     ActionEdge, ActionId, Game, GameInstanceId, GameSpecification, GameSpecificationId, Node,
     NodeId, PlayerId, ResultDiagnosticKind, ResultDiagnosticRecord, ResultIdentityRecord,
     SolverRunId,
+};
+use paignia_core::{
+    AlgorithmRecord, CatalogueClaim, DeclaredDiagnostic, ResultAlgorithm, ResultEnvelope,
+    ResultGameClass, ResultInformationStructure, ResultSelectionRule, ResultSolutionConcept,
+    ResultStatus, StaticPolicyResult, BACKWARD_INDUCTION_ALGORITHM_VERSION,
+    RESULT_ENVELOPE_SCHEMA_VERSION,
 };
 
 fn source() -> GameSpecification {
