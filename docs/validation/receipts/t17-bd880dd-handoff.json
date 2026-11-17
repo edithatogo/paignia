@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "scope": "qualified-application-handoff-bundle",
+  "provider_revision": "bd880dd756d2ba56cc5f479bc078cea31b53c1d1",
+  "provider_tree_sha": "d4caa9722a0a126c20cba3fd0d0872488099af14",
+  "semantic_profile": "paignia/static-finite-perfect-information-sparse-zero/1.0.0",
+  "profile_contract": {
+    "path": "docs/architecture/game-runtime-contract-v1.md",
+    "sha256": "8c20e1969e3e33bf1a8ac6b3ba6073775e06782348b733da73603441a068f59e"
+  },
+  "artifacts": {
+    "paignia-core": "c184e24dd9b96c7a2b64614378ff150e559f1ed823312d7265385e0a89fda99e",
+    "paignia-solve": "f2d7974020b0e63c3e023923223af913d4cf076600bc5286637e1ba52e766f1d"
+  },
+  "selected_compiler": "rustc 1.75.0 (82e1608df 2023-12-21)",
+  "package_receipt": {
+    "path": "docs/validation/receipts/t17-bd880dd-package-msrv.json",
+    "sha256": "4dedd2b14aad9ffc12e0975202c82091ff678a372bd9312bafff2b97be4e7c01"
+  },
+  "execution_evidence": {
+    "path": "docs/validation/receipts/t17-bd880dd-package-msrv.log",
+    "sha256": "5e1cfc4f378d397b05233fee3b8fc416f745b84f0d8f723be8aeb077e8387b0d"
+  },
+  "hosted_package_receipt": {
+    "path": "docs/validation/receipts/t17-bd880dd-hosted-package-msrv.json",
+    "sha256": "0da051cc2c329ce9a7cc69f93c45fb15c87dafcd14d7ee0acdcf6bfedf003280"
+  },
+  "hosted_artifact": {
+    "run_id": 44060831778,
+    "job_id": 133961981342,
+    "artifact_id": 14317508416,
+    "name": "native-package-qualification-1.75.0",
+    "url": "https://github.com/edithatogo/paignia/actions/runs/44060831778/artifacts/14317508416",
+    "zip_sha256": "a6251b5543793154eb2b5357d21d224f9b009ca6319b4a66154dc46d84cd6c99",
+    "expires_at_utc": "2026-12-17T10:02:20Z",
+    "workflow_head_revision": "bd880dd756d2ba56cc5f479bc078cea31b53c1d1",
+    "executed_pull_request_merge_revision": "b3331a257789e05b745366d3c2ef99f4032c73ee"
+  },
+  "verified_equivalence": {
+    "provider_trees_equal": true,
+    "both_archive_bytes_equal": true,
+    "both_archive_hashes_match_receipts": true
+  },
+  "provenance_note": "GitHub PR checks execute a temporary merge commit. Its receipt retains that actual revision. A separate clean checkout of the durable branch revision was qualified under Rust 1.75; its tree and both downloaded hosted archive bytes are identical. The canonical application manifest uses the durable revision and the unchanged canonical receipt, without rewriting the hosted receipt.",
+  "artifact_profiles": 7,
+  "artifact_test_executions": 40,
+  "distinct_artifact_test_cases": 12,
+  "consumer_receipts_received": 0,
+  "registry_publication": false,
+  "full_track_complete": false
+}
