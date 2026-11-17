@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import io
 import os
 from pathlib import Path
@@ -44,6 +45,32 @@ class ArtifactControls(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "path"):
             packages.unpack_artifact(path, self.root / "unpacked", "example", "1.0.0")
         self.assertFalse((self.root / "escaped").exists())
+
+    def test_retained_archive_is_the_exact_qualified_byte_sequence(self) -> None:
+        archive = self.archive([("example-1.0.0/NOTICE", b"notice", tarfile.REGTYPE)])
+        original = archive.read_bytes()
+        destination = self.root / "qualified"
+        packages.retain_artifacts(
+            {"example": archive},
+            {"example": {"archive_sha256": hashlib.sha256(original).hexdigest()}},
+            destination,
+        )
+        self.assertEqual((destination / archive.name).read_bytes(), original)
+
+    def test_changed_archive_prevents_any_artifact_retention(self) -> None:
+        first = self.root / "first.crate"
+        second = self.root / "second.crate"
+        first.write_bytes(b"qualified first")
+        second.write_bytes(b"changed after qualification")
+        destination = self.root / "rejected"
+        with self.assertRaisesRegex(ValueError, "hash"):
+            packages.retain_artifacts(
+                {"first": first, "second": second},
+                {"first": {"archive_sha256": hashlib.sha256(first.read_bytes()).hexdigest()},
+                 "second": {"archive_sha256": hashlib.sha256(b"qualified second").hexdigest()}},
+                destination,
+            )
+        self.assertFalse(destination.exists())
 
     def test_symbolic_link_is_rejected(self) -> None:
         path = self.archive([("example-1.0.0/escape", b"", tarfile.SYMTYPE)])
