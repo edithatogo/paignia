@@ -35,6 +35,8 @@ jobs:
           components: rustfmt, clippy
       - name: Install artifact source isolation
         run: sudo apt-get update && sudo apt-get install --yes bubblewrap
+      - name: Cache the full locked metadata closure
+        run: cargo fetch --locked
       - name: Format
         run: cargo fmt --all -- --check
       - name: Clippy

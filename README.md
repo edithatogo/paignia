@@ -46,6 +46,7 @@ exhaustive catalogue. UOGTO names alone do not establish implementation support.
 ## Build and verify
 
 ```bash
+cargo fetch --locked
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo test --workspace --all-targets --locked
@@ -63,7 +64,9 @@ throughout offline resolution, compilation and execution. The receipt records
 artifact hashes, compiler versions, the provider lock and each consumer's
 resolved dependency graph/lock. Minimal, default, individual advertised features
 and all-feature profiles execute separately. Python 3.11+ orchestrates these
-checks; all game execution is Rust. Cargo dependencies must be cached first.
+checks; all game execution is Rust. `cargo fetch --locked` caches the full
+metadata closure, including platform-specific packages that a native build
+does not download. Boundary inspection and artifact consumers then run offline.
 
 Library archive locks are omitted where needed for unpublished sibling packages;
 provider and isolated-consumer locks remain checked. This is library artifact
