@@ -1,0 +1,101 @@
+{
+  "schema": "paignia.test-oracle.replicator/1",
+  "task": "T17.04 / S01",
+  "qualification": "synthetic_reference_only",
+  "provenance": {
+    "author": "Paignia numerical-oracle lane, 2026-11-15",
+    "license": "Apache-2.0",
+    "derivation": "Original rational stage arithmetic and separated logistic equation; no production implementation or external data copied.",
+    "definition_reference": "https://www.math.auckland.ac.nz/~butcher/CONFERENCES/seminar-21-10-04.pdf#page=22",
+    "upstream_obligation": "https://github.com/edithatogo/kairos/blob/cad43b592893579ccbea40343548fda7acd83fd0/conductor/scientific-completion.md"
+  },
+  "assumptions": {
+    "model": "Two-strategy continuous replicator: dx_i/dt = x_i * (f_i - sum_j x_j f_j).",
+    "fitness": "f=[a+b*t,0], with time measured in arbitrary mathematical units.",
+    "analytic": "x(t)=1/(1+((1-x0)/x0)*exp(-I)); I=a*(t-t0)+b*(t*t-t0*t0)/2.",
+    "probabilities": "Two finite nonnegative components of unit mass; no clipping or normalization.",
+    "domain": "Reference runner supports finite t and nonnegative steps. These are test assumptions, not Paignia API error semantics.",
+    "events": "Split at the declared event; each segment uses its own smooth one-sided extension, including its RK4 endpoint stage. No runtime event semantics are implied.",
+    "precision": "80 decimal digits, ROUND_HALF_EVEN for trajectories and analytic exp; exact Fraction arithmetic for the single step.",
+    "positivity": "Only the stated small steps are checked. Classical explicit RK4 is not unconditionally positivity preserving."
+  },
+  "tolerances": {
+    "rational_absolute": "0",
+    "analytic_literal_absolute": "1e-70",
+    "mass_absolute": "1e-65",
+    "refinement_ratio_min": "14",
+    "refinement_ratio_max": "18",
+    "purpose": "Reference checks only; production tolerance mapping awaits accepted T17.01 semantics."
+  },
+  "one_step": {
+    "initial": ["1/4", "3/4"],
+    "time": "0",
+    "step": "1/2",
+    "fitness": ["1", "0"],
+    "stage_times": ["0", "1/4", "1/4", "1/2"],
+    "first_component_stages": ["1/4", "19/64", "4951/16384", "190822511/536870912"],
+    "first_component_slopes": ["3/16", "855/4096", "56604783/268435456", "66033824806354911/288230376151711744"],
+    "first_component_result": "408885515741609973/1152921504606846976",
+    "legacy_euler_result": "11/32"
+  },
+  "smooth_cases": [
+    {
+      "id": "constant_positive",
+      "initial_first": "0.25",
+      "a": "1",
+      "b": "0",
+      "start": "0",
+      "end": "1",
+      "integrated_difference": "1",
+      "analytic_first": "0.475366886418671691097653482610462410143978975060974436435118025053784674434418651672751763",
+      "step_counts": [8, 16, 32],
+      "finest_error_max": "1e-9"
+    },
+    {
+      "id": "time_varying",
+      "initial_first": "0.25",
+      "a": "1",
+      "b": "2",
+      "start": "0",
+      "end": "1",
+      "integrated_difference": "2",
+      "analytic_first": "0.711234594227593859942056149222187642798586337981888539215935164643753568815025604211938211",
+      "step_counts": [32, 64, 128],
+      "finest_error_max": "1e-9"
+    },
+    {
+      "id": "constant_negative",
+      "initial_first": "0.25",
+      "a": "-1",
+      "b": "0",
+      "start": "0",
+      "end": "1",
+      "integrated_difference": "-1",
+      "analytic_first": "0.109231772573035928014267726759222873947887519142982896767210838808287709293363589847379970",
+      "step_counts": [8, 16, 32],
+      "finest_error_max": "1e-9"
+    }
+  ],
+  "event_case": {
+    "initial_first": "0.25",
+    "event_time": "0.5",
+    "end": "1",
+    "left_difference": "1",
+    "right_difference": "-1",
+    "steps_per_segment": 16,
+    "analytic_first": "0.25",
+    "split_error_max": "1e-9",
+    "unsplit_error_min": "1e-5"
+  },
+  "invalid_inputs": [
+    {"id": "negative_population", "population": ["-0.1", "1.1"], "time": "0", "step": "0.1"},
+    {"id": "wrong_mass", "population": ["0.25", "0.5"], "time": "0", "step": "0.1"},
+    {"id": "zero_mass", "population": ["0", "0"], "time": "0", "step": "0.1"},
+    {"id": "wrong_dimension", "population": ["1"], "time": "0", "step": "0.1"},
+    {"id": "nan_population", "population": ["NaN", "0.75"], "time": "0", "step": "0.1"},
+    {"id": "infinite_population", "population": ["Infinity", "0"], "time": "0", "step": "0.1"},
+    {"id": "negative_step", "population": ["0.25", "0.75"], "time": "0", "step": "-0.1"},
+    {"id": "nan_step", "population": ["0.25", "0.75"], "time": "0", "step": "NaN"},
+    {"id": "infinite_time", "population": ["0.25", "0.75"], "time": "Infinity", "step": "0.1"}
+  ]
+}

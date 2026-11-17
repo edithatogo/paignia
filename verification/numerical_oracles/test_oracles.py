@@ -1,0 +1,642 @@
+#!/usr/bin/env python3
+"""Offline synthetic reference checks; never a production solver or fallback.
+
+Run this file directly from any directory. Python's standard library is the only
+dependency. Public Paignia representation/result/algorithm acceptance is outside
+this harness: see README.md before interpreting a passing test.
+"""
+
+import json
+from decimal import Decimal as D, localcontext, ROUND_HALF_EVEN
+from fractions import Fraction as Q
+from pathlib import Path
+import unittest
+
+
+FIXTURES = Path(__file__).resolve().parent
+
+
+def unique_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate fixture key: {key}")
+        result[key] = value
+    return result
+
+
+def reject_constant(value):
+    raise ValueError(f"nonstandard JSON number: {value}")
+
+
+def fixture(name, schema):
+    with (FIXTURES / name).open(encoding="utf-8") as source:
+        data = json.load(source, object_pairs_hook=unique_object,
+                         parse_constant=reject_constant)
+    if data["schema"] != schema or data["qualification"] != "synthetic_reference_only":
+        raise ValueError("unsupported test fixture schema/qualification")
+    return data
+
+
+def finite_number(value):
+    if not isinstance(value, (Q, D)) or (isinstance(value, D) and not value.is_finite()):
+        raise ValueError("reference requires a finite Fraction or Decimal")
+    return value
+
+
+def population_domain(population):
+    if len(population) != 2:
+        raise ValueError("reference requires exactly two components")
+    for value in population:
+        finite_number(value)
+        if value < 0 or value > 1:
+            raise ValueError("population leaves the simplex; no clipping allowed")
+    if abs(sum(population) - 1) > D("1e-65"):
+        raise ValueError("population mass is not one; no normalization allowed")
+
+
+def step_domain(population, time, step):
+    population_domain(population)
+    finite_number(time)
+    finite_number(step)
+    if step < 0:
+        raise ValueError("reference supports forward steps only")
+
+
+def replicator_rhs(time, population, fitness):
+    """Definition of the two-component replicator, not a production callback API."""
+    values = fitness(time, population)
+    if len(values) != 2:
+        raise ValueError("fitness dimension mismatch")
+    for value in (*population, *values):
+        finite_number(value)
+    mean = sum(x * f for x, f in zip(population, values))
+    return tuple(x * (f - mean) for x, f in zip(population, values))
+
+
+def rk4_step(population, time, step, fitness):
+    """Classical RK4 on the full two-component state; no projection or clipping.
+
+    Exact stage witnesses and a closed-form ODE solution test this small reference.
+    This function cannot be called through any Paignia production entry point.
+    """
+    step_domain(population, time, step)
+
+    def stage(slope, amount):
+        return tuple(x + amount * dx for x, dx in zip(population, slope))
+
+    k1 = replicator_rhs(time, population, fitness)
+    k2 = replicator_rhs(time + step / 2, stage(k1, step / 2), fitness)
+    k3 = replicator_rhs(time + step / 2, stage(k2, step / 2), fitness)
+    k4 = replicator_rhs(time + step, stage(k3, step), fitness)
+    result = tuple(x + step * (a + 2 * b + 2 * c + d) / 6
+                   for x, a, b, c, d in zip(population, k1, k2, k3, k4))
+    population_domain(result)
+    return result
+
+
+def euler_step(population, time, step, fitness):
+    """Named unclipped Euler negative control on the admitted small-step domain."""
+    step_domain(population, time, step)
+    result = tuple(x + step * dx for x, dx in
+                   zip(population, replicator_rhs(time, population, fitness)))
+    population_domain(result)
+    return result
+
+
+def trajectory(population, start, end, count, fitness, stepper=rk4_step):
+    finite_number(start)
+    finite_number(end)
+    if type(count) is not int or count <= 0 or end < start:
+        raise ValueError("invalid reference time grid")
+    step = (end - start) / count
+    states = [population]
+    for index in range(count):
+        population = stepper(population, start + index * step, step, fitness)
+        states.append(population)
+    return states
+
+
+def logistic(initial, integrated_difference):
+    """Separate closed form from d(log(x/(1-x)))/dt = f1-f2."""
+    finite_number(initial)
+    finite_number(integrated_difference)
+    if initial < 0 or initial > 1:
+        raise ValueError("initial proportion is outside [0,1]")
+    if initial in (0, 1):
+        return initial
+    return 1 / (1 + ((1 - initial) / initial) * (-integrated_difference).exp())
+
+
+class ReplicatorOracleTests(unittest.TestCase):
+    def setUp(self):
+        self.context = localcontext()
+        context = self.context.__enter__()
+        context.prec = 80
+        context.rounding = ROUND_HALF_EVEN
+        self.addCleanup(self.context.__exit__, None, None, None)
+        self.data = fixture("replicator_rk4_v1.json", "paignia.test-oracle.replicator/1")
+
+    def test_fixture_inventory_and_json_controls(self):
+        self.assertEqual({c["id"] for c in self.data["smooth_cases"]},
+                         {"constant_positive", "time_varying", "constant_negative"})
+        self.assertEqual(len(self.data["invalid_inputs"]), 9)
+        self.assertEqual(self.data["tolerances"]["analytic_literal_absolute"], "1e-70")
+        self.assertEqual(self.data["tolerances"]["mass_absolute"], "1e-65")
+        self.assertEqual(self.data["tolerances"]["refinement_ratio_min"], "14")
+        self.assertEqual(self.data["tolerances"]["refinement_ratio_max"], "18")
+        with self.assertRaises(ValueError):
+            json.loads('{"x":1,"x":2}', object_pairs_hook=unique_object)
+        with self.assertRaises(ValueError):
+            json.loads('{"x":NaN}', parse_constant=reject_constant)
+
+    def test_exact_four_stage_witness(self):
+        case = self.data["one_step"]
+        calls = []
+
+        def fitness(time, population):
+            calls.append((time, population[0]))
+            return tuple(map(Q, case["fitness"]))
+
+        result = rk4_step(tuple(map(Q, case["initial"])), Q(case["time"]),
+                          Q(case["step"]), fitness)
+        self.assertEqual([t for t, _ in calls], list(map(Q, case["stage_times"])))
+        self.assertEqual([x for _, x in calls],
+                         list(map(Q, case["first_component_stages"])))
+        self.assertEqual([x * (1 - x) for _, x in calls],
+                         list(map(Q, case["first_component_slopes"])))
+        self.assertEqual(result[0], Q(case["first_component_result"]))
+        self.assertEqual(sum(result), 1)
+
+    def test_legacy_euler_is_distinguished(self):
+        case = self.data["one_step"]
+        args = (tuple(map(Q, case["initial"])), Q(case["time"]),
+                Q(case["step"]), lambda t, x: (Q(1), Q(0)))
+        legacy = euler_step(*args)
+        self.assertEqual(legacy[0], Q(case["legacy_euler_result"]))
+        self.assertGreater(abs(legacy[0] - rk4_step(*args)[0]), Q(1, 1000))
+
+    def test_analytic_literals(self):
+        for case in self.data["smooth_cases"]:
+            with self.subTest(case=case["id"]):
+                a, b, start, end = (D(case[k]) for k in ("a", "b", "start", "end"))
+                integral = a * (end - start) + b * (end * end - start * start) / 2
+                self.assertEqual(integral, D(case["integrated_difference"]))
+                self.assertLess(abs(logistic(D(case["initial_first"]), integral)
+                                    - D(case["analytic_first"])),
+                                D(self.data["tolerances"]["analytic_literal_absolute"]))
+
+    def test_smooth_refinement_and_mass(self):
+        for case in self.data["smooth_cases"]:
+            with self.subTest(case=case["id"]):
+                x = D(case["initial_first"])
+                errors = []
+                for count in case["step_counts"]:
+                    states = trajectory((x, 1 - x), D(case["start"]), D(case["end"]),
+                                        count, lambda t, p: (D(case["a"]) + D(case["b"]) * t, D(0)))
+                    self.assertEqual(len(states), count + 1)
+                    for state in states:
+                        self.assertTrue(all(0 <= p <= 1 for p in state))
+                        self.assertLessEqual(abs(sum(state) - 1),
+                                             D(self.data["tolerances"]["mass_absolute"]))
+                    errors.append(abs(states[-1][0] - D(case["analytic_first"])))
+                self.assertGreater(errors[-1], D("1e-30"))
+                self.assertLess(errors[-1], D(case["finest_error_max"]))
+                for coarse, fine in zip(errors, errors[1:]):
+                    ratio = coarse / fine
+                    self.assertGreater(ratio, D(self.data["tolerances"]["refinement_ratio_min"]))
+                    self.assertLess(ratio, D(self.data["tolerances"]["refinement_ratio_max"]))
+
+    def test_euler_fails_the_finest_accuracy_bound(self):
+        case = self.data["smooth_cases"][0]
+        states = trajectory((D("0.25"), D("0.75")), D(0), D(1), 32,
+                            lambda t, p: (D(1), D(0)), stepper=euler_step)
+        self.assertGreater(abs(states[-1][0] - D(case["analytic_first"])), D("1e-4"))
+
+    def test_time_dependent_stage_times(self):
+        calls = []
+
+        def fitness(time, population):
+            calls.append(time)
+            return (1 + 2 * time, Q(0))
+
+        rk4_step((Q(1, 4), Q(3, 4)), Q(2), Q(1, 8), fitness)
+        self.assertEqual(calls, [Q(2), Q(33, 16), Q(33, 16), Q(17, 8)])
+
+    def test_frozen_stage_time_is_rejected_by_analytic_control(self):
+        def frozen(population, time, step, fitness):
+            return rk4_step(population, time, step, lambda ignored, p: fitness(time, p))
+
+        states = trajectory((D("0.25"), D("0.75")), D(0), D(1), 64,
+                            lambda t, p: (1 + 2 * t, D(0)), stepper=frozen)
+        target = D(self.data["smooth_cases"][1]["analytic_first"])
+        self.assertGreater(abs(states[-1][0] - target), D("1e-4"))
+
+    def test_split_discontinuity_and_unsplit_negative_control(self):
+        case = self.data["event_case"]
+        initial = D(case["initial_first"])
+        event, end = D(case["event_time"]), D(case["end"])
+        count = case["steps_per_segment"]
+        left = trajectory((initial, 1 - initial), D(0), event, count,
+                          lambda t, p: (D(case["left_difference"]), D(0)))
+        right = trajectory(left[-1], event, end, count,
+                           lambda t, p: (D(case["right_difference"]), D(0)))
+        self.assertLess(abs(right[-1][0] - D(case["analytic_first"])),
+                        D(case["split_error_max"]))
+        unsplit = trajectory((initial, 1 - initial), D(0), end, 2 * count,
+                             lambda t, p: (D(1) if t < event else D(-1), D(0)))
+        self.assertGreater(abs(unsplit[-1][0] - D(case["analytic_first"])),
+                           D(case["unsplit_error_min"]))
+
+    def test_simplex_faces_and_neutral_fitness(self):
+        for population in [(Q(0), Q(1)), (Q(1), Q(0))]:
+            self.assertEqual(rk4_step(population, Q(0), Q(1),
+                                     lambda t, p: (Q(-2), Q(3))), population)
+        population = (Q(1, 4), Q(3, 4))
+        self.assertEqual(rk4_step(population, Q(0), Q(1),
+                                 lambda t, p: (Q(-7), Q(-7))), population)
+
+    def test_zero_step_identity(self):
+        population = (Q(1, 4), Q(3, 4))
+        self.assertEqual(rk4_step(population, Q(0), Q(0),
+                                 lambda t, p: (Q(1), Q(0))), population)
+
+    def test_reference_domain_errors(self):
+        for case in self.data["invalid_inputs"]:
+            with self.subTest(case=case["id"]), self.assertRaises(ValueError):
+                rk4_step(tuple(map(D, case["population"])), D(case["time"]),
+                         D(case["step"]), lambda t, p: (D(1), D(0)))
+
+    def test_callback_domain_errors(self):
+        for values in [(D(1),), (D("NaN"), D(0)), (D(1), D("Infinity"))]:
+            with self.subTest(values=values), self.assertRaises(ValueError):
+                rk4_step((D("0.25"), D("0.75")), D(0), D("0.1"),
+                         lambda t, p: values)
+
+    def test_oversized_step_does_not_clip_or_normalize(self):
+        with self.assertRaises(ValueError):
+            rk4_step((Q(1, 4), Q(3, 4)), Q(0), Q(16),
+                     lambda t, p: (Q(1), Q(0)))
+
+
+def rational(value):
+    if isinstance(value, Q):
+        return value
+    if type(value) not in (str, int):
+        raise ValueError("reference requires exact rational strings or integers")
+    try:
+        return Q(value)
+    except (ValueError, ZeroDivisionError) as error:
+        raise ValueError("invalid/non-finite rational fixture value") from error
+
+
+def matrix(values):
+    if not isinstance(values, (list, tuple)) or not values:
+        raise ValueError("empty or malformed matrix")
+    if any(not isinstance(row, (list, tuple)) or not row for row in values):
+        raise ValueError("empty or malformed matrix row")
+    width = len(values[0])
+    if any(len(row) != width for row in values):
+        raise ValueError("ragged matrix")
+    return tuple(tuple(rational(x) for x in row) for row in values)
+
+
+def game_matrices(a, b):
+    a, b = matrix(a), matrix(b)
+    if len(a) != len(b) or len(a[0]) != len(b[0]):
+        raise ValueError("payoff matrix dimensions differ")
+    return a, b
+
+
+def probabilities(values, count):
+    if not isinstance(values, (list, tuple)) or len(values) != count:
+        raise ValueError("probability dimension mismatch")
+    values = tuple(rational(x) for x in values)
+    if any(x < 0 for x in values) or sum(values) != 1:
+        raise ValueError("probabilities must be nonnegative with exact unit mass")
+    return values
+
+
+def nash_certificate(a, b, p, q):
+    """Check an existing witness, never search for or enumerate equilibria."""
+    a, b = game_matrices(a, b)
+    rows, cols = len(a), len(a[0])
+    p, q = probabilities(p, rows), probabilities(q, cols)
+    row_values = tuple(sum(a[i][j] * q[j] for j in range(cols)) for i in range(rows))
+    column_values = tuple(sum(p[i] * b[i][j] for i in range(rows)) for j in range(cols))
+    utilities = (sum(p[i] * row_values[i] for i in range(rows)),
+                 sum(q[j] * column_values[j] for j in range(cols)))
+    gains = (max(row_values) - utilities[0], max(column_values) - utilities[1])
+    return {"utilities": utilities, "gains": gains,
+            "sum_gain": sum(gains), "max_gain": max(gains)}
+
+
+def require_nash(a, b, p, q):
+    certificate = nash_certificate(a, b, p, q)
+    if certificate["max_gain"] != 0:
+        raise ValueError("candidate has a profitable unilateral deviation")
+    return certificate
+
+
+class NashOracleTests(unittest.TestCase):
+    def setUp(self):
+        self.data = fixture("mixed_nash_v1.json", "paignia.test-oracle.mixed-nash/1")
+        self.games = {game["id"]: game for game in self.data["games"]}
+
+    def test_inventory_and_scope(self):
+        self.assertEqual(set(self.games), {"source_derived_strict_dominance", "matching_pennies",
+                         "coordination_three_equilibria", "asymmetric_interior", "rectangular_2x3",
+                         "rectangular_3x2", "degenerate_zero_continuum", "signed_single_action"})
+        self.assertEqual(len(self.data["games"]), len(self.games))
+        self.assertEqual(sum(len(g["witnesses"]) for g in self.games.values()), 12)
+        self.assertEqual(sum(len(g["negative_candidates"]) for g in self.games.values()), 5)
+        self.assertEqual(self.games["degenerate_zero_continuum"]["coverage"], "continuum_samples_only")
+        self.assertIs(self.data["provenance"]["external_software_executed"], False)
+
+    def test_all_exact_equilibrium_witnesses(self):
+        for game in self.games.values():
+            for witness in game["witnesses"]:
+                with self.subTest(game=game["id"], witness=witness):
+                    result = require_nash(game["A"], game["B"], witness["p"], witness["q"])
+                    self.assertEqual(result["utilities"], tuple(map(Q, witness["utilities"])))
+                    self.assertEqual(result["gains"], (Q(0), Q(0)))
+                    self.assertEqual(result["sum_gain"], 0)
+                    self.assertEqual(result["max_gain"], 0)
+
+    def test_false_candidates_have_pinned_positive_gains(self):
+        for game in self.games.values():
+            for candidate in game["negative_candidates"]:
+                with self.subTest(game=game["id"]):
+                    args = (game["A"], game["B"], candidate["p"], candidate["q"])
+                    result = nash_certificate(*args)
+                    expected = tuple(map(Q, candidate["gains"]))
+                    self.assertEqual(result["utilities"], tuple(map(Q, candidate["utilities"])))
+                    self.assertEqual(result["gains"], expected)
+                    self.assertEqual(result["sum_gain"], sum(expected))
+                    self.assertEqual(result["max_gain"], max(expected))
+                    self.assertGreater(result["max_gain"], 0)
+                    with self.assertRaises(ValueError):
+                        require_nash(*args)
+
+    def test_source_derived_dominant_action_counterexample(self):
+        game = self.games["source_derived_strict_dominance"]
+        a, b = [[list(map(Q, row)) for row in game[key]] for key in ("A", "B")]
+        self.assertEqual((b[0][0] - b[0][1]) - (b[1][0] - b[1][1]), 0)
+        self.assertEqual((a[0][0] - a[1][0]) - (a[0][1] - a[1][1]), 0)
+        result = nash_certificate(a, b, [Q(1, 2)] * 2, [Q(1, 2)] * 2)
+        self.assertEqual(result["gains"], (Q(1, 2), Q(1, 2)))
+        self.assertEqual(result["sum_gain"], 1)
+
+    def test_coordination_multiplicity_is_preserved(self):
+        witnesses = self.games["coordination_three_equilibria"]["witnesses"]
+        self.assertEqual(len({(tuple(w["p"]), tuple(w["q"])) for w in witnesses}), 3)
+        self.assertEqual(witnesses[2]["p"], ["2/3", "1/3"])
+        self.assertEqual(witnesses[2]["q"], ["1/3", "2/3"])
+
+    def test_degenerate_family_beyond_listed_samples(self):
+        game = self.games["degenerate_zero_continuum"]
+        for p in [Q(0), Q(1, 7), Q(1, 2), Q(1)]:
+            for q in [Q(0), Q(2, 7), Q(1, 2), Q(1)]:
+                result = require_nash(game["A"], game["B"], [p, 1 - p], [q, 1 - q])
+                self.assertEqual(result["gains"], (0, 0))
+
+    def test_probability_and_payoff_permutations(self):
+        for game in self.games.values():
+            for witness in game["witnesses"] + game["negative_candidates"]:
+                a = [row[::-1] for row in game["A"][::-1]]
+                b = [row[::-1] for row in game["B"][::-1]]
+                original = nash_certificate(game["A"], game["B"], witness["p"], witness["q"])
+                reordered = nash_certificate(a, b, witness["p"][::-1], witness["q"][::-1])
+                self.assertEqual(original, reordered)
+
+    def test_positive_affine_payoffs_scale_gains(self):
+        for game in self.games.values():
+            for witness in game["witnesses"] + game["negative_candidates"]:
+                a = [[7 * Q(x) - 100 for x in row] for row in game["A"]]
+                b = [[7 * Q(x) + 30 for x in row] for row in game["B"]]
+                original = nash_certificate(game["A"], game["B"], witness["p"], witness["q"])
+                changed = nash_certificate(a, b, witness["p"], witness["q"])
+                self.assertEqual(changed["utilities"],
+                                 (7 * original["utilities"][0] - 100, 7 * original["utilities"][1] + 30))
+                self.assertEqual(changed["gains"], tuple(7 * x for x in original["gains"]))
+
+    def test_number_domain_errors(self):
+        for value in [True, False, 0.5, None, "NaN", "Infinity", "-Infinity", "1/0", ""]:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                rational(value)
+
+    def test_invalid_games_do_not_become_zero_residuals(self):
+        self.assertEqual(len(self.data["invalid_games"]), 6)
+        for game in self.data["invalid_games"]:
+            with self.subTest(game=game["id"]), self.assertRaises(ValueError):
+                nash_certificate(game["A"], game["B"], ["1"], ["1"])
+
+    def test_invalid_profiles_are_not_normalized(self):
+        self.assertEqual(len(self.data["invalid_profiles"]), 6)
+        game = self.games["matching_pennies"]
+        for profile in self.data["invalid_profiles"]:
+            with self.subTest(profile=profile["id"]), self.assertRaises(ValueError):
+                nash_certificate(game["A"], game["B"], profile["p"], profile["q"])
+
+    def test_small_nonzero_gain_is_not_rounded_away(self):
+        game = self.games["matching_pennies"]
+        delta = Q(1, 10**30)
+        p = [Q(1, 2) + delta, Q(1, 2) - delta]
+        result = nash_certificate(game["A"], game["B"], p, [Q(1, 2)] * 2)
+        self.assertEqual(result["gains"], (Q(0), 2 * delta))
+        with self.assertRaises(ValueError):
+            require_nash(game["A"], game["B"], p, [Q(1, 2)] * 2)
+
+
+def ce_problem(a, b, joint, objective):
+    a, b = game_matrices(a, b)
+    rows, cols = len(a), len(a[0])
+    joint, objective = matrix(joint), matrix(objective)
+    if any(len(x) != rows or len(x[0]) != cols for x in (joint, objective)):
+        raise ValueError("joint/objective dimensions must match the game")
+    z = probabilities(tuple(x for row in joint for x in row), rows * cols)
+    c = tuple(x for row in objective for x in row)
+    constraints, recommendation_mass = [], []
+    for recommended in range(rows):
+        for alternative in range(rows):
+            if recommended != alternative:
+                constraints.append(tuple(a[i][j] - a[alternative][j] if i == recommended else Q(0)
+                                         for i in range(rows) for j in range(cols)))
+                recommendation_mass.append(sum(joint[recommended]))
+    for recommended in range(cols):
+        for alternative in range(cols):
+            if recommended != alternative:
+                constraints.append(tuple(b[i][j] - b[i][alternative] if j == recommended else Q(0)
+                                         for i in range(rows) for j in range(cols)))
+                recommendation_mass.append(sum(joint[i][recommended] for i in range(rows)))
+    return c, z, constraints, recommendation_mass
+
+
+def ce_report(c, z, constraints, recommendation_mass):
+    incentives = tuple(sum(a * p for a, p in zip(row, z)) for row in constraints)
+    conditional = tuple(max(Q(0), -slack / mass) if mass else None
+                        for slack, mass in zip(incentives, recommendation_mass))
+    return {"incentives": incentives, "objective": sum(a * p for a, p in zip(c, z)),
+            "weighted_max_gain": max([Q(0)] + [-slack for slack in incentives]),
+            "conditional_gains": conditional,
+            "conditional_max_gain": max([Q(0)] + [x for x in conditional if x is not None])}
+
+
+def ce_certificate(a, b, joint, objective):
+    """Verify all recommendation-conditional deviation inequalities."""
+    return ce_report(*ce_problem(a, b, joint, objective))
+
+
+def require_ce_optimum(a, b, joint, objective, upper_bound, multipliers):
+    """Check a supplied exact upper-bound certificate, never optimize/search."""
+    problem = ce_problem(a, b, joint, objective)
+    c, z, constraints, _ = problem
+    report = ce_report(*problem)
+    if report["weighted_max_gain"] != 0:
+        raise ValueError("joint distribution violates an incentive constraint")
+    upper_bound = rational(upper_bound)
+    if not isinstance(multipliers, (tuple, list)) or len(multipliers) != len(constraints):
+        raise ValueError("dual multiplier dimension mismatch")
+    multipliers = tuple(rational(x) for x in multipliers)
+    if any(x < 0 for x in multipliers):
+        raise ValueError("dual multipliers must be nonnegative")
+    dual_slacks = tuple(upper_bound - c[j] - sum(weight * row[j] for weight, row in
+                                                zip(multipliers, constraints)) for j in range(len(z)))
+    if any(x < 0 for x in dual_slacks):
+        raise ValueError("invalid dual upper-bound certificate")
+    gap = upper_bound - report["objective"]
+    if gap != 0:
+        raise ValueError("feasible candidate does not attain the certified upper bound")
+    return {**report, "dual_slacks": dual_slacks, "duality_gap": gap}
+
+
+class CorrelatedOracleTests(unittest.TestCase):
+    def setUp(self):
+        self.data = fixture("correlated_equilibrium_v1.json",
+                            "paignia.test-oracle.correlated-equilibrium/1")
+        self.games = {case["id"]: case for case in self.data["optimal_cases"]}
+        self.controls = {case["id"]: case for case in self.data["controls"]}
+
+    def test_inventory_and_reference_scope(self):
+        self.assertEqual(set(self.games), {"correlation_welfare_gap", "dominance_zero_recommendations",
+                                         "rectangular_2x3", "negative_single_action"})
+        self.assertEqual(len(self.data["optimal_cases"]), 4)
+        self.assertEqual(len(self.controls), 4)
+        self.assertEqual(len(self.data["invalid_joints"]), 7)
+        self.assertIs(self.data["provenance"]["optimizer_executed"], False)
+
+    def test_exact_primal_dual_optimality_certificates(self):
+        for case in self.games.values():
+            with self.subTest(case=case["id"]):
+                result = require_ce_optimum(case["A"], case["B"], case["joint"], case["objective"],
+                                            case["upper_bound"], case["dual_multipliers"])
+                self.assertEqual(result["incentives"], tuple(map(Q, case["expected_incentives"])))
+                self.assertEqual(result["objective"], Q(case["upper_bound"]))
+                self.assertEqual(result["dual_slacks"], tuple(map(Q, case["expected_dual_slacks"])))
+                self.assertEqual(result["weighted_max_gain"], 0)
+                self.assertEqual(result["conditional_max_gain"], 0)
+                self.assertEqual(result["duality_gap"], 0)
+
+    def test_all_distinguishing_controls(self):
+        for case in self.controls.values():
+            with self.subTest(case=case["id"]):
+                game = self.games[case["game"]] if "game" in case else case
+                objective = game["objective"] if "game" in case else case["objective_matrix"]
+                result = ce_certificate(game["A"], game["B"], case["joint"], objective)
+                self.assertEqual(result["incentives"], tuple(map(Q, case["expected_incentives"])))
+                self.assertEqual(result["objective"], Q(case["objective"]))
+                self.assertEqual(result["weighted_max_gain"], Q(case["weighted_max_gain"]))
+                self.assertEqual(result["conditional_max_gain"], Q(case["conditional_max_gain"]))
+
+    def test_feasible_product_is_not_an_optimality_certificate(self):
+        game = self.games["correlation_welfare_gap"]
+        candidate = self.controls["feasible_nash_product_is_suboptimal"]
+        mixed = require_nash(game["A"], game["B"], ["1/3", "2/3"], ["1/3", "2/3"])
+        self.assertEqual(mixed["utilities"], (Q(14, 3), Q(14, 3)))
+        for p, q in [(["1", "0"], ["0", "1"]), (["0", "1"], ["1", "0"])]:
+            pure = require_nash(game["A"], game["B"], p, q)
+            self.assertEqual(sum(pure["utilities"]), 9)
+        result = ce_certificate(game["A"], game["B"], candidate["joint"], game["objective"])
+        self.assertEqual(result["weighted_max_gain"], 0)
+        self.assertEqual(Q(game["upper_bound"]) - result["objective"], Q(7, 6))
+        with self.assertRaises(ValueError):
+            require_ce_optimum(game["A"], game["B"], candidate["joint"], game["objective"],
+                               game["upper_bound"], game["dual_multipliers"])
+
+    def test_marginal_product_loses_obedience(self):
+        game = self.games["correlation_welfare_gap"]
+        z = [[Q(x) for x in row] for row in game["joint"]]
+        rows = [sum(row) for row in z]
+        cols = [sum(row[j] for row in z) for j in range(2)]
+        product = [[p * q for q in cols] for p in rows]
+        expected = self.controls["product_of_ce_marginals_breaks_obedience"]
+        self.assertEqual(product, [[Q(x) for x in row] for row in expected["joint"]])
+        result = ce_certificate(game["A"], game["B"], product, game["objective"])
+        self.assertEqual(result["weighted_max_gain"], Q(3, 16))
+        self.assertEqual(result["conditional_max_gain"], Q(1, 4))
+
+    def test_large_objective_cannot_hide_incentive_failure(self):
+        game = self.games["correlation_welfare_gap"]
+        candidate = self.controls["higher_objective_infeasible_point"]
+        self.assertGreater(Q(candidate["objective"]), Q(game["upper_bound"]))
+        with self.assertRaises(ValueError):
+            require_ce_optimum(game["A"], game["B"], candidate["joint"], game["objective"],
+                               candidate["objective"], ["0"] * 4)
+
+    def test_zero_mass_recommendations_have_no_conditional_ratio(self):
+        case = self.games["dominance_zero_recommendations"]
+        result = ce_certificate(case["A"], case["B"], case["joint"], case["objective"])
+        self.assertEqual(result["conditional_gains"], (Q(0), None, Q(0), None))
+
+    def test_rectangular_constraints_include_all_deviations(self):
+        case = self.games["rectangular_2x3"]
+        result = ce_certificate(case["A"], case["B"], case["joint"], case["objective"])
+        self.assertEqual(result["incentives"], (0, 0, 0, 1, 0, 1, 0, 0))
+        self.assertEqual(result["conditional_gains"][-2:], (None, None))
+
+    def test_signed_objective_with_no_alternative_actions(self):
+        case = self.games["negative_single_action"]
+        result = require_ce_optimum(case["A"], case["B"], case["joint"], case["objective"],
+                                    case["upper_bound"], case["dual_multipliers"])
+        self.assertEqual(result["objective"], -7)
+        self.assertEqual(result["incentives"], ())
+
+    def test_invalid_joint_distributions(self):
+        game = self.games["correlation_welfare_gap"]
+        for case in self.data["invalid_joints"]:
+            with self.subTest(case=case["id"]), self.assertRaises(ValueError):
+                ce_certificate(game["A"], game["B"], case["joint"], game["objective"])
+
+    def test_invalid_objective_dimensions_and_values(self):
+        game = self.games["correlation_welfare_gap"]
+        for objective in [[], [["1"]], [["0", "0"], ["0"]],
+                          [["NaN", "0"], ["0", "0"]], [[True, 0], [0, 0]]]:
+            with self.subTest(objective=objective), self.assertRaises(ValueError):
+                ce_certificate(game["A"], game["B"], game["joint"], objective)
+
+    def test_invalid_dual_certificates(self):
+        game = self.games["correlation_welfare_gap"]
+        invalid = [("21/2", []), ("21/2", ["0", "-3/4", "0", "3/4"]),
+                   ("21/2", ["0", "NaN", "0", "3/4"]),
+                   ("NaN", game["dual_multipliers"]), ("10", game["dual_multipliers"]),
+                   ("11", game["dual_multipliers"]), ("21/2", ["0"] * 4)]
+        for bound, weights in invalid:
+            with self.subTest(bound=bound, weights=weights), self.assertRaises(ValueError):
+                require_ce_optimum(game["A"], game["B"], game["joint"], game["objective"],
+                                   bound, weights)
+
+    def test_action_permutation_preserves_incentive_values(self):
+        for case in self.controls.values():
+            game = self.games[case["game"]] if "game" in case else case
+            objective = game["objective"] if "game" in case else case["objective_matrix"]
+            reverse = lambda values: [row[::-1] for row in values[::-1]]
+            before = ce_certificate(game["A"], game["B"], case["joint"], objective)
+            after = ce_certificate(reverse(game["A"]), reverse(game["B"]),
+                                   reverse(case["joint"]), reverse(objective))
+            self.assertEqual(sorted(before["incentives"]), sorted(after["incentives"]))
+            self.assertEqual(before["objective"], after["objective"])
+            self.assertEqual(before["conditional_max_gain"], after["conditional_max_gain"])
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
