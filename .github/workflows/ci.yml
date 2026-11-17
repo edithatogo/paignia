@@ -101,7 +101,7 @@ jobs:
       - name: Isolated extracted-source consumer
         run: python3 scripts/validate_game_packages.py --source-smoke --receipt target/extracted-package-smoke.json
       - name: Cargo artifacts with provider source unavailable
-        run: python3 scripts/validate_game_packages.py --receipt target/cargo-artifact-qualification.json
+        run: python3 scripts/validate_game_packages.py --receipt target/cargo-artifact-qualification.json --artifact-dir target/qualified-packages
       - name: Native API documentation
         env:
           RUSTDOCFLAGS: -D warnings
@@ -113,6 +113,7 @@ jobs:
             target/static-dependency-boundary.json
             target/extracted-package-smoke.json
             target/cargo-artifact-qualification.json
+            target/qualified-packages/*.crate
             target/all-features.log
             target/solver-doctests.log
           if-no-files-found: error

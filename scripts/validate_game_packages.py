@@ -326,7 +326,30 @@ def build_library_archives(cargo: str, provider: Path, assembly: Path, names: li
     return "explicit-library-lock-omission" if lock_flags else "cargo-library-default"
 
 
-def artifact_qualification(cargo: str) -> dict:
+def retain_artifacts(archives: dict[str, Path], artifacts: dict, destination: Path) -> None:
+    """Retain the exact qualified bytes, checking the entire set before writing."""
+    payloads: dict[str, bytes] = {}
+    for name, archive in archives.items():
+        content = archive.read_bytes()
+        if hashlib.sha256(content).hexdigest() != artifacts[name]["archive_sha256"]:
+            raise ValueError(f"qualified artifact hash changed before retention: {name}")
+        if archive.name in payloads:
+            raise ValueError("qualified artifact filenames must be distinct")
+        payloads[archive.name] = content
+    if not payloads:
+        raise ValueError("there are no qualified artifacts to retain")
+    destination.mkdir(parents=True, exist_ok=True)
+    for name, content in payloads.items():
+        with tempfile.NamedTemporaryFile(dir=destination, delete=False) as temporary:
+            temporary.write(content)
+            temporary_path = Path(temporary.name)
+        try:
+            temporary_path.replace(destination / name)
+        finally:
+            temporary_path.unlink(missing_ok=True)
+
+
+def artifact_qualification(cargo: str, artifact_dir: Path | None = None) -> dict:
     """Build actual packages and execute each advertised feature profile."""
     package_changes = run(
         ["git", "status", "--porcelain", "--untracked-files=all", "--",
@@ -364,9 +387,11 @@ def artifact_qualification(cargo: str) -> dict:
             cargo, ROOT, staging / "assembly", list(PACKAGES)
         )
         extracted: dict[str, Path] = {}
+        archives: dict[str, Path] = {}
         for name in PACKAGES:
             package = selected[name]
             archive = staging / "assembly/package" / f'{name}-{package["version"]}.crate'
+            archives[name] = archive
             extracted[name] = unpack_artifact(archive, staging / "unpacked", name, package["version"])
             hashes: dict[str, str] = {}
             source = Path(package["manifest_path"]).parent
@@ -448,6 +473,9 @@ def artifact_qualification(cargo: str) -> dict:
                     "resolved_dependencies": [{key: p.get(key) for key in ("name", "version", "source")}
                                               for p in resolved["packages"]],
                 })
+        if artifact_dir is not None:
+            retain_artifacts(archives, receipt["artifacts"], artifact_dir)
+            receipt["retained_artifact_files"] = sorted(path.name for path in archives.values())
     return receipt
 
 
@@ -540,12 +568,15 @@ def source_smoke(cargo: str) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--receipt", type=Path, help="optional JSON result from successful native execution")
+    parser.add_argument("--artifact-dir", type=Path, help="retain exact .crate archives only after every artifact profile passes")
     parser.add_argument("--source-smoke", action="store_true", help="run only the historical copied-source smoke")
     args = parser.parse_args()
+    if args.source_smoke and args.artifact_dir is not None:
+        parser.error("--artifact-dir requires actual artifact qualification, not --source-smoke")
     cargo = shutil.which("cargo")
     if cargo is None:
         parser.exit(1, "cargo is required; native package consumer was not executed\n")
-    receipt = source_smoke(cargo) if args.source_smoke else artifact_qualification(cargo)
+    receipt = source_smoke(cargo) if args.source_smoke else artifact_qualification(cargo, args.artifact_dir)
     if args.receipt:
         args.receipt.parent.mkdir(parents=True, exist_ok=True)
         args.receipt.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")

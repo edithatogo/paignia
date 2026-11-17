@@ -74,6 +74,12 @@ consumption, not a `cargo install --locked` or registry-publication receipt.
 `--source-smoke` retains the older two-test copied-source check under its weaker,
 explicit scope. Neither check supplies the two required real application cases.
 
+Use `--artifact-dir target/qualified-packages` with `--receipt` to retain the
+exact archives after every profile passes. Hashes are rechecked before any
+archive is copied. CI retains both archives alongside the receipt and native
+logs in its compiler-specific qualification artifact, so application owners
+can test those bytes directly against their own models and expected outcomes.
+
 Consume an exact reviewed Git revision until release artifacts are qualified.
 Keep domain game definitions and payoff construction in the consumer. The
 reimbursement application owns its finite offer/acceptance integration and
