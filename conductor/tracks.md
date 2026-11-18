@@ -13,3 +13,7 @@
   [Specification, plan and handoff](tracks/t18_illicit_enforcement_inspection_games_20261110/index.md).
   Neutral leader-follower inspection/interdiction primitives and interval/credal
   equilibrium payoff bounds feeding `tobac` partial identification (`M2a`, `F03`).
+
+- [ ] **T19 Optional Serde interchange assessment**
+  [Specification and plan](tracks/t19_serde_interchange_evaluation_20261118/index.md).
+  No new core dependency or wire-format claim; create a separate adapter only after a pinned T17 consumer proves need and independent fixtures qualify precision, schema and version boundaries.

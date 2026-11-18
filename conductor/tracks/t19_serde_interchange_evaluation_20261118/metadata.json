@@ -1,0 +1,23 @@
+{
+  "track_id": "t19_serde_interchange_evaluation_20261118",
+  "type": "evaluation",
+  "status": "new",
+  "created_at": "2026-11-18T00:00:00Z",
+  "updated_at": "2026-11-18T00:00:00Z",
+  "description": "Core native solver models have no published wire format; optional Serde is deferred until an independent consumer exists.",
+  "verification": {
+    "status": "not_run",
+    "commands": []
+  },
+  "registry_id": "T19",
+  "dependencies": [
+    "t17_game_runtime_ecosystem_20261107"
+  ],
+  "external_dependencies": [
+    "Actual pinned external consumer requiring versioned game/result interchange"
+  ],
+  "owners": [
+    "edithatogo"
+  ],
+  "capability_status": "evaluation_only"
+}
