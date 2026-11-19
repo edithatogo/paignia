@@ -1,0 +1,16 @@
+[package]
+name = "paignia-native"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+paignia-core = { path = "../paignia-core" }
+paignia-solve = { path = "../paignia-solve" }
+serde_json = { workspace = true }
+
+[[bin]]
+name = "paignia-native"
+path = "src/main.rs"
+
+[lints]
+workspace = true
