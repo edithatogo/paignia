@@ -5,8 +5,12 @@ use paignia_core::{
     InformationSetDeclaration, InformationSetDefinition, InformationSetError, InformationSetId,
     Node, NodeId, PlayerId, INFORMATION_SET_PROFILE_V1, INFORMATION_SET_SCHEMA_VERSION,
 };
+use std::cmp::Ordering;
+use std::collections::{BTreeMap, BTreeSet};
+
 use paignia_solve::{
-    cfr_nash_conv, train_counterfactual_regret, CfrConfig, CfrError, CfrStrategy, CfrVariant,
+    cfr_nash_conv, cfr_profile_values, train_counterfactual_regret, CfrConfig, CfrError,
+    CfrStrategy, CfrVariant,
 };
 
 const KUHN_VALUE: f64 = -1.0 / 18.0;
@@ -114,7 +118,6 @@ fn preserves_declared_action_order() {
 fn kuhn_average_value_and_exploitability_match_the_independent_reference() {
     let fixture = include_str!("../../../fixtures/conformance/cfr-reference-v1.json");
     assert!(fixture.contains("\"player_one_value\": \"-1/18\""));
-    assert!(fixture.contains("\"status\": \"not_admitted\""));
 
     let (source, declaration) = kuhn();
     let graph = build_information_set_graph(&source, &declaration).expect("Kuhn is admissible");
@@ -526,4 +529,400 @@ fn kuhn_exploitability(probabilities: &KuhnProbabilities) -> f64 {
         worst_for_one = worst_for_one.min(kuhn_value(&deviating));
     }
     (best_for_one - current) + (current - worst_for_one)
+}
+
+const LEDUC_VALUE: f64 = -0.085_606;
+const LEDUC_ITERATIONS: u32 = 4_000;
+
+#[test]
+fn leduc_tree_matches_the_independent_check_call_value_and_trains_toward_the_published_value() {
+    let fixture = include_str!("../../../fixtures/conformance/cfr-reference-v1.json");
+    assert!(fixture.contains("\"player_one_value\": -0.085606"));
+    assert!(fixture.contains("\"information_states\": 936"));
+
+    let (source, declaration) = leduc();
+    assert_eq!(declaration.sets.len(), 936);
+    let graph =
+        build_information_set_graph(&source, &declaration).expect("Leduc is perfect recall");
+    let mut calling = CfrStrategy {
+        action_order: BTreeMap::new(),
+        probabilities: BTreeMap::new(),
+    };
+    for (set_id, set) in &graph.sets {
+        let call_index = set
+            .legal_actions
+            .iter()
+            .position(|action| action.0.ends_with(":call"))
+            .expect("call is legal");
+        let mut probabilities = vec![0.0; set.legal_actions.len()];
+        probabilities[call_index] = 1.0;
+        calling
+            .action_order
+            .insert(set_id.clone(), set.legal_actions.clone());
+        calling.probabilities.insert(set_id.clone(), probabilities);
+    }
+    let library_call =
+        cfr_profile_values(&source, &graph, &calling).expect("call value")[&player("zero")];
+    assert!((library_call - independent_leduc_check_value()).abs() < 1e-9);
+
+    let trained = train_counterfactual_regret(
+        &source,
+        &declaration,
+        &CfrConfig {
+            variant: CfrVariant::CfrPlus,
+            iterations: LEDUC_ITERATIONS,
+        },
+    )
+    .expect("Leduc trains");
+    let value = trained.root_values[&player("zero")];
+    let exploitability =
+        cfr_nash_conv(&source, &graph, &trained.average_strategy).expect("leduc nash");
+    assert!(
+        (value - LEDUC_VALUE).abs() < 2e-2,
+        "leduc value {value} target {LEDUC_VALUE} exploitability {exploitability}"
+    );
+    assert!(
+        exploitability < 0.05,
+        "leduc exploitability {exploitability}"
+    );
+}
+
+fn independent_leduc_check_value() -> f64 {
+    let mut total = 0.0;
+    let mut deals = 0.0;
+    for first in 0..6 {
+        for second in 0..6 {
+            if second == first {
+                continue;
+            }
+            for board in 0..6 {
+                if board == first || board == second {
+                    continue;
+                }
+                let left = leduc_hand_rank(first, board);
+                let right = leduc_hand_rank(second, board);
+                total += match left.cmp(&right) {
+                    Ordering::Greater => 1.0,
+                    Ordering::Less => -1.0,
+                    Ordering::Equal => 0.0,
+                };
+                deals += 1.0;
+            }
+        }
+    }
+    total / deals
+}
+
+fn leduc_hand_rank(private_card: i32, public_card: i32) -> i32 {
+    let mut low = public_card;
+    let mut high = private_card;
+    if low > high {
+        std::mem::swap(&mut low, &mut high);
+    }
+    if low % 2 == 0 && high == low + 1 {
+        36 + low
+    } else {
+        (high / 2) * 6 + (low / 2)
+    }
+}
+
+#[derive(Clone)]
+struct LeducState {
+    deck: [bool; 6],
+    deck_size: i32,
+    private_cards: [i32; 2],
+    dealt: i32,
+    public_card: i32,
+    round: i32,
+    stakes: i32,
+    ante: [i32; 2],
+    pot: i32,
+    money: [i32; 2],
+    raises: i32,
+    calls: i32,
+    folded: [bool; 2],
+    remaining: i32,
+    cursor: i32,
+    first_round: Vec<&'static str>,
+    second_round: Vec<&'static str>,
+    resolved: bool,
+}
+
+fn fresh_leduc() -> LeducState {
+    LeducState {
+        deck: [true; 6],
+        deck_size: 6,
+        private_cards: [-1, -1],
+        dealt: 0,
+        public_card: -1,
+        round: 1,
+        stakes: 1,
+        ante: [1, 1],
+        pot: 2,
+        money: [99, 99],
+        raises: 0,
+        calls: 0,
+        folded: [false, false],
+        remaining: 2,
+        cursor: -1,
+        first_round: Vec::new(),
+        second_round: Vec::new(),
+        resolved: false,
+    }
+}
+
+fn leduc() -> (GameSpecification, InformationSetDeclaration) {
+    let mut nodes = BTreeMap::new();
+    let mut sets: BTreeMap<String, (usize, BTreeSet<String>)> = BTreeMap::new();
+    expand_leduc(&fresh_leduc(), "root", &mut nodes, &mut sets);
+    let source = GameSpecification {
+        schema_version: "1.0.0".into(),
+        id: "urn:paignia:cfr:leduc".into(),
+        game: Game {
+            root: node("root"),
+            nodes: nodes
+                .into_iter()
+                .map(|(id, value)| (node(&id), value))
+                .collect(),
+        },
+    };
+    let declaration = InformationSetDeclaration {
+        schema_version: INFORMATION_SET_SCHEMA_VERSION.into(),
+        semantic_profile: INFORMATION_SET_PROFILE_V1.into(),
+        sets: sets
+            .into_iter()
+            .map(|(id, (owner, members))| InformationSetDefinition {
+                id: InformationSetId(format!("urn:paignia:cfr:set:{id}")),
+                player: player(if owner == 0 { "zero" } else { "one" }),
+                members: members.into_iter().map(|member| node(&member)).collect(),
+            })
+            .collect(),
+    };
+    (source, declaration)
+}
+
+fn expand_leduc(
+    state: &LeducState,
+    id: &str,
+    nodes: &mut BTreeMap<String, Node>,
+    sets: &mut BTreeMap<String, (usize, BTreeSet<String>)>,
+) {
+    if nodes.contains_key(id) {
+        return;
+    }
+    if state.resolved {
+        nodes.insert(
+            id.to_owned(),
+            terminal(&[
+                ("zero", f64::from(state.money[0] - 100)),
+                ("one", f64::from(state.money[1] - 100)),
+            ]),
+        );
+        return;
+    }
+    if state.cursor < 0 {
+        let probability = 1.0 / f64::from(state.deck_size);
+        let mut edges = Vec::new();
+        for card in 0..6_i32 {
+            if !state.deck[usize::try_from(card).expect("card")] {
+                continue;
+            }
+            let mut child = state.clone();
+            child.deal(card);
+            let child_id = child.identity();
+            expand_leduc(&child, &child_id, nodes, sets);
+            edges.push(ChanceEdge {
+                probability,
+                target: node(&child_id),
+            });
+        }
+        nodes.insert(id.to_owned(), Node::Chance { edges });
+        return;
+    }
+    let owner = usize::try_from(state.cursor).expect("player cursor");
+    let actions = state.legal_actions();
+    let mut edges = Vec::new();
+    for label in &actions {
+        let mut child = state.clone();
+        child.act(label);
+        let child_id = child.identity();
+        expand_leduc(&child, &child_id, nodes, sets);
+        edges.push(ActionEdge {
+            action: action(label),
+            target: node(&child_id),
+        });
+    }
+    sets.entry(state.information_set())
+        .or_insert_with(|| (owner, BTreeSet::new()))
+        .1
+        .insert(id.to_owned());
+    nodes.insert(
+        id.to_owned(),
+        Node::Decision {
+            player: player(if owner == 0 { "zero" } else { "one" }),
+            edges,
+        },
+    );
+}
+
+impl LeducState {
+    fn deal(&mut self, card: i32) {
+        let index = usize::try_from(card).expect("card");
+        self.deck[index] = false;
+        self.deck_size -= 1;
+        if self.dealt < 2 {
+            let player_index = usize::try_from(self.dealt).expect("dealt player");
+            self.private_cards[player_index] = card;
+            self.dealt += 1;
+            if self.dealt == 2 {
+                self.cursor = 0;
+            }
+        } else {
+            self.public_card = card;
+            self.cursor = 0;
+        }
+    }
+
+    fn act(&mut self, label: &str) {
+        let player_index = usize::try_from(self.cursor).expect("acting player");
+        if self.round == 1 {
+            self.first_round.push(leduc_action_label(label));
+        } else {
+            self.second_round.push(leduc_action_label(label));
+        }
+        match label {
+            "fold" => {
+                self.folded[player_index] = true;
+                self.remaining -= 1;
+                self.finish_action(false);
+            }
+            "call" => {
+                let amount = self.stakes - self.ante[player_index];
+                self.contribute(player_index, amount);
+                self.calls += 1;
+                self.finish_action(false);
+            }
+            "raise" => {
+                let call_amount = self.stakes - self.ante[player_index];
+                self.contribute(player_index, call_amount);
+                let raise_amount = if self.round == 1 { 2 } else { 4 };
+                self.stakes += raise_amount;
+                self.contribute(player_index, raise_amount);
+                self.raises += 1;
+                self.calls = 0;
+                self.finish_action(true);
+            }
+            _ => panic!("unknown leduc action"),
+        }
+    }
+
+    fn contribute(&mut self, player_index: usize, amount: i32) {
+        self.pot += amount;
+        self.ante[player_index] += amount;
+        self.money[player_index] -= amount;
+    }
+
+    fn finish_action(&mut self, raised: bool) {
+        if self.remaining == 1 || (self.round == 2 && self.ready()) {
+            self.resolve();
+            return;
+        }
+        if !raised && self.ready() {
+            self.round = 2;
+            self.raises = 0;
+            self.calls = 0;
+            self.cursor = -1;
+            return;
+        }
+        self.cursor = self.next_player();
+    }
+
+    fn ready(&self) -> bool {
+        (self.raises == 0 && self.calls == self.remaining)
+            || (self.raises > 0 && self.calls == self.remaining - 1)
+    }
+
+    fn next_player(&self) -> i32 {
+        for offset in 1..=2 {
+            let candidate = (self.cursor + offset) % 2;
+            let index = usize::try_from(candidate).expect("candidate");
+            if !self.folded[index] {
+                return candidate;
+            }
+        }
+        panic!("no acting player");
+    }
+
+    fn resolve(&mut self) {
+        if self.remaining == 1 {
+            for player_index in 0..2 {
+                if !self.folded[player_index] {
+                    self.money[player_index] += self.pot;
+                }
+            }
+        } else {
+            let left = leduc_hand_rank(self.private_cards[0], self.public_card);
+            let right = leduc_hand_rank(self.private_cards[1], self.public_card);
+            match left.cmp(&right) {
+                Ordering::Greater => self.money[0] += self.pot,
+                Ordering::Less => self.money[1] += self.pot,
+                Ordering::Equal => {
+                    self.money[0] += self.pot / 2;
+                    self.money[1] += self.pot / 2;
+                }
+            }
+        }
+        self.pot = 0;
+        self.resolved = true;
+    }
+
+    fn legal_actions(&self) -> Vec<&'static str> {
+        let player_index = usize::try_from(self.cursor).expect("legal player");
+        let mut actions = Vec::new();
+        if self.stakes > self.ante[player_index] {
+            actions.push("fold");
+        }
+        actions.push("call");
+        if self.raises < 2 {
+            actions.push("raise");
+        }
+        actions
+    }
+
+    fn information_set(&self) -> String {
+        format!(
+            "leduc-p{}-c{}-b{}-{}",
+            self.cursor,
+            self.private_cards[usize::try_from(self.cursor).expect("infoset player")],
+            self.public_card,
+            self.sequence()
+        )
+    }
+
+    fn sequence(&self) -> String {
+        format!(
+            "{}|{}",
+            self.first_round.join(","),
+            self.second_round.join(",")
+        )
+    }
+
+    fn identity(&self) -> String {
+        format!(
+            "leduc-{}-{}-b{}-{}",
+            self.private_cards[0],
+            self.private_cards[1],
+            self.public_card,
+            self.sequence()
+        )
+    }
+}
+
+fn leduc_action_label(label: &str) -> &'static str {
+    match label {
+        "fold" => "f",
+        "call" => "c",
+        "raise" => "r",
+        _ => panic!("unknown leduc action"),
+    }
 }

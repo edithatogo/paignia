@@ -4,7 +4,9 @@
 //! reach of every other player and of chance. The returned strategy is the
 //! reach-weighted average of the strategies that were actually played. This is
 //! not linear averaging, and it does not by itself prove a Nash equilibrium.
-//! Kuhn's closed form is an external check. Leduc is not solved or claimed here.
+//! Kuhn's closed form is an external check. Leduc is compared with the published
+//! two-player value of the `OpenSpiel` rule set; that comparison is not a proof
+//! that every equilibrium has been found.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -98,6 +100,7 @@ pub fn train(
     }
     let graph = build_information_set_graph(source, declaration)?;
     let players = players_of(&graph);
+    let tree = index_tree(source, &graph, &players)?;
     let mut regrets = zero_tables(&graph);
     let mut strategy_sum = zero_tables(&graph);
 
@@ -106,32 +109,28 @@ pub fn train(
             Variant::Cfr => {
                 let snapshot = regret_matching(&graph, &regrets);
                 let mut delta = zero_tables(&graph);
-                for player in &players {
-                    Traversal {
-                        source,
-                        graph: &graph,
-                        strategy: &snapshot,
-                        updating: player,
-                        delta: &mut delta,
-                        strategy_sum: &mut strategy_sum,
-                    }
-                    .walk()?;
+                for (player_index, _) in players.iter().enumerate() {
+                    walk_indexed(
+                        &tree,
+                        player_index,
+                        &snapshot,
+                        &mut delta,
+                        &mut strategy_sum,
+                    );
                 }
                 add_regret(&mut regrets, &delta, false);
             }
             Variant::CfrPlus => {
-                for player in &players {
+                for (player_index, _) in players.iter().enumerate() {
                     let snapshot = regret_matching(&graph, &regrets);
                     let mut delta = zero_tables(&graph);
-                    Traversal {
-                        source,
-                        graph: &graph,
-                        strategy: &snapshot,
-                        updating: player,
-                        delta: &mut delta,
-                        strategy_sum: &mut strategy_sum,
-                    }
-                    .walk()?;
+                    walk_indexed(
+                        &tree,
+                        player_index,
+                        &snapshot,
+                        &mut delta,
+                        &mut strategy_sum,
+                    );
                     add_regret(&mut regrets, &delta, true);
                 }
             }
@@ -335,61 +334,140 @@ fn average_strategy(
     }
 }
 
-struct Traversal<'a> {
-    source: &'a GameSpecification,
-    graph: &'a InformationSetGraph,
-    strategy: &'a BTreeMap<InformationSetId, Vec<f64>>,
-    updating: &'a PlayerId,
-    delta: &'a mut BTreeMap<InformationSetId, Vec<f64>>,
-    strategy_sum: &'a mut BTreeMap<InformationSetId, Vec<f64>>,
+enum IndexedNode {
+    Terminal(Vec<f64>),
+    Chance(Vec<(f64, usize)>),
+    Decision {
+        player: usize,
+        set: usize,
+        children: Vec<usize>,
+    },
 }
 
-impl Traversal<'_> {
-    fn walk(&mut self) -> Result<(), Error> {
-        let root = self.source.game.root.clone();
-        self.visit(&root, 1.0, 1.0)?;
-        Ok(())
-    }
+struct IndexedTree {
+    root: usize,
+    nodes: Vec<IndexedNode>,
+}
 
-    fn visit(
-        &mut self,
-        node_id: &NodeId,
-        player_reach: f64,
-        counterfactual: f64,
-    ) -> Result<f64, Error> {
-        match &self.source.game.nodes[node_id] {
-            Node::Terminal { payoffs } => Ok(payoffs.get(self.updating).copied().unwrap_or(0.0)),
-            Node::Chance { edges } => {
-                let steps = edges
+fn index_tree(
+    source: &GameSpecification,
+    graph: &InformationSetGraph,
+    players: &[PlayerId],
+) -> Result<IndexedTree, Error> {
+    let ids = source.game.nodes.keys().cloned().collect::<Vec<_>>();
+    let mut index_of = BTreeMap::new();
+    for (index, id) in ids.iter().enumerate() {
+        index_of.insert(id, index);
+    }
+    let mut set_index = BTreeMap::new();
+    for (index, set_id) in graph.sets.keys().enumerate() {
+        set_index.insert(set_id, index);
+    }
+    let mut nodes = Vec::with_capacity(ids.len());
+    for id in &ids {
+        let indexed = match &source.game.nodes[id] {
+            Node::Terminal { payoffs } => IndexedNode::Terminal(
+                players
                     .iter()
-                    .map(|edge| (edge.probability, edge.target.clone()))
-                    .collect::<Vec<_>>();
-                let mut value = 0.0;
-                for (probability, target) in steps {
-                    value += probability
-                        * self.visit(&target, player_reach, counterfactual * probability)?;
-                }
-                Ok(value)
-            }
+                    .map(|player| payoffs.get(player).copied().unwrap_or(0.0))
+                    .collect(),
+            ),
+            Node::Chance { edges } => IndexedNode::Chance(
+                edges
+                    .iter()
+                    .map(|edge| (edge.probability, index_of[&edge.target]))
+                    .collect(),
+            ),
             Node::Decision { player, edges } => {
-                let updating_player = player == self.updating;
-                let player_for_update = player.clone();
-                let set_id = self.graph.assignments[node_id].clone();
-                let legal_actions = self.graph.sets[&set_id].legal_actions.clone();
-                let probabilities = self.strategy[&set_id].clone();
-                let steps = edges
-                    .iter()
-                    .map(|edge| (edge.action.clone(), edge.target.clone()))
-                    .collect::<Vec<_>>();
-                let mut action_values = Vec::with_capacity(steps.len());
-                let mut value = 0.0;
-                for (index, (action, target)) in steps.into_iter().enumerate() {
-                    if legal_actions.get(index) != Some(&action) {
+                let set_id = &graph.assignments[id];
+                let legal_actions = &graph.sets[set_id].legal_actions;
+                let mut children = Vec::with_capacity(edges.len());
+                for (action_index, edge) in edges.iter().enumerate() {
+                    if legal_actions.get(action_index) != Some(&edge.action) {
                         return Err(Error::InconsistentActionOrder {
-                            node: node_id.clone(),
-                            action,
+                            node: id.clone(),
+                            action: edge.action.clone(),
                         });
                     }
+                    children.push(index_of[&edge.target]);
+                }
+                IndexedNode::Decision {
+                    player: players
+                        .iter()
+                        .position(|candidate| candidate == player)
+                        .expect("every decision player owns an information set"),
+                    set: set_index[set_id],
+                    children,
+                }
+            }
+        };
+        nodes.push(indexed);
+    }
+    Ok(IndexedTree {
+        root: index_of[&source.game.root],
+        nodes,
+    })
+}
+
+struct IndexedWalk<'a> {
+    tree: &'a IndexedTree,
+    updating: usize,
+    strategy: &'a [Vec<f64>],
+    delta: &'a mut [Vec<f64>],
+    strategy_sum: &'a mut [Vec<f64>],
+}
+
+fn walk_indexed(
+    tree: &IndexedTree,
+    updating: usize,
+    strategy: &BTreeMap<InformationSetId, Vec<f64>>,
+    delta: &mut BTreeMap<InformationSetId, Vec<f64>>,
+    strategy_sum: &mut BTreeMap<InformationSetId, Vec<f64>>,
+) {
+    let strategy_rows = strategy.values().cloned().collect::<Vec<_>>();
+    let mut delta_rows = delta.values().cloned().collect::<Vec<_>>();
+    let mut sum_rows = strategy_sum.values().cloned().collect::<Vec<_>>();
+    IndexedWalk {
+        tree,
+        updating,
+        strategy: &strategy_rows,
+        delta: &mut delta_rows,
+        strategy_sum: &mut sum_rows,
+    }
+    .visit(tree.root, 1.0, 1.0);
+    for (row, accumulated) in delta.values_mut().zip(delta_rows) {
+        *row = accumulated;
+    }
+    for (row, accumulated) in strategy_sum.values_mut().zip(sum_rows) {
+        *row = accumulated;
+    }
+}
+
+impl IndexedWalk<'_> {
+    fn visit(&mut self, node_index: usize, player_reach: f64, counterfactual: f64) -> f64 {
+        match &self.tree.nodes[node_index] {
+            IndexedNode::Terminal(payoffs) => payoffs[self.updating],
+            IndexedNode::Chance(edges) => {
+                let edges = edges.clone();
+                let mut value = 0.0;
+                for (probability, target) in edges {
+                    value += probability
+                        * self.visit(target, player_reach, counterfactual * probability);
+                }
+                value
+            }
+            IndexedNode::Decision {
+                player,
+                set,
+                children,
+            } => {
+                let updating_player = *player == self.updating;
+                let set = *set;
+                let children = children.clone();
+                let probabilities = self.strategy[set].clone();
+                let mut action_values = Vec::with_capacity(children.len());
+                let mut value = 0.0;
+                for (index, target) in children.into_iter().enumerate() {
                     let probability = probabilities[index];
                     let next_player_reach = if updating_player {
                         player_reach * probability
@@ -401,25 +479,21 @@ impl Traversal<'_> {
                     } else {
                         counterfactual * probability
                     };
-                    let action_value =
-                        self.visit(&target, next_player_reach, next_counterfactual)?;
+                    let action_value = self.visit(target, next_player_reach, next_counterfactual);
                     value += probability * action_value;
                     action_values.push(action_value);
                 }
-                if player_for_update == *self.updating {
-                    let regret = self.delta.get_mut(&set_id).expect("delta covers every set");
+                if updating_player {
+                    let regret = &mut self.delta[set];
                     for (index, action_value) in action_values.iter().enumerate() {
                         regret[index] += counterfactual * (action_value - value);
                     }
-                    let sum = self
-                        .strategy_sum
-                        .get_mut(&set_id)
-                        .expect("strategy sum covers every set");
+                    let sum = &mut self.strategy_sum[set];
                     for (index, probability) in probabilities.iter().enumerate() {
                         sum[index] += player_reach * probability;
                     }
                 }
-                Ok(value)
+                value
             }
         }
     }

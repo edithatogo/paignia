@@ -56,8 +56,10 @@ exploitability check for this game.
 
 ## What this slice does not establish
 
-- Leduc poker is not constructed, solved, or compared with a published value.
-  S04's Leduc obligation remains open.
+- The Leduc comparison uses the two-player OpenSpiel rule set and the published
+  first-player value `-0.085606`. Four thousand CFR+ iterations must land within
+  `0.02`, with Nash conv below `0.05`. That is not an exact equilibrium, a
+  vanilla-CFR curve, or a claim that S04 is closed.
 - No iteration curve is claimed to match OpenSpiel, Gambit, or any other
   implementation. Those programs use their own averaging and update schedules.
 - This is not an equilibrium catalogue, a welfare claim, or a production

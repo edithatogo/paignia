@@ -481,7 +481,10 @@ oracle and result contract. Exclusion is not scientific completion.
   evaluated by a separate deal enumerator. At 12,000 iterations both variants
   stay within `5e-3` of that constant, with independent exploitability below
   `0.02`, and the library Nash conv matches that enumerator within `1e-8`.
-  Leduc is explicitly not admitted. This does not close S04, T17.07, or T17.17.
+  Leduc uses the two-player OpenSpiel rules: 936 information states, an
+  independent 120-deal check-call value, and CFR+ after 4,000 iterations within
+  `0.02` of the published first-player value `-0.085606`, with Nash conv below
+  `0.05`. This does not close S04, T17.07, or T17.17.
 
 ## Phase C — optional execution and representation gaps
 
