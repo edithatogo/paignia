@@ -172,6 +172,29 @@ fn a_sixteenth_grid_misses_the_exact_optimistic_commitment() {
     }
 }
 
+#[test]
+fn the_pessimistic_supremum_is_approached_at_two_thirds_and_not_attained() {
+    let interior = game(1, 4, 1, 2);
+    let bound =
+        inspection_commitment_bound(interior, ratio(1, 1), InspectionFollowerTie::Pessimistic)
+            .expect("supremum");
+    assert!(!bound.attained);
+    assert_eq!(bound.value, ratio(-1, 3));
+    let (evade, payoffs) = inspection_commitment_at(
+        interior,
+        ratio(2, 3),
+        ratio(1, 1),
+        InspectionFollowerTie::Pessimistic,
+    )
+    .expect("approach");
+    assert_eq!(evade, ratio(0, 1));
+    assert_eq!(payoffs.leader, ratio(-2, 3));
+    assert_eq!(
+        closed_form(1, 4, 1, 2, ratio(2, 3), ratio(0, 1)),
+        (payoffs.leader, payoffs.follower)
+    );
+}
+
 fn check_certificate(row: Certificate) {
     let (cost, harm, budget, optimistic, value, attained, witness) = row;
     let tie = if optimistic {
