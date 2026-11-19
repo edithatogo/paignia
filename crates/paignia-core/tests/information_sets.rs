@@ -219,6 +219,30 @@ fn consistent_dag_merge() -> (GameSpecification, Declaration) {
     (source, declaration)
 }
 
+fn opponent_merge(later_own_decision: bool) -> (GameSpecification, Declaration) {
+    let mut nodes = vec![
+        ("root", decision("alice", &[("a", "d1"), ("b", "d2")])),
+        ("d1", decision("bob", &[("go", "merged")])),
+        ("d2", decision("bob", &[("go", "merged")])),
+    ];
+    if later_own_decision {
+        nodes.push(("merged", decision("bob", &[("finish", "later")])));
+        nodes.push(("later", decision("alice", &[("end", "terminal")])));
+    } else {
+        nodes.push(("merged", decision("bob", &[("finish", "terminal")])));
+    }
+    nodes.push(("terminal", terminal("alice", 1.0)));
+    let mut sets = vec![
+        set("first", "alice", &["root"]),
+        set("bob-unobserved", "bob", &["d1", "d2"]),
+        set("bob-merged", "bob", &["merged"]),
+    ];
+    if later_own_decision {
+        sets.push(set("alice-later", "alice", &["later"]));
+    }
+    (specification("root", nodes), declared(sets))
+}
+
 #[test]
 fn accepts_perfect_information_singletons() {
     let (source, declaration) = perfect_information();
@@ -334,6 +358,30 @@ fn accepts_merge_after_different_opponent_actions() {
     assert_eq!(
         graph.assignments[&node("merged")],
         InformationSetId("urn:paignia:test:set:alice-later".into())
+    );
+}
+
+#[test]
+fn accepts_opponent_merge_that_only_affects_nonacting_history() {
+    let (source, declaration) = opponent_merge(false);
+    let graph = accept(&source, &declaration);
+    assert_eq!(
+        graph.assignments[&node("merged")],
+        InformationSetId("urn:paignia:test:set:bob-merged".into())
+    );
+}
+
+#[test]
+fn rejects_later_own_decision_after_ambiguous_opponent_merge() {
+    let (source, declaration) = opponent_merge(true);
+    let error = reject(&source, &declaration);
+
+    assert_eq!(
+        error,
+        Error::AmbiguousRecall {
+            node: node("later"),
+            player: player("alice"),
+        }
     );
 }
 

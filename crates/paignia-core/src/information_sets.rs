@@ -45,6 +45,10 @@ pub struct Set {
 }
 
 /// Admitted information-set graph with an explicit node-to-set assignment.
+///
+/// The records are ordinary public data. Public mutation or manual construction
+/// is not a new source or membership validation; use [`build`] for a checked
+/// graph.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Graph {
     pub schema_version: String,
@@ -150,9 +154,6 @@ impl Error {
         match self {
             Self::UnsupportedSchemaVersion { .. } => "schema_version".into(),
             Self::UnsupportedSemanticProfile { .. } => "semantic_profile".into(),
-            Self::InvalidSource(ProfileValidationError::UnsupportedSemanticProfile { .. }) => {
-                "semantic_profile".into()
-            }
             Self::InvalidSource(error) => format!("source.{}", error.path()),
             Self::EmptyIdentifier { path } => (*path).into(),
             Self::DuplicateInformationSet(set) => format!("sets.{}.id", set.0),
@@ -195,9 +196,10 @@ enum Recall {
 /// nonempty member list and requires identical ordered legal actions across its
 /// members. Perfect recall is required: all members of a set must share the
 /// same preceding sequence of that player's own information sets and actions,
-/// and every decision reached through shared paths must have a unique such
-/// history. Members are returned in canonical node order; declared action order
-/// is preserved.
+/// and every one of that player's decision nodes reached through shared paths
+/// must have a unique such history. Merges at other players' decisions do not
+/// create ambiguity unless the affected player acts again below them. Members
+/// are returned in canonical node order; declared action order is preserved.
 ///
 /// # Errors
 ///
@@ -359,9 +361,12 @@ fn ensure_complete_coverage(
 fn ensure_shared_actions(source: &GameSpecification, sets: &AdmittedSets) -> Result<(), Error> {
     for (set_id, set) in sets {
         let reference = &set.members[0];
-        let expected = legal_actions(source, reference);
         for member in &set.members[1..] {
-            if legal_actions(source, member) != expected {
+            let matches = action_edges(source, member)
+                .iter()
+                .map(|edge| &edge.action)
+                .eq(set.legal_actions.iter());
+            if !matches {
                 return Err(Error::ActionMismatch {
                     set: set_id.clone(),
                     node: member.clone(),
