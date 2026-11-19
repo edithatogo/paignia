@@ -595,7 +595,7 @@ oracle and result contract. Exclusion is not scientific completion.
   incompatible versions or unsupported mutable policy state before resuming;
   matching a solver's diagnostic trace alone does not establish replay.
 
-### [ ] T17.17 — validate an ECS-independent information-set representation
+### [~] T17.17 — validate an ECS-independent information-set representation
 
 - Behavior: validate the declared finite information-set graph without importing
   Kairos storage or treating ontology labels as implemented semantics.
