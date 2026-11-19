@@ -1,0 +1,529 @@
+//! CFR/CFR+ on admitted information-set graphs, checked against Kuhn's value.
+
+use paignia_core::{
+    build_information_set_graph, ActionEdge, ActionId, ChanceEdge, Game, GameSpecification,
+    InformationSetDeclaration, InformationSetDefinition, InformationSetError, InformationSetId,
+    Node, NodeId, PlayerId, INFORMATION_SET_PROFILE_V1, INFORMATION_SET_SCHEMA_VERSION,
+};
+use paignia_solve::{
+    cfr_nash_conv, train_counterfactual_regret, CfrConfig, CfrError, CfrStrategy, CfrVariant,
+};
+
+const KUHN_VALUE: f64 = -1.0 / 18.0;
+const KUHN_ITERATIONS: u32 = 12_000;
+
+#[test]
+fn rejects_an_empty_iteration_budget_before_training() {
+    let (source, declaration) = one_action_chance_game();
+    let error = train_counterfactual_regret(
+        &source,
+        &declaration,
+        &CfrConfig {
+            variant: CfrVariant::Cfr,
+            iterations: 0,
+        },
+    )
+    .expect_err("zero iterations are outside the budget");
+
+    assert_eq!(error, CfrError::IterationBudget { iterations: 0 });
+}
+
+#[test]
+fn rejects_imperfect_recall_before_any_strategy_is_returned() {
+    let (source, declaration) = imperfect_recall();
+    let error = train_counterfactual_regret(
+        &source,
+        &declaration,
+        &CfrConfig {
+            variant: CfrVariant::Cfr,
+            iterations: 1,
+        },
+    )
+    .expect_err("imperfect recall is not a trainable profile");
+
+    assert!(matches!(
+        error,
+        CfrError::InformationSet(InformationSetError::ImperfectRecall { .. })
+    ));
+}
+
+#[test]
+fn chance_weights_a_one_action_game_exactly() {
+    let (source, declaration) = one_action_chance_game();
+    let trained = train_counterfactual_regret(
+        &source,
+        &declaration,
+        &CfrConfig {
+            variant: CfrVariant::Cfr,
+            iterations: 1,
+        },
+    )
+    .expect("one legal action trains");
+    let alice = player("alice");
+
+    assert!((trained.root_values[&alice] - 1.0).abs() < 1e-12);
+    for probabilities in trained.average_strategy.probabilities.values() {
+        assert!((probabilities.iter().sum::<f64>() - 1.0).abs() < 1e-12);
+    }
+}
+
+#[test]
+fn learns_the_strictly_better_shared_action() {
+    let (source, declaration) = dominated_chance_game();
+    let trained = train_counterfactual_regret(
+        &source,
+        &declaration,
+        &CfrConfig {
+            variant: CfrVariant::CfrPlus,
+            iterations: 2_000,
+        },
+    )
+    .expect("dominated action trains");
+    let set = InformationSetId("urn:paignia:cfr:set:shared".into());
+    let good = trained.average_strategy.action_order[&set]
+        .iter()
+        .position(|action| action.0.ends_with(":good"))
+        .expect("good action is declared");
+
+    assert!(trained.average_strategy.probabilities[&set][good] > 0.9);
+    assert!(trained.root_values[&player("alice")] > 2.45);
+    assert!(trained.root_values[&player("alice")] <= 2.5 + 1e-9);
+}
+
+#[test]
+fn preserves_declared_action_order() {
+    let (source, declaration) = one_action_chance_game();
+    let trained = train_counterfactual_regret(
+        &source,
+        &declaration,
+        &CfrConfig {
+            variant: CfrVariant::Cfr,
+            iterations: 1,
+        },
+    )
+    .expect("order probe trains");
+    let set = InformationSetId("urn:paignia:cfr:set:low".into());
+
+    assert_eq!(
+        trained.average_strategy.action_order[&set],
+        vec![action("zebra"), action("alpha")]
+    );
+}
+
+#[test]
+fn kuhn_average_value_and_exploitability_match_the_independent_reference() {
+    let fixture = include_str!("../../../fixtures/conformance/cfr-reference-v1.json");
+    assert!(fixture.contains("\"player_one_value\": \"-1/18\""));
+    assert!(fixture.contains("\"status\": \"not_admitted\""));
+
+    let (source, declaration) = kuhn();
+    let graph = build_information_set_graph(&source, &declaration).expect("Kuhn is admissible");
+    for variant in [CfrVariant::Cfr, CfrVariant::CfrPlus] {
+        let trained = train_counterfactual_regret(
+            &source,
+            &declaration,
+            &CfrConfig {
+                variant,
+                iterations: KUHN_ITERATIONS,
+            },
+        )
+        .expect("Kuhn trains");
+        let probabilities = kuhn_probabilities(&trained.average_strategy);
+        let independent_value = kuhn_value(&probabilities);
+        let library_value = trained.root_values[&player("one")];
+        let independent_exploitability = kuhn_exploitability(&probabilities);
+        let library_exploitability =
+            cfr_nash_conv(&source, &graph, &trained.average_strategy).expect("nash conv");
+
+        assert!(
+            (library_value - independent_value).abs() < 1e-9,
+            "{variant:?} library {library_value} independent {independent_value}"
+        );
+        assert!(
+            (independent_value - KUHN_VALUE).abs() < 5e-3,
+            "{variant:?} value {independent_value} target {KUHN_VALUE}"
+        );
+        assert!(
+            independent_exploitability < 2e-2,
+            "{variant:?} exploitability {independent_exploitability}"
+        );
+        assert!(
+            (library_exploitability - independent_exploitability).abs() < 1e-8,
+            "{variant:?} library {library_exploitability} independent {independent_exploitability}"
+        );
+    }
+}
+
+fn node(value: &str) -> NodeId {
+    NodeId(format!("urn:paignia:cfr:node:{value}"))
+}
+
+fn action(value: &str) -> ActionId {
+    ActionId(format!("urn:paignia:cfr:action:{value}"))
+}
+
+fn player(value: &str) -> PlayerId {
+    PlayerId(format!("urn:paignia:cfr:player:{value}"))
+}
+
+fn decision(owner: &str, edges: &[(&str, &str)]) -> Node {
+    Node::Decision {
+        player: player(owner),
+        edges: edges
+            .iter()
+            .map(|(label, target)| ActionEdge {
+                action: action(label),
+                target: node(target),
+            })
+            .collect(),
+    }
+}
+
+fn chance(edges: &[(f64, &str)]) -> Node {
+    Node::Chance {
+        edges: edges
+            .iter()
+            .map(|(probability, target)| ChanceEdge {
+                probability: *probability,
+                target: node(target),
+            })
+            .collect(),
+    }
+}
+
+fn terminal(payoffs: &[(&str, f64)]) -> Node {
+    Node::Terminal {
+        payoffs: payoffs
+            .iter()
+            .map(|(owner, payoff)| (player(owner), *payoff))
+            .collect(),
+    }
+}
+
+fn specification(root: &str, nodes: Vec<(&str, Node)>) -> GameSpecification {
+    GameSpecification {
+        schema_version: "1.0.0".into(),
+        id: "urn:paignia:cfr:specification".into(),
+        game: Game {
+            root: node(root),
+            nodes: nodes
+                .into_iter()
+                .map(|(id, value)| (node(id), value))
+                .collect(),
+        },
+    }
+}
+
+fn declared(sets: Vec<(&str, &str, &[&str])>) -> InformationSetDeclaration {
+    InformationSetDeclaration {
+        schema_version: INFORMATION_SET_SCHEMA_VERSION.into(),
+        semantic_profile: INFORMATION_SET_PROFILE_V1.into(),
+        sets: sets
+            .into_iter()
+            .map(|(id, owner, members)| InformationSetDefinition {
+                id: InformationSetId(format!("urn:paignia:cfr:set:{id}")),
+                player: player(owner),
+                members: members.iter().map(|member| node(member)).collect(),
+            })
+            .collect(),
+    }
+}
+
+fn one_action_chance_game() -> (GameSpecification, InformationSetDeclaration) {
+    let source = specification(
+        "root",
+        vec![
+            ("root", chance(&[(0.25, "low"), (0.75, "high")])),
+            (
+                "low",
+                decision("alice", &[("zebra", "low-pay"), ("alpha", "low-pay")]),
+            ),
+            ("high", decision("alice", &[("take", "high-pay")])),
+            ("low-pay", terminal(&[("alice", 4.0)])),
+            ("high-pay", terminal(&[("alice", 0.0)])),
+        ],
+    );
+    let declaration = declared(vec![
+        ("low", "alice", &["low"]),
+        ("high", "alice", &["high"]),
+    ]);
+    (source, declaration)
+}
+
+fn dominated_chance_game() -> (GameSpecification, InformationSetDeclaration) {
+    let source = specification(
+        "root",
+        vec![
+            ("root", chance(&[(0.25, "low"), (0.75, "high")])),
+            (
+                "low",
+                decision("alice", &[("good", "low-good"), ("bad", "low-bad")]),
+            ),
+            (
+                "high",
+                decision("alice", &[("good", "high-good"), ("bad", "high-bad")]),
+            ),
+            ("low-good", terminal(&[("alice", 10.0)])),
+            ("low-bad", terminal(&[("alice", 0.0)])),
+            ("high-good", terminal(&[("alice", 0.0)])),
+            ("high-bad", terminal(&[("alice", 3.0)])),
+        ],
+    );
+    let declaration = declared(vec![("shared", "alice", &["low", "high"])]);
+    (source, declaration)
+}
+
+fn imperfect_recall() -> (GameSpecification, InformationSetDeclaration) {
+    let source = specification(
+        "root",
+        vec![
+            (
+                "root",
+                decision("alice", &[("a", "after-a"), ("b", "after-b")]),
+            ),
+            ("after-a", decision("alice", &[("x", "a-x"), ("y", "a-y")])),
+            ("after-b", decision("alice", &[("x", "b-x"), ("y", "b-y")])),
+            ("a-x", terminal(&[("alice", 1.0)])),
+            ("a-y", terminal(&[("alice", 2.0)])),
+            ("b-x", terminal(&[("alice", 3.0)])),
+            ("b-y", terminal(&[("alice", 4.0)])),
+        ],
+    );
+    let declaration = declared(vec![
+        ("first", "alice", &["root"]),
+        ("forgotten", "alice", &["after-a", "after-b"]),
+    ]);
+    (source, declaration)
+}
+
+fn kuhn() -> (GameSpecification, InformationSetDeclaration) {
+    let cards = ["J", "Q", "K"];
+    let mut deals = Vec::new();
+    for first in cards {
+        for second in cards {
+            if first != second {
+                deals.push((first, second));
+            }
+        }
+    }
+    let deal_labels: Vec<(String, String, String)> = deals
+        .iter()
+        .map(|(first, second)| {
+            (
+                (*first).to_owned(),
+                (*second).to_owned(),
+                format!("{first}{second}"),
+            )
+        })
+        .collect();
+    let chance_edges: Vec<(f64, String)> = deal_labels
+        .iter()
+        .map(|(_, _, label)| (1.0 / 6.0, format!("{label}-p1")))
+        .collect();
+    let chance_refs: Vec<(f64, &str)> = chance_edges
+        .iter()
+        .map(|(probability, label)| (*probability, label.as_str()))
+        .collect();
+    let mut owned_nodes = vec![("root".to_owned(), chance(&chance_refs))];
+    for (first, second, label) in &deal_labels {
+        owned_nodes.extend(kuhn_deal_nodes(first, second, label));
+    }
+    let source = GameSpecification {
+        schema_version: "1.0.0".into(),
+        id: "urn:paignia:cfr:kuhn".into(),
+        game: Game {
+            root: node("root"),
+            nodes: owned_nodes
+                .into_iter()
+                .map(|(id, value)| (node(&id), value))
+                .collect(),
+        },
+    };
+    let sets = cards
+        .into_iter()
+        .flat_map(|card| kuhn_card_sets(&deal_labels, card))
+        .collect();
+    let declaration = InformationSetDeclaration {
+        schema_version: INFORMATION_SET_SCHEMA_VERSION.into(),
+        semantic_profile: INFORMATION_SET_PROFILE_V1.into(),
+        sets,
+    };
+    (source, declaration)
+}
+
+fn kuhn_deal_nodes(first: &str, second: &str, label: &str) -> Vec<(String, Node)> {
+    let stake_one = showdown(first, second, 1.0);
+    let stake_two = showdown(first, second, 2.0);
+    let p2_check = format!("{label}-p2-check");
+    let p2_bet = format!("{label}-p2-bet");
+    let checked = format!("{label}-cc");
+    let face = format!("{label}-p1-face");
+    let folded = format!("{label}-bf");
+    let called = format!("{label}-bc");
+    let check_fold = format!("{label}-cbf");
+    let check_call = format!("{label}-cbc");
+    vec![
+        (
+            format!("{label}-p1"),
+            choice("one", &[("check", &p2_check), ("bet", &p2_bet)]),
+        ),
+        (
+            format!("{label}-p2-check"),
+            choice("two", &[("check", &checked), ("bet", &face)]),
+        ),
+        (
+            format!("{label}-p2-bet"),
+            choice("two", &[("fold", &folded), ("call", &called)]),
+        ),
+        (
+            format!("{label}-p1-face"),
+            choice("one", &[("fold", &check_fold), ("call", &check_call)]),
+        ),
+        (format!("{label}-cc"), terminal_pair(stake_one)),
+        (format!("{label}-bc"), terminal_pair(stake_two)),
+        (format!("{label}-cbc"), terminal_pair(stake_two)),
+        (format!("{label}-bf"), terminal_pair(1.0)),
+        (format!("{label}-cbf"), terminal_pair(-1.0)),
+    ]
+}
+
+fn choice(owner: &str, edges: &[(&str, &str)]) -> Node {
+    Node::Decision {
+        player: player(owner),
+        edges: edges
+            .iter()
+            .map(|(label, target)| ActionEdge {
+                action: action(label),
+                target: node(target),
+            })
+            .collect(),
+    }
+}
+
+fn kuhn_card_sets(deals: &[(String, String, String)], card: &str) -> Vec<InformationSetDefinition> {
+    let members = |suffix: &str, by_first: bool| {
+        deals
+            .iter()
+            .filter(|(first, second, _)| {
+                if by_first {
+                    first == card
+                } else {
+                    second == card
+                }
+            })
+            .map(|(_, _, label)| format!("{label}-{suffix}"))
+            .collect::<Vec<_>>()
+    };
+    vec![
+        set_owned(&format!("p1-{card}"), "one", &members("p1", true)),
+        set_owned(&format!("p1-{card}-face"), "one", &members("p1-face", true)),
+        set_owned(
+            &format!("p2-{card}-check"),
+            "two",
+            &members("p2-check", false),
+        ),
+        set_owned(&format!("p2-{card}-bet"), "two", &members("p2-bet", false)),
+    ]
+}
+
+fn set_owned(id: &str, owner: &str, members: &[String]) -> InformationSetDefinition {
+    InformationSetDefinition {
+        id: InformationSetId(format!("urn:paignia:cfr:set:{id}")),
+        player: player(owner),
+        members: members.iter().map(|member| node(member)).collect(),
+    }
+}
+
+fn terminal_pair(player_one: f64) -> Node {
+    terminal(&[("one", player_one), ("two", -player_one)])
+}
+
+fn rank(card: &str) -> u8 {
+    match card {
+        "J" => 0,
+        "Q" => 1,
+        "K" => 2,
+        _ => panic!("unknown card"),
+    }
+}
+
+fn showdown(first: &str, second: &str, stake: f64) -> f64 {
+    if rank(first) > rank(second) {
+        stake
+    } else {
+        -stake
+    }
+}
+
+#[derive(Clone, Copy)]
+struct KuhnProbabilities {
+    p1_bet: [f64; 3],
+    p1_call: [f64; 3],
+    p2_bet: [f64; 3],
+    p2_call: [f64; 3],
+}
+
+fn kuhn_probabilities(strategy: &CfrStrategy) -> KuhnProbabilities {
+    let mut probabilities = KuhnProbabilities {
+        p1_bet: [0.0; 3],
+        p1_call: [0.0; 3],
+        p2_bet: [0.0; 3],
+        p2_call: [0.0; 3],
+    };
+    for card in 0..3 {
+        let name = ["J", "Q", "K"][card];
+        probabilities.p1_bet[card] = probability(strategy, &format!("p1-{name}"), "bet");
+        probabilities.p1_call[card] = probability(strategy, &format!("p1-{name}-face"), "call");
+        probabilities.p2_bet[card] = probability(strategy, &format!("p2-{name}-check"), "bet");
+        probabilities.p2_call[card] = probability(strategy, &format!("p2-{name}-bet"), "call");
+    }
+    probabilities
+}
+
+fn probability(strategy: &CfrStrategy, set: &str, action_name: &str) -> f64 {
+    let id = InformationSetId(format!("urn:paignia:cfr:set:{set}"));
+    let index = strategy.action_order[&id]
+        .iter()
+        .position(|action| action.0.ends_with(&format!(":{action_name}")))
+        .expect("action is present");
+    strategy.probabilities[&id][index]
+}
+
+fn kuhn_value(probabilities: &KuhnProbabilities) -> f64 {
+    let deals = [(0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1)];
+    let mut total = 0.0;
+    for (first, second) in deals {
+        let bet = probabilities.p1_bet[first];
+        let check = 1.0 - bet;
+        let second_call = probabilities.p2_call[second];
+        let second_bet = probabilities.p2_bet[second];
+        let first_call = probabilities.p1_call[first];
+        let show = |stake: f64| if first > second { stake } else { -stake };
+        let after_bet = (1.0 - second_call) * 1.0 + second_call * show(2.0);
+        let after_check = (1.0 - second_bet) * show(1.0)
+            + second_bet * (-(1.0 - first_call) + first_call * show(2.0));
+        total += bet * after_bet + check * after_check;
+    }
+    total / 6.0
+}
+
+fn kuhn_exploitability(probabilities: &KuhnProbabilities) -> f64 {
+    let current = kuhn_value(probabilities);
+    let mut best_for_one = f64::NEG_INFINITY;
+    let mut worst_for_one = f64::INFINITY;
+    for mask in 0..64_u32 {
+        let mut deviating = *probabilities;
+        for card in 0..3 {
+            deviating.p1_bet[card] = f64::from((mask >> card) & 1);
+            deviating.p1_call[card] = f64::from((mask >> (card + 3)) & 1);
+        }
+        best_for_one = best_for_one.max(kuhn_value(&deviating));
+        deviating = *probabilities;
+        for card in 0..3 {
+            deviating.p2_bet[card] = f64::from((mask >> card) & 1);
+            deviating.p2_call[card] = f64::from((mask >> (card + 3)) & 1);
+        }
+        worst_for_one = worst_for_one.min(kuhn_value(&deviating));
+    }
+    (best_for_one - current) + (current - worst_for_one)
+}

@@ -1,0 +1,17 @@
+{
+  "schema": "paignia/cfr-reference/1.0.0",
+  "method_version": "1.0.0",
+  "kuhn": {
+    "citation": "Kuhn, H. W. (1950). A simplified two-person poker. In Kuhn, H. W. and Tucker, A. W. (eds.), Contributions to the Theory of Games, volume 1, pages 97–103. Princeton University Press.",
+    "ante": 1,
+    "bet": 1,
+    "player_one_value": "-1/18",
+    "player_one_value_decimal": -0.05555555555555555,
+    "deals": 6,
+    "notes": "Net chip value for the first player at equilibrium. Showdown pays the current stake to the higher card. A fold loses one chip. This constant is not derived from the Paignia trainer."
+  },
+  "leduc": {
+    "status": "not_admitted",
+    "reason": "No independently reproduced Leduc value or iteration curve is pinned in this slice."
+  }
+}
