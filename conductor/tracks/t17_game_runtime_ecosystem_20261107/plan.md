@@ -615,7 +615,7 @@ oracle and result contract. Exclusion is not scientific completion.
   exact ordered-action agreement, declared-player ownership and a perfect-recall
   check over shared DAG paths are implemented in the four paths above. The
   tests-first commit `535b1ca` executes 33 tests with zero passes; the retained
-  34-test suite and the 266 default / 301 all-feature workspace tests pass on
+  36-test suite and the 266 default / 301 all-feature workspace tests pass on
   Rust 1.75.0 and stable 1.100.0, with formatting, Clippy and rustdoc warnings
   denied, extraction validation, six retained independent review harnesses and
   the extracted-source package smoke passing locally. Artifact qualification is

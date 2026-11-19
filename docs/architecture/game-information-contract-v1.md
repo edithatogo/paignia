@@ -155,11 +155,12 @@ require their own explicit contract and evidence.
 ## Controls and execution receipt
 
 The focused native suite is `crates/paignia-core/tests/information_sets.rs`. Its
-34 tests cover:
+36 tests cover:
 
 - accepted perfect-information singletons, one shared information set, distinct
-  remembered information sets, chance merges, consistent DAG merges and merges
-  after different opponent actions;
+  remembered information sets, chance merges, consistent DAG merges, merges
+  after different opponent actions, and an opponent-only merge that does not
+  reach a later decision of the non-acting player;
 - canonical member ordering, declaration-order invariance, exact source binding
   and owned output isolation;
 - opaque Unicode/IRI identifiers and declared action order;
@@ -171,12 +172,10 @@ The focused native suite is `crates/paignia-core/tests/information_sets.rs`. Its
 - a 5,000-decision iterative-chain case.
 
 The tests-first commit `535b1ca` executes 33 tests with zero passes and 33
-failures from an explicit unimplemented builder; the retained suite now has 34
-tests after the opponent-history merge control. The implemented module passes all
-34 on stable Rust 1.100.0 and declared MSRV 1.75.0 locally. Formatting, workspace
-Clippy with warnings denied, and the 266 default / 301 all-feature workspace
-tests pass on both compilers. Hosted CI remains required before this leaf is
-recorded as accepted.
+failures from an explicit unimplemented builder. The retained suite now has 36
+tests: the opponent-history merge control plus an accepted opponent-only merge
+and a rejected later own decision beneath that merge. Hosted CI and independent
+specialist review remain required before this leaf is recorded as accepted.
 
 ```bash
 cargo test --locked -p paignia-core --test information_sets
