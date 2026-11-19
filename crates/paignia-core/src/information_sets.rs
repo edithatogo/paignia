@@ -477,7 +477,7 @@ fn recall_state(
                     }
                 }
             }
-            Recall::Unset => Recall::Unset,
+            Recall::Unset => unreachable!("parents are processed before their children"),
         };
         state = match (state, contribution) {
             (Recall::Unset, next) => next,

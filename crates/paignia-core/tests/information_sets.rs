@@ -310,6 +310,34 @@ fn accepts_consistent_dag_merge() {
 }
 
 #[test]
+fn accepts_merge_after_different_opponent_actions() {
+    let source = specification(
+        "root",
+        vec![
+            (
+                "root",
+                decision("bob", &[("left", "after-left"), ("right", "after-right")]),
+            ),
+            ("after-left", decision("alice", &[("same", "merged")])),
+            ("after-right", decision("alice", &[("same", "merged")])),
+            ("merged", decision("alice", &[("finish", "terminal")])),
+            ("terminal", terminal("alice", 1.0)),
+        ],
+    );
+    let declaration = declared(vec![
+        set("bob-first", "bob", &["root"]),
+        set("alice-unobserved", "alice", &["after-left", "after-right"]),
+        set("alice-later", "alice", &["merged"]),
+    ]);
+
+    let graph = accept(&source, &declaration);
+    assert_eq!(
+        graph.assignments[&node("merged")],
+        InformationSetId("urn:paignia:test:set:alice-later".into())
+    );
+}
+
+#[test]
 fn accepts_a_game_without_decision_nodes() {
     let source = specification("root", vec![("root", terminal("alice", 0.0))]);
     let graph = accept(&source, &declared(Vec::new()));
@@ -334,30 +362,47 @@ fn member_and_set_order_do_not_change_the_result() {
 #[test]
 fn preserves_opaque_identifiers_and_declared_action_order() {
     let opaque_player = PlayerId("https://example.test/player/üñïçø∂é".into());
+    let opaque_node = NodeId("https://example.test/node/a b?x=1#fragment".into());
     let opaque_set = InformationSetId("https://example.test/set/ ünïcode ".into());
-    let source = specification(
-        "https://example.test/node/a b?x=1#fragment",
-        vec![
-            (
-                "https://example.test/node/a b?x=1#fragment",
-                Node::Decision {
-                    player: opaque_player.clone(),
-                    edges: vec![
-                        ActionEdge {
-                            action: ActionId("urn:action:zeta".into()),
-                            target: node("zeta"),
-                        },
-                        ActionEdge {
-                            action: ActionId("urn:action:alpha".into()),
-                            target: node("alpha"),
-                        },
-                    ],
-                },
-            ),
-            ("zeta", terminal("alice", 1.0)),
-            ("alpha", terminal("alice", 2.0)),
-        ],
-    );
+    let zeta = NodeId("urn:terminal:zeta".into());
+    let alpha = NodeId("urn:terminal:alpha".into());
+    let source = GameSpecification {
+        schema_version: "1.0.0".into(),
+        id: "https://example.test/specification/opaque".into(),
+        game: Game {
+            root: opaque_node.clone(),
+            nodes: BTreeMap::from([
+                (
+                    opaque_node.clone(),
+                    Node::Decision {
+                        player: opaque_player.clone(),
+                        edges: vec![
+                            ActionEdge {
+                                action: ActionId("urn:action:zeta".into()),
+                                target: zeta.clone(),
+                            },
+                            ActionEdge {
+                                action: ActionId("urn:action:alpha".into()),
+                                target: alpha.clone(),
+                            },
+                        ],
+                    },
+                ),
+                (
+                    zeta,
+                    Node::Terminal {
+                        payoffs: BTreeMap::from([(opaque_player.clone(), 1.0)]),
+                    },
+                ),
+                (
+                    alpha,
+                    Node::Terminal {
+                        payoffs: BTreeMap::from([(opaque_player.clone(), 2.0)]),
+                    },
+                ),
+            ]),
+        },
+    };
     let declaration = Declaration {
         schema_version: INFORMATION_SET_SCHEMA_VERSION.into(),
         semantic_profile: INFORMATION_SET_PROFILE_V1.into(),
