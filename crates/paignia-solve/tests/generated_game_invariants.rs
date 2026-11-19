@@ -53,29 +53,48 @@ fn generated_dominance_games_recover_unique_actions_and_expose_false_mixtures() 
         for column_gap in (-4..=4).filter(|gap| *gap != 0) {
             for externality in [-3, 0, 3] {
                 for baseline in [-2, 0, 2] {
-                    let (r, c, e, v) = (
+                    let (row_advantage, column_advantage, opponent_effect, base_payoff) = (
                         f64::from(row_gap),
                         f64::from(column_gap),
                         f64::from(externality),
                         f64::from(baseline),
                     );
-                    let a = vec![vec![v + r, v + e + r], vec![v, v + e]];
-                    let b = vec![vec![v + c, v], vec![v + e + c, v + e]];
-                    let p = if row_gap > 0 { [1.0, 0.0] } else { [0.0, 1.0] };
-                    let q = if column_gap > 0 {
+                    let row_payoffs = vec![
+                        vec![
+                            base_payoff + row_advantage,
+                            base_payoff + opponent_effect + row_advantage,
+                        ],
+                        vec![base_payoff, base_payoff + opponent_effect],
+                    ];
+                    let column_payoffs = vec![
+                        vec![base_payoff + column_advantage, base_payoff],
+                        vec![
+                            base_payoff + opponent_effect + column_advantage,
+                            base_payoff + opponent_effect,
+                        ],
+                    ];
+                    let row_strategy = if row_gap > 0 { [1.0, 0.0] } else { [0.0, 1.0] };
+                    let column_strategy = if column_gap > 0 {
                         [1.0, 0.0]
                     } else {
                         [0.0, 1.0]
                     };
                     witness(
-                        &unique_candidate(&a, &b),
-                        p,
-                        q,
-                        [v + r.max(0.0) + q[1] * e, v + c.max(0.0) + p[1] * e],
+                        &unique_candidate(&row_payoffs, &column_payoffs),
+                        row_strategy,
+                        column_strategy,
+                        [
+                            base_payoff
+                                + row_advantage.max(0.0)
+                                + column_strategy[1] * opponent_effect,
+                            base_payoff
+                                + column_advantage.max(0.0)
+                                + row_strategy[1] * opponent_effect,
+                        ],
                     );
                     let false_mixture = evaluate_mixed_nash_candidate(
-                        &a,
-                        &b,
+                        &row_payoffs,
+                        &column_payoffs,
                         &[0.5, 0.5],
                         &[0.5, 0.5],
                         MixedNashConfig::default(),
@@ -84,11 +103,11 @@ fn generated_dominance_games_recover_unique_actions_and_expose_false_mixtures() 
                     assert!(!false_mixture.diagnostics.within_tolerance);
                     near(
                         false_mixture.diagnostics.best_response_gains[0],
-                        r.abs() / 2.0,
+                        row_advantage.abs() / 2.0,
                     );
                     near(
                         false_mixture.diagnostics.best_response_gains[1],
-                        c.abs() / 2.0,
+                        column_advantage.abs() / 2.0,
                     );
                     cases += 1;
                 }
