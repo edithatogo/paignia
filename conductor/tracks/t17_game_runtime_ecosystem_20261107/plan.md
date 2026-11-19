@@ -602,15 +602,26 @@ oracle and result contract. Exclusion is not scientific completion.
 - Depends on: T17.01 and the UOGTO executable-profile contract.
 - Execution: specialist, extensive-game representation.
 - Files (4): `crates/paignia-core/src/lib.rs`,
-  `crates/paignia-core/src/information_sets.rs` (future),
-  `crates/paignia-core/tests/information_sets.rs` (future),
-  `docs/architecture/game-information-contract-v1.md` (future).
+  `crates/paignia-core/src/information_sets.rs`,
+  `crates/paignia-core/tests/information_sets.rs`,
+  `docs/architecture/game-information-contract-v1.md`.
 - Check: `cargo test --locked -p paignia-core --test information_sets`
-  (future target). Check player/namespace ownership, consistent legal actions
+  (native target). Check player/namespace ownership, consistent legal actions
   within each information set and the declared recall/observation rules. Reject
-  unsupported imperfect recall and invalid memberships. The current `Game` has
-  no information-set representation; retain its bounded perfect-information
-  profile while this extension is pending. CFR acceptance follows in T17.07.
+  unsupported imperfect recall and invalid memberships. The base `Game` retains
+  its bounded perfect-information profile; this contract adds a separate declared
+  partition and does not change `Game` semantics. CFR acceptance follows in T17.07.
+- Implementation evidence — 20 November 2026: complete-partition admission,
+  exact ordered-action agreement, declared-player ownership and a perfect-recall
+  check over shared DAG paths are implemented in the four paths above. The
+  tests-first commit `535b1ca` executes 33 tests with zero passes; the retained
+  34-test suite and the 266 default / 301 all-feature workspace tests pass on
+  Rust 1.75.0 and stable 1.100.0, with formatting, Clippy and rustdoc warnings
+  denied, extraction validation, six retained independent review harnesses and
+  the extracted-source package smoke passing locally. Artifact qualification is
+  unavailable on the macOS host because `bubblewrap` is absent. Independent
+  specialist review and hosted Linux CI remain required before this leaf moves
+  to `[x]`; no CFR/S04, native-lifecycle or ontology claim is made here.
 
 ## Phase D — real application consumers
 
