@@ -2,6 +2,7 @@
 
 #[cfg(feature = "correlated-equilibrium")]
 mod correlated_equilibrium;
+mod leader_follower;
 mod mixed_nash;
 mod replicator;
 mod result;
@@ -24,6 +25,16 @@ pub use correlated_equilibrium::{
     MAX_ACTIONS as MAX_CORRELATED_EQUILIBRIUM_ACTIONS,
     MAX_ITERATIONS as MAX_CORRELATED_EQUILIBRIUM_ITERATIONS,
     VERSION as CORRELATED_EQUILIBRIUM_VERSION,
+};
+
+pub use leader_follower::{
+    commitment_at as inspection_commitment_at, commitment_bound as inspection_commitment_bound,
+    deviation_gains as inspection_deviation_gains, expected_payoffs as inspection_expected_payoffs,
+    simultaneous_nash as inspection_simultaneous_nash, Commitment as InspectionCommitment,
+    Error as InspectionError, FollowerTie as InspectionFollowerTie, Gains as InspectionGains,
+    NashWitness as InspectionNash, Parameters as InspectionParameters,
+    Payoffs as InspectionPayoffs, Ratio as InspectionRatio,
+    VERSION as INSPECTION_COMMITMENT_VERSION,
 };
 
 pub use mixed_nash::{
