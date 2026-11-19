@@ -334,7 +334,6 @@ fn member_and_set_order_do_not_change_the_result() {
 #[test]
 fn preserves_opaque_identifiers_and_declared_action_order() {
     let opaque_player = PlayerId("https://example.test/player/üñïçø∂é".into());
-    let opaque_node = NodeId("https://example.test/node/a b?x=1#fragment".into());
     let opaque_set = InformationSetId("https://example.test/set/ ünïcode ".into());
     let source = specification(
         "https://example.test/node/a b?x=1#fragment",
