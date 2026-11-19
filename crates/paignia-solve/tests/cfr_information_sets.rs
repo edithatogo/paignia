@@ -157,6 +157,53 @@ fn kuhn_average_value_and_exploitability_match_the_independent_reference() {
     }
 }
 
+#[test]
+fn kuhn_error_and_exploitability_shrink_across_iteration_counts() {
+    let fixture = include_str!("../../../fixtures/conformance/cfr-reference-v1.json");
+    assert!(fixture.contains("\"iteration_counts\": [100, 1000, 12000]"));
+
+    let (source, declaration) = kuhn();
+    let graph = build_information_set_graph(&source, &declaration).expect("Kuhn is admissible");
+    for variant in [CfrVariant::Cfr, CfrVariant::CfrPlus] {
+        let mut observed = Vec::new();
+        for iterations in [100_u32, 1_000, 12_000] {
+            let trained = train_counterfactual_regret(
+                &source,
+                &declaration,
+                &CfrConfig {
+                    variant,
+                    iterations,
+                },
+            )
+            .expect("Kuhn trains at this budget");
+            let probabilities = kuhn_probabilities(&trained.average_strategy);
+            let independent_value = kuhn_value(&probabilities);
+            let library_value = trained.root_values[&player("one")];
+            let independent_exploitability = kuhn_exploitability(&probabilities);
+            let library_exploitability =
+                cfr_nash_conv(&source, &graph, &trained.average_strategy).expect("nash conv");
+            assert!(
+                (library_value - independent_value).abs() < 1e-9,
+                "{variant:?} {iterations} library {library_value} independent {independent_value}"
+            );
+            assert!(
+                (library_exploitability - independent_exploitability).abs() < 1e-8,
+                "{variant:?} {iterations} library {library_exploitability} independent {independent_exploitability}"
+            );
+            let value_error = (independent_value - KUHN_VALUE).abs();
+            assert!(
+                value_error < 5e-3,
+                "{variant:?} {iterations} value error {value_error}"
+            );
+            observed.push(independent_exploitability);
+        }
+        assert!(
+            observed[1] < observed[0] && observed[2] < observed[1],
+            "{variant:?} exploitability {observed:?} does not shrink across 100, 1000, and 12000"
+        );
+    }
+}
+
 fn node(value: &str) -> NodeId {
     NodeId(format!("urn:paignia:cfr:node:{value}"))
 }

@@ -54,6 +54,11 @@ The same test enumerates the 64 pure strategies of each player against the
 other player's mixed average strategy. That enumeration is the independent
 exploitability check for this game.
 
+A second Kuhn test repeats that pair of checks at 100, 1,000, and 12,000
+iterations for both variants. Exploitability shrinks at each step. Absolute
+error against `-1/18` stays under `5e-3` at every budget; that error is not
+itself monotone. These budgets are not an OpenSpiel or Gambit iteration curve.
+
 ## What this slice does not establish
 
 - The Leduc comparison uses the two-player OpenSpiel rule set and the published
@@ -62,6 +67,8 @@ exploitability check for this game.
   vanilla-CFR curve, or a claim that S04 is closed.
 - No iteration curve is claimed to match OpenSpiel, Gambit, or any other
   implementation. Those programs use their own averaging and update schedules.
+  The Kuhn budgets above only show this trainer's exploitability shrinking
+  under its own independent enumerator.
 - This is not an equilibrium catalogue, a welfare claim, or a production
   tolerance. Running more iterations is not automatic acceptance.
 - Kairos storage, ontology labels, live observations, and stream isolation are
