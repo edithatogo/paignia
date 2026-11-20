@@ -11,7 +11,7 @@ checksum = "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53"
 [[package]]
 name = "kairo-ecs-core"
 version = "0.0.0"
-source = "git+https://github.com/edithatogo/kairos?rev=bac331fca95420a94db240c02ae66c1991b85da7#bac331fca95420a94db240c02ae66c1991b85da7"
+source = "git+https://github.com/edithatogo/kairos?rev=beab75d32cf1e141eef9c0fc6ee17ec7d0a9e3ea#beab75d32cf1e141eef9c0fc6ee17ec7d0a9e3ea"
 dependencies = [
  "kairo-ecs-types",
 ]
@@ -19,7 +19,7 @@ dependencies = [
 [[package]]
 name = "kairo-ecs-rng"
 version = "0.0.0"
-source = "git+https://github.com/edithatogo/kairos?rev=bac331fca95420a94db240c02ae66c1991b85da7#bac331fca95420a94db240c02ae66c1991b85da7"
+source = "git+https://github.com/edithatogo/kairos?rev=beab75d32cf1e141eef9c0fc6ee17ec7d0a9e3ea#beab75d32cf1e141eef9c0fc6ee17ec7d0a9e3ea"
 dependencies = [
  "kairo-ecs-types",
  "rand",
@@ -32,7 +32,7 @@ dependencies = [
 [[package]]
 name = "kairo-ecs-state"
 version = "0.0.0"
-source = "git+https://github.com/edithatogo/kairos?rev=bac331fca95420a94db240c02ae66c1991b85da7#bac331fca95420a94db240c02ae66c1991b85da7"
+source = "git+https://github.com/edithatogo/kairos?rev=beab75d32cf1e141eef9c0fc6ee17ec7d0a9e3ea#beab75d32cf1e141eef9c0fc6ee17ec7d0a9e3ea"
 dependencies = [
  "kairo-ecs-core",
  "kairo-ecs-types",
@@ -41,7 +41,7 @@ dependencies = [
 [[package]]
 name = "kairo-ecs-types"
 version = "0.0.0"
-source = "git+https://github.com/edithatogo/kairos?rev=bac331fca95420a94db240c02ae66c1991b85da7#bac331fca95420a94db240c02ae66c1991b85da7"
+source = "git+https://github.com/edithatogo/kairos?rev=beab75d32cf1e141eef9c0fc6ee17ec7d0a9e3ea#beab75d32cf1e141eef9c0fc6ee17ec7d0a9e3ea"
 
 [[package]]
 name = "libm"
