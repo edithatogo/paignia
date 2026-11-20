@@ -66,6 +66,15 @@ test uses inspection probability `1/6` and evasion probability `1/4`, which lies
 inside the projected box and has a profitable deviation at the low cost, the
 equal-cost boundary, and the high cost.
 
+## Two-parameter rectangle
+
+`inspection_nash_rectangle` varies two distinct parameters over a closed
+rectangle. All four corners must lie in the same strict regime. In the interior
+regime and in the pure-skip regime, each Nash coordinate is monotone, so the
+span of the corners is the image and the endpoint gap is zero. A rectangle that
+mixes those regimes, or that repeats one parameter, is rejected. Equal cost and
+harm at a corner still has no unique witness.
+
 ## Imperfect detection
 
 `inspection_nash_with_detection` admits a detection probability in `(0, 1]`.
