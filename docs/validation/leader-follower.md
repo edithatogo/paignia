@@ -77,6 +77,13 @@ segment of best responses returns `LeaderIndifferent`.
 endpoints stay in the same strict regime. A change of regime is rejected rather
 than filled in.
 
+`inspection_commitment_bound_with_detection` uses the same detection probability.
+The follower's indifference point is `g / (d (g + f))`. Perfect detection
+reproduces the original commitment bound. At detection `1/2` and a full budget,
+the optimistic value `-2/3` is attained at inspection probability `2/3`, while
+the pessimistic value `-2/3` is a supremum. A budget of `1/2` stays on the
+evasion side and attains `-7/2`.
+
 ## What this slice does not establish
 
 - This is not a general Stackelberg algorithm, a multi-channel model, or an

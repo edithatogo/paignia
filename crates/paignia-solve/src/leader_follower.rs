@@ -544,6 +544,22 @@ pub fn commitment_at(
     budget: Ratio,
     tie: FollowerTie,
 ) -> Result<(Ratio, Payoffs), Error> {
+    commitment_at_with_detection(game, Ratio::one(), inspect, budget, tie)
+}
+
+/// Commitment response when detection may be imperfect.
+///
+/// # Errors
+///
+/// Returns [`Error::DetectionOutOfRange`], [`Error::ProbabilityOutOfRange`], or
+/// [`Error::BudgetExceeded`].
+pub fn commitment_at_with_detection(
+    game: Parameters,
+    detection: Ratio,
+    inspect: Ratio,
+    budget: Ratio,
+    tie: FollowerTie,
+) -> Result<(Ratio, Payoffs), Error> {
     require_probability(budget)?;
     require_probability(inspect)?;
     if inspect > budget {
@@ -551,9 +567,12 @@ pub fn commitment_at(
     }
     let comply = (
         Ratio::zero(),
-        expected_payoffs(game, inspect, Ratio::zero())?,
+        expected_payoffs_with_detection(game, detection, inspect, Ratio::zero())?,
     );
-    let evade = (Ratio::one(), expected_payoffs(game, inspect, Ratio::one())?);
+    let evade = (
+        Ratio::one(),
+        expected_payoffs_with_detection(game, detection, inspect, Ratio::one())?,
+    );
     let mut options = Vec::with_capacity(2);
     match comply.1.follower.cmp(&evade.1.follower) {
         Ordering::Greater => options.push(comply),
@@ -584,8 +603,26 @@ pub fn commitment_bound(
     budget: Ratio,
     tie: FollowerTie,
 ) -> Result<Commitment, Error> {
+    commitment_bound_with_detection(game, Ratio::one(), budget, tie)
+}
+
+/// Commitment bound for a detection probability in `(0, 1]`.
+///
+/// The follower's indifference point is `g / (detection * (g + f))`. When that
+/// point lies above 1, evasion is the unique response on the whole budget and
+/// the bound is an endpoint. Perfect detection matches [`commitment_bound`].
+///
+/// # Errors
+///
+/// Returns [`Error::DetectionOutOfRange`] or [`Error::ProbabilityOutOfRange`].
+pub fn commitment_bound_with_detection(
+    game: Parameters,
+    detection: Ratio,
+    budget: Ratio,
+    tie: FollowerTie,
+) -> Result<Commitment, Error> {
     require_probability(budget)?;
-    let threshold = threshold(game)?;
+    let threshold = detection_threshold(game, detection)?;
     let mut points = vec![Ratio::zero(), budget];
     if threshold <= budget {
         points.push(threshold);
@@ -595,7 +632,7 @@ pub fn commitment_bound(
     let attained = points
         .into_iter()
         .map(|inspect| {
-            commitment_at(game, inspect, budget, tie)
+            commitment_at_with_detection(game, detection, inspect, budget, tie)
                 .map(|(evade, payoffs)| (inspect, evade, payoffs))
         })
         .collect::<Result<Vec<_>, _>>()?;
@@ -604,10 +641,14 @@ pub fn commitment_bound(
         .map(|(_, _, payoffs)| payoffs.leader)
         .collect();
     if threshold <= budget {
-        values.push(expected_payoffs(game, threshold, Ratio::one())?.leader);
+        values.push(
+            expected_payoffs_with_detection(game, detection, threshold, Ratio::one())?.leader,
+        );
     }
     if threshold < budget {
-        values.push(expected_payoffs(game, threshold, Ratio::zero())?.leader);
+        values.push(
+            expected_payoffs_with_detection(game, detection, threshold, Ratio::zero())?.leader,
+        );
     }
     let value = values.into_iter().max().ok_or(Error::InconsistentWitness)?;
     let witness = attained
@@ -631,8 +672,13 @@ pub fn commitment_bound(
 }
 
 fn threshold(game: Parameters) -> Result<Ratio, Error> {
+    detection_threshold(game, Ratio::one())
+}
+
+fn detection_threshold(game: Parameters, detection: Ratio) -> Result<Ratio, Error> {
+    require_detection(detection)?;
     game.evasion_gain
-        .div(game.evasion_gain.add(game.detected_loss)?)
+        .div(detection.mul(game.evasion_gain.add(game.detected_loss)?)?)
 }
 
 fn require_probability(value: Ratio) -> Result<(), Error> {

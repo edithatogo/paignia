@@ -1,9 +1,10 @@
 //! Imperfect detection for the binary inspection family.
 
 use paignia_solve::{
+    inspection_commitment_bound, inspection_commitment_bound_with_detection,
     inspection_detection_projection, inspection_expected_payoffs_with_detection,
     inspection_nash_with_detection, inspection_simultaneous_nash, InspectionError,
-    InspectionParameters, InspectionRatio,
+    InspectionFollowerTie, InspectionParameters, InspectionRatio,
 };
 
 fn ratio(numerator: i64, denominator: i64) -> InspectionRatio {
@@ -95,6 +96,62 @@ fn an_interior_detection_interval_spans_the_endpoint_witnesses() {
     assert_eq!(projection.leader.upper, ratio(-1, 1));
     assert_eq!(projection.follower.lower, ratio(0, 1));
     assert_eq!(projection.follower.upper, ratio(0, 1));
+}
+
+#[test]
+fn perfect_detection_commitment_matches_the_original_bound() {
+    let interior = game(1, 4, 1, 2);
+    let original =
+        inspection_commitment_bound(interior, ratio(1, 1), InspectionFollowerTie::Pessimistic)
+            .expect("original");
+    let detected = inspection_commitment_bound_with_detection(
+        interior,
+        ratio(1, 1),
+        ratio(1, 1),
+        InspectionFollowerTie::Pessimistic,
+    )
+    .expect("detected");
+    assert_eq!(original, detected);
+    assert!(!original.attained);
+    assert_eq!(original.value, ratio(-1, 3));
+}
+
+#[test]
+fn half_detection_commitment_uses_the_two_thirds_threshold() {
+    let interior = game(1, 4, 1, 2);
+    let optimistic = inspection_commitment_bound_with_detection(
+        interior,
+        ratio(1, 2),
+        ratio(1, 1),
+        InspectionFollowerTie::Optimistic,
+    )
+    .expect("optimistic");
+    assert!(optimistic.attained);
+    assert_eq!(optimistic.value, ratio(-2, 3));
+    assert_eq!(optimistic.inspect, Some(ratio(2, 3)));
+    assert_eq!(optimistic.evade, Some(ratio(0, 1)));
+
+    let pessimistic = inspection_commitment_bound_with_detection(
+        interior,
+        ratio(1, 2),
+        ratio(1, 1),
+        InspectionFollowerTie::Pessimistic,
+    )
+    .expect("pessimistic");
+    assert!(!pessimistic.attained);
+    assert_eq!(pessimistic.value, ratio(-2, 3));
+
+    let capped = inspection_commitment_bound_with_detection(
+        interior,
+        ratio(1, 2),
+        ratio(1, 2),
+        InspectionFollowerTie::Optimistic,
+    )
+    .expect("capped");
+    assert!(capped.attained);
+    assert_eq!(capped.value, ratio(-7, 2));
+    assert_eq!(capped.inspect, Some(ratio(1, 2)));
+    assert_eq!(capped.evade, Some(ratio(1, 1)));
 }
 
 #[test]

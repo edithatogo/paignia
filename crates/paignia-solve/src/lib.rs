@@ -28,7 +28,10 @@ pub use correlated_equilibrium::{
 };
 
 pub use leader_follower::{
-    commitment_at as inspection_commitment_at, commitment_bound as inspection_commitment_bound,
+    commitment_at as inspection_commitment_at,
+    commitment_at_with_detection as inspection_commitment_at_with_detection,
+    commitment_bound as inspection_commitment_bound,
+    commitment_bound_with_detection as inspection_commitment_bound_with_detection,
     detection_nash_projection as inspection_detection_projection,
     deviation_gains as inspection_deviation_gains, expected_payoffs as inspection_expected_payoffs,
     expected_payoffs_with_detection as inspection_expected_payoffs_with_detection,
