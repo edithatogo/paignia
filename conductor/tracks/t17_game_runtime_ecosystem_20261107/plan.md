@@ -54,9 +54,18 @@ accepted executable profile. The merged Kairos `K01.port` receipt qualifies
 T17.08, T17.15 and T17.16. T17.07 is complete after the independent Leduc
 comparison and the legacy Kairos CFR retirement. Three leaves remain open
 (.10, .11 and .12). The bounded release check still requires a second matching
-application receipt. Kairos S01–S03 source disposition and the valued-payoff
-handoff stay open.
+application receipt. The valued-payoff handoff stays open.
 [Kairos port acceptance](https://github.com/edithatogo/kairos/blob/f7484751c4a058581f2425ca493faec8e85e5637/conductor/contracts/game-port-acceptance.md)
+
+Kairos withdrew the legacy S01 RK4 export at `ae9ae116` and the S03
+correlated-equilibrium exports at `01156707`. Paignia retained the two S03
+oracles and their weighted incentive threshold before the Kairos retirement.
+Kairos retired the legacy mixed-strategy exports (S02) at `9f51775` after
+removing the product-equilibrium caller. The exact-base native coverage gate
+passed at 33,121/38,353 against 33,170/38,412. [Kairos #409](https://github.com/edithatogo/kairos/pull/409) · [Coverage result](https://github.com/edithatogo/kairos/actions/runs/44813475869/job/136563716910)
+[Kairos #407](https://github.com/edithatogo/kairos/pull/407) ·
+[Paignia #64](https://github.com/edithatogo/paignia/pull/64) ·
+[Kairos #408](https://github.com/edithatogo/kairos/pull/408)
 
 Earlier dated paragraphs retain historical source, failure and review evidence,
 including then-future paths and then-pending PR/merge wording. The current

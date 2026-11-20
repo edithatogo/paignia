@@ -14,7 +14,9 @@ support enumeration, optional correlated equilibrium, static identity conversion
 and owned policy observations. The [static package review](docs/validation/t17-review-20261117.md)
 and [native provider review](docs/validation/provider-review-20261120.md) record
 exact sources, checks and limits. Registry publication remains disabled.
-Two real application receipts and full native execution qualification remain open.
+The accepted reimbursement Chapter 8 case supplies the first real application
+receipt. Bounded release eligibility still requires a second application on the
+same artifacts and profile. [Chapter 8 receipt](docs/validation/receipts/t17-reimbursement-chapter8.json)
 
 The initial source transfer is merged in [PR #2](https://github.com/edithatogo/paignia/pull/2)
 at `12b22ce7571b9c590405bf53c2c1c5862b49cd64`.
@@ -30,25 +32,33 @@ subsequent contract, package and numerical work without relabelling the old run.
 |---|---|---|
 | `paignia-core` | Finite acyclic graphs, static-profile admission, perfect-recall information-set admission, typed identities and result envelopes, static identity conversion, owned policy observations, and paired two-by-two payoff tables. | `thiserror`. |
 | `paignia-solve` | Backward induction and chance expectations, bounded pure/mixed Nash, CFR/CFR+, exact binary commitment, two-by-two Nash payoff hull bounds, RK4/Euler, and optional correlated equilibrium. | `paignia-core`, `thiserror`. The explicit `correlated-equilibrium` feature adds Clarabel 0.11.1 and its qualified closure. |
-| `paignia-kairos` | Optional T17.08 candidate for one finite perfect-information path through a Kairos scheduler. | `paignia-core`, pinned Kairos APIs and `thiserror` in a separate workspace requiring Rust 1.99. |
+| `paignia-kairos` | Optional qualified adapter for a finite perfect-information path through a Kairos scheduler, with isolated random streams and in-process checkpoint replay. | `paignia-core`, pinned Kairos APIs and `thiserror` in a separate workspace requiring Rust 1.99. |
 
 The [information-set profile](docs/architecture/game-information-contract-v1.md)
 and [CFR contract](docs/validation/cfr.md) define the admitted finite graphs and
-the independent Kuhn and Leduc controls. UOGTO profile acceptance and the
-Kairos source-side obligations remain open. [Binary commitment](docs/validation/leader-follower.md)
+the independent Kuhn and Leduc controls. UOGTO accepted the executable
+information-set profile. [UOGTO acceptance](https://github.com/edithatogo/UOGTO/pull/139)
+
+[Binary commitment](docs/validation/leader-follower.md)
 and [Nash payoff hull bounds](docs/validation/credal-nash.md) specify the
 supported two-player families, projections and diagnostics.
 
 The [mixed-Nash contract](docs/validation/mixed-nash.md) limits enumeration to
 verified finite witnesses from equal-cardinality nonsingular supports, and
 explicitly rejects Lemke–Howson. It does not promise a complete catalogue.
+Kairos retired the former mixed-strategy exports after the caller migration.
+[Kairos S02 retirement](https://github.com/edithatogo/kairos/pull/409)
+
 The [correlated-equilibrium contract](docs/validation/correlated-equilibrium.md)
 requires actual primal/dual admission of unchanged raw LP coordinates; it reports
 an approximate result and preserves solver termination. The
 [RK4 contract](docs/validation/replicator-rk4.md) states its smooth-segment,
-representable-time and simplex admission limits. Its implementation does not
-close the external Kairos caller/retirement part of S01. `Solution.trace` is
-solver analysis over hypothetical alternatives, not a causal simulation stream.
+representable-time and simplex admission limits. Kairos retired its legacy
+public RK4 export and retained experimental trajectory reproduction.
+[Kairos S01 retirement](https://github.com/edithatogo/kairos/pull/407)
+
+`Solution.trace` records solver analysis over hypothetical alternatives. Native
+execution records the realised causal path separately.
 
 [Static conversion](docs/architecture/game-semantic-conversion-v1.md) preserves
 the declared graph semantics and decision selection order. The
@@ -57,8 +67,9 @@ declared context and ordered legal actions. Matching caller-supplied context
 establishes consistency; the host owns actual session authority and freshness.
 
 The [native execution contract](docs/architecture/game-native-execution-v1.md)
-describes the bounded adapter, its independent build and the remaining provider
-acceptance.
+describes the bounded adapter and its independent build. The K01.port receipt
+covers the qualified native path, random-stream isolation and in-process replay.
+[Kairos K01.port acceptance](https://github.com/edithatogo/kairos/pull/405)
 
 Known seed behavior remains explicit: chance edges may have probability zero;
 extensive-form missing player payoffs currently act as zero; ties use the

@@ -26,24 +26,24 @@
   ],
   "scientific_obligations": {
     "S01": {
-      "status": "pending",
+      "status": "unsupported",
       "owner": "edithatogo/kairos Track 110",
-      "replacement_plan": "T17.04 bounded Paignia implementation accepted; retain Kairos source API/caller regression, output migration and retirement receipt. Separate numerical-method qualification is documented in the T17 review receipt."
+      "replacement_plan": "The candidate release scope is backward induction. Bounded Paignia RK4/Euler is separately qualified in T17.04. Kairos retired the former RK4 export in PR 407."
     },
     "S02": {
-      "status": "pending",
+      "status": "unsupported",
       "owner": "edithatogo/kairos Track 110",
-      "replacement_plan": "T17.05 bounded Paignia implementation accepted; retain Kairos source API/caller regression, output migration and retirement receipt. Separate numerical-method qualification is documented in the T17 review receipt."
+      "replacement_plan": "The candidate release scope is backward induction. The finite Paignia mixed-Nash witness scope is separately qualified in T17.05. Kairos PR 409 retired the five legacy exports at 9f51775."
     },
     "S03": {
-      "status": "pending",
+      "status": "unsupported",
       "owner": "edithatogo/kairos Track 110",
-      "replacement_plan": "T17.06 bounded Paignia implementation accepted; retain Kairos source API/caller regression, output migration and retirement receipt. Separate numerical-method qualification is documented in the T17 review receipt."
+      "replacement_plan": "The candidate release scope is backward induction. Optional Paignia CE is separately qualified in T17.06, with migrated legacy oracle cases in Paignia PR 64 and Kairos source retirement in PR 408."
     },
     "S04": {
-      "status": "pending",
+      "status": "unsupported",
       "owner": "edithatogo/paignia",
-      "replacement_plan": "T17.17 after the accepted UOGTO executable information-set profile, then T17.07; retain Kairos Track 110 source history and retirement."
+      "replacement_plan": "The candidate release scope is perfect-information backward induction. Paignia PR 63 separately accepts the bounded information-set CFR/CFR+ methods and Kairos PR 406 retires the historical public API."
     }
   },
   "limitations": [

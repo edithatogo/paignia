@@ -63,9 +63,9 @@
     ]
   },
   "scientific_obligations": {
-    "S01": "T17.04 bounded Paignia RK4/Euler implementation complete with independent acceptance; Kairos Track 110 source/API/caller retirement remains open.",
-    "S02": "T17.05 bounded Paignia mixed-Nash implementation complete after reviewed cancellation fixes; finite-witness scope explicit; Kairos Track 110 source disposition remains open.",
-    "S03": "T17.06 bounded optional Paignia CE implementation complete with qualified Clarabel and independent primal/dual numerical acceptance; Kairos Track 110 source disposition remains open.",
+    "S01": "T17.04 bounded Paignia RK4/Euler accepted. Kairos PR 407 retired the misnamed legacy public RK4 API and retained the experimental projected Euler trajectory.",
+    "S02": "T17.05 bounded Paignia mixed-Nash implementation complete after reviewed cancellation fixes, with explicit finite-witness scope. Kairos PR 409 retired the five legacy mixed-strategy exports at 9f51775.",
+    "S03": "T17.06 bounded optional Paignia CE accepted with qualified Clarabel and independent primal/dual checks. Paignia PR 64 retains historical oracles; Kairos PR 408 retired the duplicate CE APIs and retained experimental zero-sum minimax.",
     "S04": "Bounded CFR/CFR+ and the UOGTO executable information-set profile are accepted. Independent Kuhn diagnostics and independently trained Leduc checkpoints are qualified. Kairos retired the legacy production Kuhn CFR API and retained its historical controls."
   },
   "max_files_per_leaf": 5,
@@ -244,8 +244,7 @@
   "archive_eligible": false,
   "archive_blockers": [
     "T17.10 needs a second matching-artifact receipt before T17.12 can report eligibility.",
-    "T17.11 valued-payoff contract remains reimbursement-owned and unfinished.",
-    "Kairos Track 110 retains S01-S03 source API/caller migration and retirement."
+    "T17.11 valued-payoff contract remains reimbursement-owned and unfinished."
   ],
   "historical_accepted_checkpoint_20261117": {
     "status": "bounded_native_contract_and_local_artifact_qualification_accepted",
