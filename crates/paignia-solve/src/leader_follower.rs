@@ -314,6 +314,12 @@ pub enum Error {
     /// The corners of a four-parameter box are not in one strict Nash regime.
     #[error("parameter box changes the Nash regime")]
     BoxRegimeChange,
+    /// A convex hull was given no parameter vectors.
+    #[error("a Nash hull needs at least one parameter vector")]
+    EmptyHull,
+    /// The vertices of a convex hull are not in one strict Nash regime.
+    #[error("parameter hull changes the Nash regime")]
+    HullRegimeChange,
     /// The interval is not contained in one strict commitment piece.
     #[error("the interval is not inside one strict commitment piece")]
     CommitmentRegimeChange,
@@ -1136,6 +1142,48 @@ fn box_axes(
         gain.ok_or(Error::RepeatedParameter)?,
         loss.ok_or(Error::RepeatedParameter)?,
     ))
+}
+
+/// Nash projection of the convex hull of finitely many parameter vectors.
+///
+/// Detection stays perfect. The strict regimes `c < h` and `c > h` are convex,
+/// so a hull whose vertices share one of them stays in that regime. Inside
+/// either regime the inspection share, evasion share and both payoffs are
+/// linear or linear-fractional with a positive denominator, so their extrema
+/// on the hull are attained at vertices. The reported intervals remain
+/// separate projections. This is not a credal set over arbitrary payoff
+/// matrices, and it does not admit imperfect detection.
+///
+/// # Errors
+///
+/// Returns [`Error::EmptyHull`] when `vertices` is empty,
+/// [`Error::HullRegimeChange`] when the vertices do not share one strict
+/// regime, and [`Error::LeaderIndifferent`] when a vertex has equal cost and
+/// harm.
+pub fn nash_hull(vertices: &[Parameters]) -> Result<NashProjection, Error> {
+    if vertices.is_empty() {
+        return Err(Error::EmptyHull);
+    }
+    let mut image: Option<Image> = None;
+    let mut pure_skip: Option<bool> = None;
+    for game in vertices {
+        let witness = simultaneous_nash(*game)?;
+        let vertex_is_pure = witness.inspect == Ratio::zero();
+        match pure_skip {
+            None => pure_skip = Some(vertex_is_pure),
+            Some(previous) if previous != vertex_is_pure => return Err(Error::HullRegimeChange),
+            Some(_) => {}
+        }
+        push_image(&mut image, witness_image(witness));
+    }
+    let image = image.ok_or(Error::InconsistentWitness)?;
+    Ok(NashProjection {
+        inspect: image.inspect.bounds(),
+        evade: image.evade.bounds(),
+        leader: image.leader.bounds(),
+        follower: image.follower.bounds(),
+        endpoint_gap: Ratio::zero(),
+    })
 }
 
 /// Nash projection while detection and one other parameter vary together.

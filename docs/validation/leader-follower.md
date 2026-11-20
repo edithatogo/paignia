@@ -83,6 +83,16 @@ The corner with cost `1` has leader value `-1` and evasion at most `1/6`, so
 the reported leader upper bound and evasion upper bound are not a joint
 witness. This is not a credal set over arbitrary payoff matrices.
 
+`inspection_nash_hull` projects the convex hull of finitely many parameter
+vectors at perfect detection. The regimes `c < h` and `c > h` are convex, and
+inside either regime the shares and payoffs are linear or linear-fractional
+with a positive denominator, so the extrema are attained at the vertices. The
+vertices `(1, 6, 1, 4)`, `(2, 8, 2, 2)` and `(1, 8, 1, 2)` give inspection
+`[1/5, 1/2]` and evasion `[1/8, 1/4]`. The midpoint of the first two vertices
+has inspection `1/3` and evasion `3/14`, both inside that span. Imperfect
+detection is not included, because a mixture of interior detection games can
+leave the interior.
+
 `inspection_detection_rectangle` varies detection together with one other
 parameter. Every corner must stay in one strict regime. With cost in `[1, 3/2]`
 and detection in `[1/2, 1]`, inspection runs from `1/3` to `2/3`, evasion from
