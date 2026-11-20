@@ -13,10 +13,10 @@ resolver = "3"
 
 [dependencies]
 paignia-core = { path = "../paignia-core", version = "0.1.0" }
-kairo-ecs-core = { git = "https://github.com/edithatogo/kairos", rev = "bac331fca95420a94db240c02ae66c1991b85da7" }
-kairo-ecs-rng = { git = "https://github.com/edithatogo/kairos", rev = "bac331fca95420a94db240c02ae66c1991b85da7" }
-kairo-ecs-state = { git = "https://github.com/edithatogo/kairos", rev = "bac331fca95420a94db240c02ae66c1991b85da7" }
-kairo-ecs-types = { git = "https://github.com/edithatogo/kairos", rev = "bac331fca95420a94db240c02ae66c1991b85da7" }
+kairo-ecs-core = { git = "https://github.com/edithatogo/kairos", rev = "235e6a333ccc6e690f5b41f2c5eaa9a6784fe147" }
+kairo-ecs-rng = { git = "https://github.com/edithatogo/kairos", rev = "235e6a333ccc6e690f5b41f2c5eaa9a6784fe147" }
+kairo-ecs-state = { git = "https://github.com/edithatogo/kairos", rev = "235e6a333ccc6e690f5b41f2c5eaa9a6784fe147" }
+kairo-ecs-types = { git = "https://github.com/edithatogo/kairos", rev = "235e6a333ccc6e690f5b41f2c5eaa9a6784fe147" }
 thiserror = "=1.0.69"
 
 [lints.rust]

@@ -1,10 +1,10 @@
 # Bounded Kairos game execution
 
 `paignia-kairos` implements execution schema `1.0.0` for Paignia's finite
-perfect-information sparse-zero profile. The adapter uses Kairos
-`bac331fca95420a94db240c02ae66c1991b85da7` and the separate locked Cargo
-workspace at `crates/paignia-kairos`. The main static workspace can still build
-on Rust 1.75. The adapter requires Rust 1.99 or later.
+perfect-information sparse-zero profile. The separate Cargo workspace at
+`crates/paignia-kairos` binds its Kairos revision in the
+[adapter lock](../../crates/paignia-kairos/Cargo.lock). The static workspace
+requires Rust 1.75 or later. The adapter requires Rust 1.99 or later.
 
 ## Host binding and dispatch
 

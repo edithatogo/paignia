@@ -611,22 +611,27 @@ oracle and result contract. Exclusion is not scientific completion.
   Independent policy and draw configurations exercise distinct outcomes.
   [Comparison randomness](../../../docs/validation/game-rng-isolation.md)
 
-### [ ] T17.16 — restore qualified policy and native state for causal replay
+### [~] T17.16 — restore qualified policy and native state for causal replay
 
 - Behavior: resume the supported game execution from one checkpoint with the
   same subsequent causal events and outcomes as uninterrupted execution.
 - Depends on: T17.08 and T17.15.
 - Execution: specialist, state ownership and replay.
-- Files (4): `crates/paignia-kairos/src/lib.rs`,
-  `crates/paignia-kairos/src/checkpoint.rs` (future),
-  `crates/paignia-kairos/tests/policy_resume.rs` (future),
-  `docs/validation/game-policy-resume.md` (future).
-- Check: `cargo test --locked -p paignia-kairos --test policy_resume`
-  (future target). Restore live policy state, identity mapping, native state and
+- Files (5): `crates/paignia-kairos/src/lib.rs`,
+  `crates/paignia-kairos/src/checkpoint.rs`, `crates/paignia-kairos/src/randomness.rs`,
+  `crates/paignia-kairos/tests/policy_resume.rs`, and
+  `docs/validation/game-policy-resume.md`. The adapter manifest and lock carry
+  the separately qualified Kairos pin.
+- Check: `cargo test --locked --manifest-path crates/paignia-kairos/Cargo.toml
+  --test policy_resume`. Restore live policy state, identity mapping, native state and
   qualified RNG checkpoints together; a sibling branch remains isolated. Keep
   frozen offline training provenance distinct from live replay state. Reject
   incompatible versions or unsupported mutable policy state before resuming;
   matching a solver's diagnostic trace alone does not establish replay.
+- Candidate evidence: capture after a committed transition into chance, restore
+  the Kairos snapshot into a fresh scheduler and decode a separate live policy
+  before committing the resume. Both native stream modes exercise deterministic
+  replay and sibling isolation. [Replay contract](../../../docs/validation/game-policy-resume.md)
 
 ### [~] T17.17 — validate an ECS-independent information-set representation
 
