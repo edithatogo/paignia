@@ -1,0 +1,27 @@
+[package]
+name = "paignia-kairos"
+description = "Bounded native execution of Paignia game paths using Kairos"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+rust-version = "1.99"
+repository = "https://github.com/edithatogo/paignia"
+publish = false
+
+[workspace]
+resolver = "3"
+
+[dependencies]
+paignia-core = { path = "../paignia-core", version = "0.1.0" }
+kairo-ecs-core = { git = "https://github.com/edithatogo/kairos", rev = "bac331fca95420a94db240c02ae66c1991b85da7" }
+kairo-ecs-rng = { git = "https://github.com/edithatogo/kairos", rev = "bac331fca95420a94db240c02ae66c1991b85da7" }
+kairo-ecs-state = { git = "https://github.com/edithatogo/kairos", rev = "bac331fca95420a94db240c02ae66c1991b85da7" }
+kairo-ecs-types = { git = "https://github.com/edithatogo/kairos", rev = "bac331fca95420a94db240c02ae66c1991b85da7" }
+thiserror = "=1.0.69"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = "warn"
+pedantic = "warn"
