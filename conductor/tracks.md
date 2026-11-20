@@ -5,7 +5,7 @@
   Fourteen provider-owned leaves plus three external consumer/valuation handoffs
   retain all seventeen IDs. Thirteen provider leaves are complete after
   review and qualification, including the independent CFR/CFR+ checks and
-  Kairos S04 source retirement. T17.09 supplies the first application
+  Kairos S01–S04 source retirement. T17.09 supplies the first application
   artifact receipt. Three leaves remain open (.10, .11 and .12) for the
   second matching application receipt, the valued-payoff handoff and
   bounded release eligibility.

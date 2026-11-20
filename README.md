@@ -46,6 +46,9 @@ supported two-player families, projections and diagnostics.
 The [mixed-Nash contract](docs/validation/mixed-nash.md) limits enumeration to
 verified finite witnesses from equal-cardinality nonsingular supports, and
 explicitly rejects Lemke–Howson. It does not promise a complete catalogue.
+Kairos retired the former mixed-strategy exports after the caller migration.
+[Kairos S02 retirement](https://github.com/edithatogo/kairos/pull/409)
+
 The [correlated-equilibrium contract](docs/validation/correlated-equilibrium.md)
 requires actual primal/dual admission of unchanged raw LP coordinates; it reports
 an approximate result and preserves solver termination. The

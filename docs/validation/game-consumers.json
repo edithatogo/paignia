@@ -31,9 +31,9 @@
       "replacement_plan": "The candidate release scope is backward induction. Bounded Paignia RK4/Euler is separately qualified in T17.04. Kairos retired the former RK4 export in PR 407."
     },
     "S02": {
-      "status": "pending",
+      "status": "unsupported",
       "owner": "edithatogo/kairos Track 110",
-      "replacement_plan": "T17.05 bounded Paignia implementation accepted; retain Kairos source API/caller regression, output migration and retirement receipt. Separate numerical-method qualification is documented in the T17 review receipt."
+      "replacement_plan": "The candidate release scope is backward induction. The finite Paignia mixed-Nash witness scope is separately qualified in T17.05. Kairos PR 409 retired the five legacy exports at 9f51775."
     },
     "S03": {
       "status": "unsupported",

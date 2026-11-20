@@ -60,7 +60,9 @@ application receipt. The valued-payoff handoff stays open.
 Kairos withdrew the legacy S01 RK4 export at `ae9ae116` and the S03
 correlated-equilibrium exports at `01156707`. Paignia retained the two S03
 oracles and their weighted incentive threshold before the Kairos retirement.
-S02 source retirement remains an open archive requirement.
+Kairos retired the legacy mixed-strategy exports (S02) at `9f51775` after
+removing the product-equilibrium caller. The exact-base native coverage gate
+passed at 33,121/38,353 against 33,170/38,412. [Kairos #409](https://github.com/edithatogo/kairos/pull/409) · [Coverage result](https://github.com/edithatogo/kairos/actions/runs/44813475869/job/136563716910)
 [Kairos #407](https://github.com/edithatogo/kairos/pull/407) ·
 [Paignia #64](https://github.com/edithatogo/paignia/pull/64) ·
 [Kairos #408](https://github.com/edithatogo/kairos/pull/408)
