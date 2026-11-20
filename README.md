@@ -11,9 +11,10 @@ dependency. Static solving has no Kairos or host-language runtime dependency.
 resolved dependency boundary and local Cargo artifact consumption are qualified
 on Rust 1.75 and stable. Independent review accepts bounded RK4/Euler, mixed-Nash
 support enumeration, optional correlated equilibrium, static identity conversion
-and owned policy observations. The [current T17 receipt](docs/validation/t17-review-20261117.md)
-records exact source, checks and limits. Registry publication remains disabled;
-two real application receipts and the remaining track obligations are open.
+and owned policy observations. The [static package review](docs/validation/t17-review-20261117.md)
+and [native provider review](docs/validation/provider-review-20261120.md) record
+exact sources, checks and limits. Registry publication remains disabled.
+Two real application receipts and the native adapter remain open.
 
 The initial source transfer is merged in [PR #2](https://github.com/edithatogo/paignia/pull/2)
 at `12b22ce7571b9c590405bf53c2c1c5862b49cd64`.
@@ -27,10 +28,16 @@ subsequent contract, package and numerical work without relabelling the old run.
 
 | Package | Current implementation | Dependencies |
 |---|---|---|
-| `paignia-core` | Finite acyclic graphs; exact static-profile admission; typed identity roles; source-bound native result envelopes; reversible static identity conversion; owned policy observations. | `thiserror`; no Kairos, Voiage, application or host-language runtime. |
-| `paignia-solve` | Backward induction/chance expectations, bounded pure/mixed Nash, opt-in result emission, RK4/Euler and optional correlated-equilibrium programs. | `paignia-core`, `thiserror`; the explicit `correlated-equilibrium` feature adds pinned Clarabel 0.11.1 with its qualified closure. Default consumers do not acquire it. |
+| `paignia-core` | Finite acyclic graphs, static-profile admission, perfect-recall information-set admission, typed identities and result envelopes, static identity conversion, owned policy observations, and paired two-by-two payoff tables. | `thiserror`. |
+| `paignia-solve` | Backward induction and chance expectations, bounded pure/mixed Nash, CFR/CFR+, exact binary commitment, two-by-two Nash payoff hull bounds, RK4/Euler, and optional correlated equilibrium. | `paignia-core`, `thiserror`. The explicit `correlated-equilibrium` feature adds Clarabel 0.11.1 and its qualified closure. |
 
-Information sets, CFR/CFR+, learning and native simulation adapters remain open.
+The [information-set profile](docs/architecture/game-information-contract-v1.md)
+and [CFR contract](docs/validation/cfr.md) define the admitted finite graphs and
+the independent Kuhn and Leduc controls. UOGTO profile acceptance and the
+Kairos source-side obligations remain open. [Binary commitment](docs/validation/leader-follower.md)
+and [Nash payoff hull bounds](docs/validation/credal-nash.md) specify the
+supported two-player families, projections and diagnostics.
+
 The [mixed-Nash contract](docs/validation/mixed-nash.md) limits enumeration to
 verified finite witnesses from equal-cardinality nonsingular supports, and
 explicitly rejects Lemke–Howson. It does not promise a complete catalogue.
@@ -57,7 +64,12 @@ exhaustive catalogue. UOGTO names alone do not establish implementation support.
 
 ## Build and verify
 
+Use the CPython patch release recorded in `.python-version` for verification.
+Create the repository-local environment once and use it for subsequent checks.
+
 ```bash
+uv venv --python "$(cat .python-version)" target/dev-python
+target/dev-python/bin/python --version
 cargo fetch --locked
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
@@ -66,10 +78,10 @@ cargo test --workspace --all-targets --locked
 cargo test --workspace --all-targets --all-features --locked
 cargo test --locked -p paignia-core --doc
 cargo test --locked -p paignia-solve --doc --all-features
-python3 -B -m unittest discover -s tests
+target/dev-python/bin/python -B -m unittest discover -s tests
 cargo doc --workspace --no-deps --all-features --locked
-python3 scripts/validate_extraction.py
-python3 scripts/validate_game_packages.py
+target/dev-python/bin/python scripts/validate_extraction.py
+target/dev-python/bin/python scripts/validate_game_packages.py
 ```
 
 The package guard creates actual `.crate` archives, verifies normalized metadata,
@@ -78,7 +90,7 @@ separate consumers. Linux `bubblewrap` makes the provider checkout unavailable
 throughout offline resolution, compilation and execution. The receipt records
 artifact hashes, compiler versions, the provider lock and each consumer's
 resolved dependency graph/lock. Minimal, default, individual advertised features
-and all-feature profiles execute separately. Python 3.11+ orchestrates these
+and all-feature profiles execute separately. The pinned CPython interpreter orchestrates these
 checks; all game execution is Rust. `cargo fetch --locked` caches the full
 metadata closure, including platform-specific packages that a native build
 does not download. Boundary inspection and artifact consumers then run offline.

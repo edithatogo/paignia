@@ -20,8 +20,8 @@ Required native checks for source changes:
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo test --workspace --all-targets --locked
-python3 scripts/validate_extraction.py
-python3 scripts/validate_game_packages.py
+target/dev-python/bin/python scripts/validate_extraction.py
+target/dev-python/bin/python scripts/validate_game_packages.py
 ```
 
 The declared MSRV and stable profiles are checked by hosted CI. Release

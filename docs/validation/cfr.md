@@ -117,9 +117,9 @@ must agree with Paignia within `1e-9` at each tested budget.
   tolerance. Running more iterations is not automatic acceptance.
 - Kairos storage, ontology labels, live observations, and stream isolation are
   not involved.
-- T17.17 remains separately unaccepted until its own specialist review and
-  hosted CI are recorded. This trainer only consumes a graph that the current
-  admission function accepts.
+- T17.17's bounded native graph passed specialist review and hosted CI.
+  UOGTO executable profile acceptance and the Kairos source disposition
+  remain separate obligations. [20 November review](provider-review-20261120.md)
 
 ```bash
 cargo test --locked -p paignia-solve --test cfr_information_sets

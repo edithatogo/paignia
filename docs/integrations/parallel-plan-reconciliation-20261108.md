@@ -788,3 +788,21 @@ qualified. No application fixture was fabricated to fill this gap.
 Full T17 remains active with nine open leaves and the inherited source-side
 obligations. Registry publication remains disabled. The central offline-security
 workflow remains queued for its dedicated infrastructure and has not passed.
+
+## Provider integration on 20 November 2026
+
+Chat `01a1f635-4bc4-73f0-b6f2-2d2541bb46a0` integrates Paignia PRs and owns
+this Conductor status update in the Git worktree
+`/Volumes/PortableSSD/GitHub/paignia-provider-verification`. Its scope covers
+Paignia's Rust providers, verification workflows, and tracked evidence.
+
+PRs #37, #39, #40 and #51–#53 landed the bounded T17 provider. PRs #41–#50
+and #54 landed T18.01 and T18.02. PR #55 carries the integrated compiler,
+package, privacy and reference checks on the pinned Python runtime.
+The review records the offline job status alongside the checks that ran.
+[Provider review](../validation/provider-review-20261120.md)
+
+The next outstanding inputs are UOGTO's executable information-set profile,
+Kairos's native game port and source-side S04 disposition, the two actual
+consumer receipts, reimbursement's valued-payoff contract, and the
+T18.03 application handoff. Each keeps its linked owner and acceptance criteria.

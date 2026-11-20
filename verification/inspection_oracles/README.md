@@ -213,11 +213,11 @@ a best response, see von Stengel and Zamir (2010),
 *Games and Economic Behavior* 69(2), 446-457. That conceptual reference is not
 the source of these constants or an independent review of this implementation.
 
-The committed command uses CPython 3.12.14 and only its standard library:
+The current command uses the pinned repository-local CPython interpreter and its standard library.
 
 ```bash
-python3 -B verification/inspection_oracles/test_inspection.py
-python3 -B scripts/validate_extraction.py
+target/dev-python/bin/python -B verification/inspection_oracles/test_inspection.py
+target/dev-python/bin/python -B scripts/validate_extraction.py
 ```
 
 It runs 28 named tests, including subcases. JSON numeric values are canonical
@@ -258,7 +258,7 @@ passing tests or production failures.
 | Replace `choose = max if tie == "optimistic" else min` with `choose = max` | `test_optimistic_tie_is_not_pessimistic_or_a_nash_profile` |
 
 To reproduce a control, copy this entire directory outside the source tree,
-apply only its stated mutation and run `python3 -B test_inspection.py
+apply only its stated mutation and run `target/dev-python/bin/python -B test_inspection.py
 InspectionOracleTests.<focused_test>` from that copy. Preserve the originals.
 
 | Runtime file | SHA-256 |
@@ -292,7 +292,7 @@ tree and this document's hash, avoiding a self-referential committed hash.
 1. Receive the final exact-head authoring/test packet and record accepted scope
    in coordinator-owned Conductor/ownership files. Parent T18.01 remains open.
 2. Add the explicit harness command above to shared CI under a pinned/declared
-   CPython 3.12.14 interpreter. The current native workflow does not execute it.
+   CPython interpreter. The native workflow now executes the full suite on the version in `.python-version`.
    No manifest, dependency, lockfile or production export change is required.
 3. Obtain independent specialist numerical review of this exact fixture head.
    Author review and calculations independent of this module are still author

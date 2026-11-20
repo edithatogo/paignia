@@ -66,7 +66,7 @@
     "S01": "T17.04 bounded Paignia RK4/Euler implementation complete with independent acceptance; Kairos Track 110 source/API/caller retirement remains open.",
     "S02": "T17.05 bounded Paignia mixed-Nash implementation complete after reviewed cancellation fixes; finite-witness scope explicit; Kairos Track 110 source disposition remains open.",
     "S03": "T17.06 bounded optional Paignia CE implementation complete with qualified Clarabel and independent primal/dual numerical acceptance; Kairos Track 110 source disposition remains open.",
-    "S04": "CFR/CFR+ pending accepted UOGTO executable information-set profile, T17.17 representation and T17.07 implementation; retain source-side history."
+    "S04": "Bounded CFR/CFR+ and perfect-recall graph admission merged after specialist review and hosted native checks. UOGTO executable information-set acceptance and Kairos Track 110 source disposition remain open."
   },
   "max_files_per_leaf": 5,
   "review_policy": "Focused checks and coherent specialist review; no repeated human approval loop",
@@ -190,7 +190,7 @@
     "T17.04": "completed_for_declared_bounded_provider_capability",
     "T17.05": "completed_for_declared_bounded_provider_capability",
     "T17.06": "completed_for_declared_bounded_provider_capability",
-    "T17.07": "blocked_on_T17.17",
+    "T17.07": "bounded_CFR_and_CFR_plus_merged; UOGTO_profile_and_Kairos_S04_disposition_pending",
     "T17.08": "blocked_on_accepted_Kairos_native_port",
     "T17.09": "external_application_receipt_pending",
     "T17.10": "external_second_application_receipt_pending",
@@ -200,15 +200,15 @@
     "T17.14": "completed_for_declared_bounded_provider_capability",
     "T17.15": "blocked_on_T17.08",
     "T17.16": "blocked_on_T17.08_and_T17.15",
-    "T17.17": "blocked_on_UOGTO_executable_information_set_profile"
+    "T17.17": "bounded_perfect_recall_graph_merged; UOGTO_executable_information_set_profile_pending"
   },
   "archive_eligible": false,
   "archive_blockers": [
-    "T17.17 then .07 require accepted UOGTO executable information-set semantics and implementation.",
+    "T17.17 and T17.07 require accepted UOGTO executable information-set semantics for the merged bounded provider.",
     "T17.08 then .15 and .16 require accepted Kairos native port and adapter/stream/replay implementation.",
     "T17.09/.10 actual matching-artifact application receipts remain absent; .12 cannot admit them.",
     "T17.11 valued-payoff contract remains reimbursement-owned and unfinished.",
-    "Kairos Track 110 retains S01-S03 source API/caller migration and retirement; S04 remains unfinished."
+    "Kairos Track 110 retains S01-S04 source API/caller migration and retirement."
   ],
   "historical_accepted_checkpoint_20261117": {
     "status": "bounded_native_contract_and_local_artifact_qualification_accepted",
