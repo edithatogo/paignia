@@ -9,7 +9,12 @@ declaration must satisfy
 an incomplete partition, and a legal-action mismatch are rejected before any
 regret table is allocated.
 
-Two variants share one tree walk:
+The solver indexes the admitted acyclic graph once. A forward traversal sums
+counterfactual reach at shared continuations. A reverse traversal evaluates
+continuation payoffs. Work for one player's update is linear in the graph's
+nodes and edges. No traversal expands all paths to a shared node.
+
+The two variants use these updates.
 
 | Variant | Identifier | Update |
 | --- | --- | --- |
@@ -40,6 +45,15 @@ information set of the named player, after the information sets below it, and
 sum is exploitability. A small value is evidence about this run; it is not a
 proof that every equilibrium has been found, and it says nothing about a game
 outside the admitted graph.
+
+The public diagnostics re-admit the supplied graph against its source and check
+the exact information-set and action domains. Each strategy row must have finite
+probabilities in the unit interval and total mass within `1e-12` of one.
+Best-response comparisons use within-state payoff differences and compensated
+summation. Training scales each player's utilities by a power of two and
+restores the original units for expected payoffs. A nonzero quantity that
+underflows to zero, a nonfinite result or a computed negative unilateral gain
+returns a numerical error.
 
 ## External check that is pinned
 

@@ -926,3 +926,230 @@ fn leduc_action_label(label: &str) -> &'static str {
         _ => panic!("unknown leduc action"),
     }
 }
+
+#[test]
+fn diagnostics_reject_bad_mass_width_keys_action_order_and_graph() {
+    use paignia_solve::cfr_best_response_value;
+    let (source, declaration) = dominated_chance_game();
+    let graph = build_information_set_graph(&source, &declaration).unwrap();
+    let strategy = train_counterfactual_regret(
+        &source,
+        &declaration,
+        &CfrConfig {
+            variant: CfrVariant::Cfr,
+            iterations: 1,
+        },
+    )
+    .unwrap()
+    .average_strategy;
+    let set = declaration.sets[0].id.clone();
+    for invalid in [
+        vec![],
+        vec![1.0],
+        vec![1.0, 0.0, 0.0],
+        vec![2.0, -1.0],
+        vec![0.1, 0.1],
+        vec![f64::NAN, 0.0],
+        vec![f64::INFINITY, 0.0],
+    ] {
+        let mut malformed = strategy.clone();
+        malformed.probabilities.insert(set.clone(), invalid);
+        assert_eq!(
+            cfr_nash_conv(&source, &graph, &malformed),
+            Err(CfrError::InvalidDistribution(set.clone()))
+        );
+    }
+    let mut missing = strategy.clone();
+    missing.probabilities.clear();
+    assert_eq!(
+        cfr_profile_values(&source, &graph, &missing),
+        Err(CfrError::StrategyDomain)
+    );
+    let mut reordered = strategy.clone();
+    reordered.action_order.get_mut(&set).unwrap().reverse();
+    assert!(matches!(
+        cfr_best_response_value(&source, &graph, &reordered, &player("alice")),
+        Err(CfrError::InconsistentActionOrder { .. })
+    ));
+    let mut stale = graph;
+    stale.assignments.clear();
+    assert_eq!(
+        cfr_nash_conv(&source, &stale, &strategy),
+        Err(CfrError::GraphMismatch)
+    );
+}
+
+#[test]
+fn a_deep_shared_chance_dag_uses_the_same_counterfactual_mass_as_one_edge() {
+    use paignia_solve::cfr_best_response_value;
+    let (mut source, declaration) = dominated_chance_game();
+    // Two edges to the same child at each stage give 2^4096 histories with total mass one.
+    for i in 0..4096 {
+        let next = node(&format!("shared-chance-{i}"));
+        let edges = [0.25, 0.75].map(|probability| ChanceEdge {
+            probability,
+            target: source.game.root.clone(),
+        });
+        source.game.nodes.insert(
+            next.clone(),
+            Node::Chance {
+                edges: edges.to_vec(),
+            },
+        );
+        source.game.root = next;
+    }
+    let graph = build_information_set_graph(&source, &declaration).unwrap();
+    for variant in [CfrVariant::Cfr, CfrVariant::CfrPlus] {
+        let trained = train_counterfactual_regret(
+            &source,
+            &declaration,
+            &CfrConfig {
+                variant,
+                iterations: 5,
+            },
+        )
+        .unwrap();
+        // The shared actions yield 2.5 and 2.25. One uniform iteration and
+        // four iterations of the first action give an average (0.9, 0.1).
+        let row = &trained.average_strategy.probabilities[&declaration.sets[0].id];
+        assert!((row[0] - 0.9).abs() < 1e-12);
+        let best =
+            cfr_best_response_value(&source, &graph, &trained.average_strategy, &player("alice"))
+                .unwrap();
+        assert!((best - 2.5).abs() < 1e-12);
+        assert!((trained.root_values[&player("alice")] - 2.475).abs() < 1e-12);
+    }
+}
+
+#[test]
+fn extreme_payoffs_preserve_regret_matching_proportions() {
+    let source = specification(
+        "root",
+        vec![
+            (
+                "root",
+                decision(
+                    "alice",
+                    &[("w1", "up"), ("w2", "up"), ("l1", "down"), ("l2", "down")],
+                ),
+            ),
+            ("up", terminal(&[("alice", 1e308)])),
+            ("down", terminal(&[("alice", -1e308)])),
+        ],
+    );
+    let declaration = declared(vec![("root", "alice", &["root"])]);
+    for variant in [CfrVariant::Cfr, CfrVariant::CfrPlus] {
+        let trained = train_counterfactual_regret(
+            &source,
+            &declaration,
+            &CfrConfig {
+                variant,
+                iterations: 2,
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            trained.average_strategy.probabilities[&declaration.sets[0].id],
+            [0.375, 0.375, 0.125, 0.125]
+        );
+        assert!((trained.root_values[&player("alice")] / 1e308 - 0.5).abs() < 1e-14);
+    }
+}
+
+#[test]
+fn common_state_payoffs_cancel_before_scoring_a_best_response() {
+    use paignia_solve::cfr_best_response_value;
+    let large = 2_f64.powi(55);
+    let source = specification(
+        "root",
+        vec![
+            ("root", chance(&[(0.25, "a"), (0.25, "c"), (0.5, "b")])),
+            ("a", decision("alice", &[("L", "pos"), ("R", "pos")])),
+            ("b", decision("alice", &[("L", "zero"), ("R", "two")])),
+            ("c", decision("alice", &[("L", "neg"), ("R", "neg")])),
+            ("pos", terminal(&[("alice", large)])),
+            ("neg", terminal(&[("alice", -large)])),
+            ("zero", terminal(&[])),
+            ("two", terminal(&[("alice", 2.0)])),
+        ],
+    );
+    let declaration = declared(vec![("hidden", "alice", &["a", "b", "c"])]);
+    let graph = build_information_set_graph(&source, &declaration).unwrap();
+    let id = declaration.sets[0].id.clone();
+    let mut strategy = CfrStrategy {
+        action_order: BTreeMap::from([(id.clone(), vec![action("L"), action("R")])]),
+        probabilities: BTreeMap::from([(id.clone(), vec![0.0, 1.0])]),
+    };
+    let alice = player("alice");
+    assert!(
+        (cfr_best_response_value(&source, &graph, &strategy, &alice).unwrap() - 1.0).abs()
+            < f64::EPSILON
+    );
+    assert!(cfr_nash_conv(&source, &graph, &strategy).unwrap().abs() < f64::EPSILON);
+    strategy.probabilities.insert(id, vec![1.0, 0.0]);
+    assert!((cfr_nash_conv(&source, &graph, &strategy).unwrap() - 1.0).abs() < f64::EPSILON);
+}
+
+#[test]
+fn positive_reach_that_underflows_is_reported() {
+    use paignia_solve::cfr_best_response_value;
+    let mut source = specification(
+        "choose",
+        vec![
+            (
+                "choose",
+                decision("alice", &[("L", "zero"), ("R", "large")]),
+            ),
+            ("zero", terminal(&[])),
+            ("large", terminal(&[("alice", 2_f64.powi(1023))])),
+        ],
+    );
+    let declaration = declared(vec![("choose", "alice", &["choose"])]);
+    let probability = 2_f64.powi(-49);
+    for i in 0..22 {
+        let root = node(&format!("tiny-chance-{i}"));
+        source.game.nodes.insert(
+            root.clone(),
+            Node::Chance {
+                edges: vec![
+                    ChanceEdge {
+                        probability,
+                        target: source.game.root.clone(),
+                    },
+                    ChanceEdge {
+                        probability: 1.0 - probability,
+                        target: node("zero"),
+                    },
+                ],
+            },
+        );
+        source.game.root = root;
+    }
+    let graph = build_information_set_graph(&source, &declaration).unwrap();
+    let id = declaration.sets[0].id.clone();
+    let strategy = CfrStrategy {
+        action_order: BTreeMap::from([(id.clone(), vec![action("L"), action("R")])]),
+        probabilities: BTreeMap::from([(id, vec![0.0, 1.0])]),
+    };
+    assert_eq!(
+        cfr_best_response_value(&source, &graph, &strategy, &player("alice")),
+        Err(CfrError::Underflow)
+    );
+    assert_eq!(
+        cfr_nash_conv(&source, &graph, &strategy),
+        Err(CfrError::Underflow)
+    );
+    for variant in [CfrVariant::Cfr, CfrVariant::CfrPlus] {
+        assert_eq!(
+            train_counterfactual_regret(
+                &source,
+                &declaration,
+                &CfrConfig {
+                    variant,
+                    iterations: 1
+                }
+            ),
+            Err(CfrError::Underflow)
+        );
+    }
+}
