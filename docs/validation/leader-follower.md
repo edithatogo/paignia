@@ -1,0 +1,185 @@
+# Exact leader-follower inspection family — T18.01
+
+## Supported input and method
+
+`inspection_simultaneous_nash`, `inspection_commitment_at`, and
+`inspection_commitment_bound` admit one binary family. The leader's rows are
+inspect and skip. The follower's columns are comply and evade. With strictly
+positive `c`, `h`, `g`, and `f`, the cells are `(-c, 0)`, `(-c, -f)`, `(0, 0)`,
+and `(-h, g)`.
+
+Detection is perfect when the leader inspects. The follower observes the
+committed inspection probability and does not observe the later private draw.
+An expected-effort budget `B` in `[0, 1]` limits that probability. It does not
+forbid a realised inspection when `B < 1`.
+
+At follower indifference, optimistic selection maximises the leader's payoff and
+pessimistic selection minimises it. The returned commitment is attained only
+when a feasible probability reaches the value. A one-sided threshold limit that
+no feasible point reaches is a supremum and carries no strategy witness.
+
+Simultaneous Nash is a separate witness. When `c < h` it is the unique interior
+profile `p = g/(g+f)`, `q = c/h`. When `c > h`, skip is strictly dominant and
+the unique profile is `(0, 1)`. The infeasible value `q = c/h > 1` is rejected
+rather than clipped. When `c = h`, every inspection probability up to the
+follower's threshold can be a best response, so the method returns
+`LeaderIndifferent` instead of an arbitrary witness.
+
+Each exact arithmetic operation stores its reduced result as a signed `i64`
+numerator and a positive `i64` denominator. Subtraction forms the difference
+of cross-products in `i128` before reduction. This allows a payoff with
+numerator `i64::MIN` to produce a representable deviation gain. A reduced
+result outside the storage range returns `Overflow`.
+
+A zero denominator, a nonpositive parameter,
+a probability outside `[0, 1]`, and a commitment above the budget are rejected.
+No payoff is replaced by zero.
+
+## External check that is pinned
+
+The two Nash witnesses and fourteen commitment certificates are the synthetic
+literals in
+[`verification/inspection_oracles/inspection_2x2_v1.json`](../../verification/inspection_oracles/inspection_2x2_v1.json).
+They were not produced by this solver. The focused test also evaluates the closed forms
+
+```text
+U_I(p,q) = -c*p - h*(1-p)*q
+U_E(p,q) = q*(g - (g+f)*p)
+```
+
+on the four pure profiles and on the unattained approach `p = 2/3`. That path
+does not call the four-cell sum.
+
+## One-parameter Nash projection
+
+`inspection_nash_projection` lets one of `c`, `h`, `g`, or `f` range over a
+closed positive interval while the other three stay fixed. Inside a strict
+regime the unique witness is monotone, so each coordinate's image is the span
+of the regime endpoints. An interval that contains `c = h` also includes the
+indifference segment: inspection probabilities from 0 through `g/(g+f)`, evasion
+probability 1, and follower payoffs from 0 through `g`. Every reported endpoint
+is attained, and the endpoint gap is exactly zero.
+
+The four intervals are projections. A combination drawn from all four at once
+need not be a Nash witness for any parameter in the interval. The crossing-cost
+test uses inspection probability `1/6` and evasion probability `1/4`, which lies
+inside the projected box and has a profitable deviation at the low cost, the
+equal-cost boundary, and the high cost.
+
+## Two-parameter rectangle
+
+`inspection_nash_rectangle` varies two distinct parameters over a closed
+rectangle. All four corners must lie in the same strict regime. In the interior
+regime and in the pure-skip regime, each Nash coordinate is monotone, so the
+span of the corners is the image and the endpoint gap is zero. A rectangle that
+mixes those regimes, or that repeats one parameter, is rejected. Equal cost and
+harm at a corner still has no unique witness.
+
+`inspection_nash_box` varies all four parameters. The sixteen corners are
+solved only while every corner stays in one strict regime. Cost in `[1, 2]`,
+harm in `[6, 8]`, gain in `[1, 2]` and detected loss in `[2, 4]` give
+inspection `[1/5, 1/2]`, evasion `[1/8, 1/3]` and leader value `[-2, -1]`.
+The corner with cost `1` has leader value `-1` and evasion at most `1/6`, so
+the reported leader upper bound and evasion upper bound are not a joint
+witness. This is not a credal set over arbitrary payoff matrices.
+
+`inspection_nash_hull` projects the convex hull of finitely many parameter
+vectors at perfect detection. The regimes `c < h` and `c > h` are convex, and
+inside either regime the shares and payoffs are linear or linear-fractional
+with a positive denominator, so the extrema are attained at the vertices. The
+vertices `(1, 6, 1, 4)`, `(2, 8, 2, 2)` and `(1, 8, 1, 2)` give inspection
+`[1/5, 1/2]` and evasion `[1/8, 1/4]`. The midpoint of the first two vertices
+has inspection `1/3` and evasion `3/14`, both inside that span. Imperfect
+detection is not included, because a mixture of interior detection games can
+leave the interior. The same vertex span does not bound the commitment
+value. The games `(1, 4, 4, 1)` and `(2, 4, 2, 3)` both have optimistic
+full-budget value `-4/5`, while their midpoint has value `-9/10`.
+
+`inspection_detection_rectangle` varies detection together with one other
+parameter. Every corner must stay in one strict regime. With cost in `[1, 3/2]`
+and detection in `[1/2, 1]`, inspection runs from `1/3` to `2/3`, evasion from
+`1/4` to `3/4`, and the leader value from `-3` to `-1`.
+
+## Commitment over one interval
+
+`inspection_commitment_projection` varies one of `c, h, g, f` at perfect
+detection. `inspection_detection_commitment_projection` varies detection `d`
+alone. Write `θ = g/(d(g+f))` for the follower's threshold and `B` for the
+budget. The table gives the pointwise value and the attaining shares `(p, q)`.
+
+| Conditions throughout the interval | Leader value | Optimistic | Pessimistic |
+|---|---|---|---|
+| `θ < B` and `cθ < h` | `-cθ` | `(θ, 0)` | Unattained supremum |
+| `θ < B` and `cθ > h` | `-h` | `(0, 1)` | `(0, 1)` |
+| `θ > B` and `d h > c` | `-h + B(d h - c)` | `(B, 1)` | `(B, 1)` |
+| `θ > B` and `d h < c` | `-h` | `(0, 1)` | `(0, 1)` |
+
+When `θ < B`, the leader compares skipping with deterring evasion. At `θ`,
+compliance gives the leader `h(1-dθ) > 0` more than evasion. Under pessimistic
+ties the leader can approach the deterrence value from above `θ`. When
+`cθ = h`, skipping attains the same value for either tie rule, and optimistic
+selection also permits deterrence at `θ`.
+
+Each comparison is monotone in the single varied input. If both endpoints lie
+in the same row, every intervening game does too. Values and attaining shares
+then span their endpoint values. Both projection functions return
+`CommitmentRegimeChange` when an interval touches a row boundary or crosses
+between rows, including singleton intervals on a boundary.
+
+For example, with `B = d = 1`, `c = 2`, `h = 1`, `f = 3` and gain in
+`[1, 5]`, the optimistic inspection shares at the endpoints are `1/4` and
+`0`. Gain `2` has a unique optimum at `2/5` with value `-4/5`. The switch
+at gain `3` explains why the endpoint shares cannot bound this interval.
+
+For the original game `(1, 4, 1, 2)` at full budget, raising cost from `1` to
+`2` moves the value from `-1/3` to `-2/3` under both tie rules. Each
+pessimistic value is an unattained supremum. With cost fixed at `1`, raising
+detection from `1/2` to `1` moves the optimistic inspection share from `2/3` to
+`1/3` and the value from `-2/3` to `-1/3`.
+
+## Imperfect detection
+
+`inspection_nash_with_detection` admits a detection probability in `(0, 1]`.
+Perfect detection reproduces the witness above. Otherwise the detected branch
+prevents harm and imposes the detected loss only with that probability, and the
+complement leaves the harm and the evasion gain in place. The unique witness is
+the interior profile `p = g/(d(g+f))`, `q = c/(d h)` when both coordinates lie
+in `(0, 1)`. Its leader value is `-c/d` and the follower value is zero.
+When `c > d h`, skipping is strictly dominant and `(0, 1)` is unique, including
+when the follower would tie at full inspection. When `c < d h` and
+`d(g+f) < g`, evasion is strictly dominant and `(1, 1)` is unique.
+
+When `c = d h`, all equilibria have `q = 1` and
+`0 ≤ p ≤ min(1, g/(d(g+f)))`. The solver returns `LeaderIndifferent`.
+When `c < d h` and `d(g+f) = g`, all equilibria have `p = 1` and
+`c/(d h) ≤ q ≤ 1`. The solver returns `FollowerIndifferentAtFullInspection`.
+
+`inspection_detection_projection` compares the inspection shares of the two
+solved endpoints. It returns `DetectionRegimeChange` if their regimes differ.
+For a singleton with a unique witness, every coordinate projects to that
+witness's value. An error solving either endpoint propagates to the caller.
+
+`inspection_commitment_bound_with_detection` uses the same detection probability.
+The follower's indifference point is `g / (d (g + f))`. Perfect detection
+reproduces the original commitment bound. At detection `1/2` and a full budget,
+the optimistic value `-2/3` is attained at inspection probability `2/3`, while
+the pessimistic value `-2/3` is a supremum. A budget of `1/2` stays on the
+evasion side and attains `-7/2`.
+
+## What this slice does not establish
+
+- Detection uses a single probability conditional on inspection in one binary
+  channel. Multi-channel allocation and general Stackelberg games are outside
+  this family.
+- It does not encode the game in the perfect-information extensive-form profile.
+  Revealing the realised inspection before the follower acts is a different game.
+- Parameter intervals, credal bounds, and solver-residual certificates belong
+  to T18.02. The `tobac` and `voiage` handoff belongs to T18.03 and is external.
+- Agreement with these rationals does not close T18.01. The synthetic oracle
+  still requires its own specialist review, and this native method is not that
+  review.
+- No operational, welfare, or empirical claim follows from the constants.
+
+```bash
+cargo test --locked -p paignia-solve --test leader_follower --test inspection_interval --test inspection_detection
+```

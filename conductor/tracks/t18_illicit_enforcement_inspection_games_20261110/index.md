@@ -1,6 +1,6 @@
 # T18 Illicit-supply border-enforcement and retail-inspection game contracts for tobac
 
-Status: new; planning only. Native game representations and equilibrium solvers remain in `paignia-core` / `paignia-solve` (`T17`); tobacco-control institutions, customs seizure processes, wastewater calibration and partial-identification intervals remain in `edithatogo/tobac`.
+Status: in progress. The native exact 2x2 leader-follower family is implemented in `paignia-solve` and is not yet a closed T18.01 receipt. Interval bounds and the external consumer handoff remain open. Tobacco-control institutions, customs seizure processes, wastewater calibration and partial-identification intervals remain in `edithatogo/tobac`.
 
 - [Specification](spec.md)
 - [Provider and consumer implementation plan](plan.md)
