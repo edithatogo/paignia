@@ -50,7 +50,8 @@ The public diagnostics re-admit the supplied graph against its source and check
 the exact information-set and action domains. Each strategy row must have finite
 probabilities in the unit interval and total mass within `1e-12` of one.
 Best-response comparisons use within-state payoff differences and compensated
-summation. Training scales each player's utilities by a power of two and
+summation. NashConv propagates the gains of switching actions before rounding
+the two root payoffs. Training scales each player's utilities by a power of two and
 restores the original units for expected payoffs. A nonzero quantity that
 underflows to zero, a nonfinite result or a computed negative unilateral gain
 returns a numerical error.
