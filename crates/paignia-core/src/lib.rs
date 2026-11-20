@@ -1,4 +1,4 @@
-//! Domain-neutral finite extensive-form game types.
+//! Domain-neutral finite game types.
 //!
 //! The crate deliberately contains no application-domain concepts. It is the
 //! Paignia extraction seed for a Rust game library independent of Kairos and aligned with
@@ -44,6 +44,14 @@ pub struct NodeId(pub String);
 pub struct ActionId(pub String);
 
 pub type PayoffVector = BTreeMap<PlayerId, f64>;
+
+/// A two-player binary game. Both matrices are indexed by `[row][column]`.
+/// Mixed shares `(p, q)` give the probabilities of row 0 and column 0.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Bimatrix2<T> {
+    pub row_payoffs: [[T; 2]; 2],
+    pub column_payoffs: [[T; 2]; 2],
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ActionEdge {
