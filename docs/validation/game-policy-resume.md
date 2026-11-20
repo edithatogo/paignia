@@ -34,9 +34,10 @@ history from the game revision. The resumed branch reproduces full native
 event IDs, time, counters, ordering, chance outcomes, policy action and payoff
 across 64 seeds per stream profile. A sibling changes its decoded policy and
 reaches a different payoff while the original and checkpoint remain intact.
-Negative cases reject
-incompatible formats, version, invalid policy bytes and a nonfresh scheduler.
+Negative cases reject incompatible formats or versions, invalid policy bytes,
+and a nonfresh scheduler.
 
-The candidate uses the native scheduler state change in
-[Kairos #401](https://github.com/edithatogo/kairos/pull/401). Its upstream
-qualification and immutable accepted pin are prerequisites for integration.
+The adapter binds the native scheduler checkpoint at Kairos
+`235e6a333ccc6e690f5b41f2c5eaa9a6784fe147`. The upstream change passed independent
+review, workspace coverage and native CI.
+[Kairos #401](https://github.com/edithatogo/kairos/pull/401)
