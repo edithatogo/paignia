@@ -1,0 +1,42 @@
+{
+  "schema": "paignia/leduc-open-spiel/1.0.0",
+  "open_spiel_commit": "4956843d7375e29a4c986425c66f897d7ac15340",
+  "game": "leduc_poker",
+  "average_weight": "own_reach",
+  "cfr_plus_update_order": [
+    1,
+    0
+  ],
+  "curves": [
+    {
+      "method": "paignia/vanilla-cfr",
+      "samples": [
+        {
+          "iterations": 1000,
+          "first_player_value": -0.09121178317115965,
+          "nash_conv": 0.07962655462919666
+        },
+        {
+          "iterations": 4000,
+          "first_player_value": -0.08842247883323526,
+          "nash_conv": 0.034685342220880946
+        }
+      ]
+    },
+    {
+      "method": "paignia/cfr-plus",
+      "samples": [
+        {
+          "iterations": 1000,
+          "first_player_value": -0.08573022092480617,
+          "nash_conv": 0.011737789016919464
+        },
+        {
+          "iterations": 4000,
+          "first_player_value": -0.08563722747574573,
+          "nash_conv": 0.002932121222831971
+        }
+      ]
+    }
+  ]
+}
