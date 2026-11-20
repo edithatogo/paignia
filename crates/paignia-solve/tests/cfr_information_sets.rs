@@ -1,5 +1,8 @@
 //! CFR/CFR+ on admitted information-set graphs, checked against Kuhn's value.
 
+#[path = "support/leduc_reference.rs"]
+mod leduc_reference;
+
 use paignia_core::{
     build_information_set_graph, ActionEdge, ActionId, ChanceEdge, Game, GameSpecification,
     InformationSetDeclaration, InformationSetDefinition, InformationSetError, InformationSetGraph,
@@ -10,8 +13,8 @@ use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
 use paignia_solve::{
-    cfr_nash_conv, cfr_profile_values, train_counterfactual_regret, CfrConfig, CfrError,
-    CfrStrategy, CfrVariant,
+    cfr_best_response_value, cfr_nash_conv, cfr_profile_values, train_counterfactual_regret,
+    CfrConfig, CfrError, CfrStrategy, CfrVariant,
 };
 
 const KUHN_VALUE: f64 = -1.0 / 18.0;
@@ -116,7 +119,7 @@ fn preserves_declared_action_order() {
 }
 
 #[test]
-fn kuhn_average_value_and_exploitability_match_the_independent_reference() {
+fn kuhn_average_value_and_nash_conv_match_the_independent_reference() {
     let fixture = include_str!("../../../fixtures/conformance/cfr-reference-v1.json");
     assert!(fixture.contains("\"player_one_value\": \"-1/18\""));
 
@@ -135,8 +138,8 @@ fn kuhn_average_value_and_exploitability_match_the_independent_reference() {
         let probabilities = kuhn_probabilities(&trained.average_strategy);
         let independent_value = kuhn_value(&probabilities);
         let library_value = trained.root_values[&player("one")];
-        let independent_exploitability = kuhn_exploitability(&probabilities);
-        let library_exploitability =
+        let independent_nash_conv = kuhn_best_responses(&probabilities).iter().sum::<f64>();
+        let library_nash_conv =
             cfr_nash_conv(&source, &graph, &trained.average_strategy).expect("nash conv");
 
         assert!(
@@ -148,18 +151,18 @@ fn kuhn_average_value_and_exploitability_match_the_independent_reference() {
             "{variant:?} value {independent_value} target {KUHN_VALUE}"
         );
         assert!(
-            independent_exploitability < 2e-2,
-            "{variant:?} exploitability {independent_exploitability}"
+            independent_nash_conv < 2e-2,
+            "{variant:?} NashConv {independent_nash_conv}"
         );
         assert!(
-            (library_exploitability - independent_exploitability).abs() < 1e-8,
-            "{variant:?} library {library_exploitability} independent {independent_exploitability}"
+            (library_nash_conv - independent_nash_conv).abs() < 1e-8,
+            "{variant:?} library {library_nash_conv} independent {independent_nash_conv}"
         );
     }
 }
 
 #[test]
-fn kuhn_error_and_exploitability_shrink_across_iteration_counts() {
+fn kuhn_nash_conv_shrinks_and_value_stays_within_tolerance_at_three_budgets() {
     let fixture = include_str!("../../../fixtures/conformance/cfr-reference-v1.json");
     assert!(fixture.contains("\"iteration_counts\": [100, 1000, 12000]"));
 
@@ -180,27 +183,37 @@ fn kuhn_error_and_exploitability_shrink_across_iteration_counts() {
             let probabilities = kuhn_probabilities(&trained.average_strategy);
             let independent_value = kuhn_value(&probabilities);
             let library_value = trained.root_values[&player("one")];
-            let independent_exploitability = kuhn_exploitability(&probabilities);
-            let library_exploitability =
+            let responses = kuhn_best_responses(&probabilities);
+            for (seat, expected) in [player("one"), player("two")].iter().zip(responses) {
+                let actual =
+                    cfr_best_response_value(&source, &graph, &trained.average_strategy, seat)
+                        .expect("Kuhn best response");
+                assert!(
+                    (actual - expected).abs() < 1e-9,
+                    "{variant:?} {iterations} {seat:?}: {actual} vs {expected}"
+                );
+            }
+            let independent_nash_conv = responses.iter().sum::<f64>();
+            let library_nash_conv =
                 cfr_nash_conv(&source, &graph, &trained.average_strategy).expect("nash conv");
             assert!(
                 (library_value - independent_value).abs() < 1e-9,
                 "{variant:?} {iterations} library {library_value} independent {independent_value}"
             );
             assert!(
-                (library_exploitability - independent_exploitability).abs() < 1e-8,
-                "{variant:?} {iterations} library {library_exploitability} independent {independent_exploitability}"
+                (library_nash_conv - independent_nash_conv).abs() < 1e-8,
+                "{variant:?} {iterations} library {library_nash_conv} independent {independent_nash_conv}"
             );
             let value_error = (independent_value - KUHN_VALUE).abs();
             assert!(
                 value_error < 5e-3,
                 "{variant:?} {iterations} value error {value_error}"
             );
-            observed.push(independent_exploitability);
+            observed.push(independent_nash_conv);
         }
         assert!(
             observed[1] < observed[0] && observed[2] < observed[1],
-            "{variant:?} exploitability {observed:?} does not shrink across 100, 1000, and 12000"
+            "{variant:?} NashConv {observed:?} does not shrink across 100, 1000, and 12000"
         );
     }
 }
@@ -558,8 +571,7 @@ fn kuhn_value(probabilities: &KuhnProbabilities) -> f64 {
     total / 6.0
 }
 
-fn kuhn_exploitability(probabilities: &KuhnProbabilities) -> f64 {
-    let current = kuhn_value(probabilities);
+fn kuhn_best_responses(probabilities: &KuhnProbabilities) -> [f64; 2] {
     let mut best_for_one = f64::NEG_INFINITY;
     let mut worst_for_one = f64::INFINITY;
     for mask in 0..64_u32 {
@@ -576,22 +588,16 @@ fn kuhn_exploitability(probabilities: &KuhnProbabilities) -> f64 {
         }
         worst_for_one = worst_for_one.min(kuhn_value(&deviating));
     }
-    (best_for_one - current) + (current - worst_for_one)
+    [best_for_one, -worst_for_one]
 }
 
 const LEDUC_VALUE: f64 = -0.085_606;
 const LEDUC_ITERATIONS: u32 = 4_000;
 
 #[test]
-fn leduc_tree_matches_the_independent_check_call_value_and_trains_toward_the_published_value() {
-    let fixture = include_str!("../../../fixtures/conformance/cfr-reference-v1.json");
-    assert!(fixture.contains("\"player_one_value\": -0.085606"));
-    assert!(fixture.contains("\"information_states\": 936"));
-
+fn leduc_all_call_matches_both_seat_best_responses_and_nash_conv() {
     let (source, declaration) = leduc();
-    assert_eq!(declaration.sets.len(), 936);
-    let graph =
-        build_information_set_graph(&source, &declaration).expect("Leduc is perfect recall");
+    let graph = build_information_set_graph(&source, &declaration).expect("Leduc is admissible");
     let mut calling = CfrStrategy {
         action_order: BTreeMap::new(),
         probabilities: BTreeMap::new(),
@@ -609,82 +615,141 @@ fn leduc_tree_matches_the_independent_check_call_value_and_trains_toward_the_pub
             .insert(set_id.clone(), set.legal_actions.clone());
         calling.probabilities.insert(set_id.clone(), probabilities);
     }
-    let library_call =
-        cfr_profile_values(&source, &graph, &calling).expect("call value")[&player("zero")];
-    assert!((library_call - independent_leduc_check_value()).abs() < 1e-9);
-
-    let early = leduc_cfr_plus(&source, &declaration, &graph, 1_000);
-    let trained = leduc_cfr_plus(&source, &declaration, &graph, LEDUC_ITERATIONS);
-    assert!(
-        trained.exploitability < early.exploitability,
-        "leduc exploitability early {} late {}",
-        early.exploitability,
-        trained.exploitability
-    );
-    assert!(
-        (trained.value - LEDUC_VALUE).abs() < 2e-2,
-        "leduc value {} target {LEDUC_VALUE} exploitability {}",
-        trained.value,
-        trained.exploitability
-    );
-    assert!(
-        trained.exploitability < 0.05,
-        "leduc exploitability {}",
-        trained.exploitability
-    );
+    let (showdown_sum, best_response_sum, deals) = all_call_deal_totals();
+    assert_eq!((showdown_sum, best_response_sum, deals), (0, 176, 120));
+    let expected_response = f64::from(best_response_sum) / f64::from(deals);
+    let values = cfr_profile_values(&source, &graph, &calling).expect("all-call values");
+    for (index, seat) in [player("zero"), player("one")].into_iter().enumerate() {
+        let reference = leduc_reference::returns(&calling, index);
+        assert!(reference.on_policy.abs() < 1e-12);
+        assert!((reference.best_response - expected_response).abs() < 1e-12);
+        assert!(values[&seat].abs() < 1e-12);
+        let response = cfr_best_response_value(&source, &graph, &calling, &seat)
+            .expect("all-call best response");
+        assert!(
+            (response - expected_response).abs() < 1e-12,
+            "{seat:?}: {response}"
+        );
+    }
+    let nash_conv = cfr_nash_conv(&source, &graph, &calling).expect("all-call NashConv");
+    assert!((nash_conv - 44.0 / 15.0).abs() < 1e-12, "{nash_conv}");
 }
 
+#[test]
+fn leduc_cfr_plus_checks_published_value_and_nash_conv() {
+    let fixture = include_str!("../../../fixtures/conformance/cfr-reference-v1.json");
+    assert!(fixture.contains("\"player_one_value\": -0.085606"));
+    assert!(fixture.contains("\"information_states\": 936"));
+
+    let (source, declaration) = leduc();
+    assert_eq!(declaration.sets.len(), 936);
+    let graph =
+        build_information_set_graph(&source, &declaration).expect("Leduc is perfect recall");
+    let early = checked_leduc_run(&source, &declaration, &graph, CfrVariant::CfrPlus, 1_000);
+    let late = checked_leduc_run(
+        &source,
+        &declaration,
+        &graph,
+        CfrVariant::CfrPlus,
+        LEDUC_ITERATIONS,
+    );
+    assert!(
+        late.nash_conv < early.nash_conv,
+        "CFR+ NashConv: {early:?} to {late:?}"
+    );
+    assert!((late.value - LEDUC_VALUE).abs() < 2e-2, "value: {late:?}");
+    assert!(late.nash_conv < 0.05, "CFR+ NashConv: {late:?}");
+}
+
+#[derive(Debug)]
 struct LeducRun {
     value: f64,
-    exploitability: f64,
+    nash_conv: f64,
 }
 
-fn leduc_cfr_plus(
+fn checked_leduc_run(
     source: &GameSpecification,
     declaration: &InformationSetDeclaration,
     graph: &InformationSetGraph,
+    variant: CfrVariant,
     iterations: u32,
 ) -> LeducRun {
     let trained = train_counterfactual_regret(
         source,
         declaration,
         &CfrConfig {
-            variant: CfrVariant::CfrPlus,
+            variant,
             iterations,
         },
     )
-    .expect("Leduc trains");
+    .expect("Leduc trains at this budget");
+    let strategy = &trained.average_strategy;
+    let reference = [0, 1].map(|seat| leduc_reference::returns(strategy, seat));
+    for (seat, expected) in [player("zero"), player("one")].iter().zip(reference) {
+        let br =
+            cfr_best_response_value(source, graph, strategy, seat).expect("Leduc best response");
+        assert!(
+            (trained.root_values[seat] - expected.on_policy).abs() < 1e-9,
+            "{variant:?} {iterations} {seat:?} profile vs {expected:?}"
+        );
+        assert!(
+            (br - expected.best_response).abs() < 1e-9,
+            "{variant:?} {iterations} {seat:?} best response {br} vs {expected:?}"
+        );
+    }
+    let nash_conv = reference
+        .iter()
+        .map(|s| s.best_response - s.on_policy)
+        .sum::<f64>();
+    let actual = cfr_nash_conv(source, graph, strategy).expect("Leduc NashConv");
+    assert!(
+        (actual - nash_conv).abs() < 1e-9,
+        "{variant:?} {iterations}: {actual} vs {nash_conv}"
+    );
+    eprintln!("{variant:?} {iterations}: {reference:?}, NashConv {nash_conv}");
     LeducRun {
-        value: trained.root_values[&player("zero")],
-        exploitability: cfr_nash_conv(source, graph, &trained.average_strategy)
-            .expect("leduc nash"),
+        value: reference[0].on_policy,
+        nash_conv,
     }
 }
 
-fn independent_leduc_check_value() -> f64 {
-    let mut total = 0.0;
-    let mut deals = 0.0;
-    for first in 0..6 {
-        for second in 0..6 {
-            if second == first {
+// Against an opponent who always calls, a raise is matched exactly once per
+// round. Maximize the extra 2 or 4 chips using only cards visible at that turn.
+fn all_call_deal_totals() -> (i32, i32, i32) {
+    let mut first_round = [0_i32; 6];
+    let mut second_round = [[0_i32; 6]; 6];
+    let mut deals = 0;
+    for (private, boards) in second_round.iter_mut().enumerate() {
+        for (board, board_total) in boards.iter_mut().enumerate() {
+            if board == private {
                 continue;
             }
-            for board in 0..6 {
-                if board == first || board == second {
-                    continue;
-                }
-                let left = leduc_hand_rank(first, board);
-                let right = leduc_hand_rank(second, board);
-                total += match left.cmp(&right) {
-                    Ordering::Greater => 1.0,
-                    Ordering::Less => -1.0,
-                    Ordering::Equal => 0.0,
+            for other in (0..6).filter(|&card| card != private && card != board) {
+                let rank = |card: usize| (card / 2 == board / 2, card / 2);
+                let result = match rank(private).cmp(&rank(other)) {
+                    Ordering::Greater => 1,
+                    Ordering::Equal => 0,
+                    Ordering::Less => -1,
                 };
-                deals += 1.0;
+                deals += 1;
+                first_round[private] += result;
+                *board_total += result;
             }
         }
     }
-    total / deals
+    let showdown = first_round.iter().sum::<i32>();
+    let first_raise = first_round.iter().copied().map(|v| v.max(0)).sum::<i32>();
+    let second_raise = second_round
+        .iter()
+        .flatten()
+        .copied()
+        .map(|v| v.max(0))
+        .sum::<i32>();
+    (
+        showdown,
+        showdown + 2 * first_raise + 4 * second_raise,
+        deals,
+    )
 }
 
 fn leduc_hand_rank(private_card: i32, public_card: i32) -> i32 {
@@ -998,5 +1063,232 @@ fn leduc_action_label(label: &str) -> &'static str {
         "call" => "c",
         "raise" => "r",
         _ => panic!("unknown leduc action"),
+    }
+}
+
+#[test]
+fn diagnostics_reject_bad_mass_width_keys_action_order_and_graph() {
+    use paignia_solve::cfr_best_response_value;
+    let (source, declaration) = dominated_chance_game();
+    let graph = build_information_set_graph(&source, &declaration).unwrap();
+    let strategy = train_counterfactual_regret(
+        &source,
+        &declaration,
+        &CfrConfig {
+            variant: CfrVariant::Cfr,
+            iterations: 1,
+        },
+    )
+    .unwrap()
+    .average_strategy;
+    let set = declaration.sets[0].id.clone();
+    for invalid in [
+        vec![],
+        vec![1.0],
+        vec![1.0, 0.0, 0.0],
+        vec![2.0, -1.0],
+        vec![0.1, 0.1],
+        vec![f64::NAN, 0.0],
+        vec![f64::INFINITY, 0.0],
+    ] {
+        let mut malformed = strategy.clone();
+        malformed.probabilities.insert(set.clone(), invalid);
+        assert_eq!(
+            cfr_nash_conv(&source, &graph, &malformed),
+            Err(CfrError::InvalidDistribution(set.clone()))
+        );
+    }
+    let mut missing = strategy.clone();
+    missing.probabilities.clear();
+    assert_eq!(
+        cfr_profile_values(&source, &graph, &missing),
+        Err(CfrError::StrategyDomain)
+    );
+    let mut reordered = strategy.clone();
+    reordered.action_order.get_mut(&set).unwrap().reverse();
+    assert!(matches!(
+        cfr_best_response_value(&source, &graph, &reordered, &player("alice")),
+        Err(CfrError::InconsistentActionOrder { .. })
+    ));
+    let mut stale = graph;
+    stale.assignments.clear();
+    assert_eq!(
+        cfr_nash_conv(&source, &stale, &strategy),
+        Err(CfrError::GraphMismatch)
+    );
+}
+
+#[test]
+fn a_deep_shared_chance_dag_uses_the_same_counterfactual_mass_as_one_edge() {
+    use paignia_solve::cfr_best_response_value;
+    let (mut source, declaration) = dominated_chance_game();
+    // Two edges to the same child at each stage give 2^4096 histories with total mass one.
+    for i in 0..4096 {
+        let next = node(&format!("shared-chance-{i}"));
+        let edges = [0.25, 0.75].map(|probability| ChanceEdge {
+            probability,
+            target: source.game.root.clone(),
+        });
+        source.game.nodes.insert(
+            next.clone(),
+            Node::Chance {
+                edges: edges.to_vec(),
+            },
+        );
+        source.game.root = next;
+    }
+    let graph = build_information_set_graph(&source, &declaration).unwrap();
+    for variant in [CfrVariant::Cfr, CfrVariant::CfrPlus] {
+        let trained = train_counterfactual_regret(
+            &source,
+            &declaration,
+            &CfrConfig {
+                variant,
+                iterations: 5,
+            },
+        )
+        .unwrap();
+        // The shared actions yield 2.5 and 2.25. One uniform iteration and
+        // four iterations of the first action give an average (0.9, 0.1).
+        let row = &trained.average_strategy.probabilities[&declaration.sets[0].id];
+        assert!((row[0] - 0.9).abs() < 1e-12);
+        let best =
+            cfr_best_response_value(&source, &graph, &trained.average_strategy, &player("alice"))
+                .unwrap();
+        assert!((best - 2.5).abs() < 1e-12);
+        assert!((trained.root_values[&player("alice")] - 2.475).abs() < 1e-12);
+    }
+}
+
+#[test]
+fn extreme_payoffs_preserve_regret_matching_proportions() {
+    let source = specification(
+        "root",
+        vec![
+            (
+                "root",
+                decision(
+                    "alice",
+                    &[("w1", "up"), ("w2", "up"), ("l1", "down"), ("l2", "down")],
+                ),
+            ),
+            ("up", terminal(&[("alice", 1e308)])),
+            ("down", terminal(&[("alice", -1e308)])),
+        ],
+    );
+    let declaration = declared(vec![("root", "alice", &["root"])]);
+    for variant in [CfrVariant::Cfr, CfrVariant::CfrPlus] {
+        let trained = train_counterfactual_regret(
+            &source,
+            &declaration,
+            &CfrConfig {
+                variant,
+                iterations: 2,
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            trained.average_strategy.probabilities[&declaration.sets[0].id],
+            [0.375, 0.375, 0.125, 0.125]
+        );
+        assert!((trained.root_values[&player("alice")] / 1e308 - 0.5).abs() < 1e-14);
+    }
+}
+
+#[test]
+fn common_state_payoffs_cancel_before_scoring_a_best_response() {
+    use paignia_solve::cfr_best_response_value;
+    let large = 2_f64.powi(55);
+    let source = specification(
+        "root",
+        vec![
+            ("root", chance(&[(0.25, "a"), (0.25, "c"), (0.5, "b")])),
+            ("a", decision("alice", &[("L", "pos"), ("R", "pos")])),
+            ("b", decision("alice", &[("L", "zero"), ("R", "two")])),
+            ("c", decision("alice", &[("L", "neg"), ("R", "neg")])),
+            ("pos", terminal(&[("alice", large)])),
+            ("neg", terminal(&[("alice", -large)])),
+            ("zero", terminal(&[])),
+            ("two", terminal(&[("alice", 2.0)])),
+        ],
+    );
+    let declaration = declared(vec![("hidden", "alice", &["a", "b", "c"])]);
+    let graph = build_information_set_graph(&source, &declaration).unwrap();
+    let id = declaration.sets[0].id.clone();
+    let mut strategy = CfrStrategy {
+        action_order: BTreeMap::from([(id.clone(), vec![action("L"), action("R")])]),
+        probabilities: BTreeMap::from([(id.clone(), vec![0.0, 1.0])]),
+    };
+    let alice = player("alice");
+    assert!(
+        (cfr_best_response_value(&source, &graph, &strategy, &alice).unwrap() - 1.0).abs()
+            < f64::EPSILON
+    );
+    assert!(cfr_nash_conv(&source, &graph, &strategy).unwrap().abs() < f64::EPSILON);
+    strategy.probabilities.insert(id, vec![1.0, 0.0]);
+    assert!((cfr_nash_conv(&source, &graph, &strategy).unwrap() - 1.0).abs() < f64::EPSILON);
+}
+
+#[test]
+fn positive_reach_that_underflows_is_reported() {
+    use paignia_solve::cfr_best_response_value;
+    let mut source = specification(
+        "choose",
+        vec![
+            (
+                "choose",
+                decision("alice", &[("L", "zero"), ("R", "large")]),
+            ),
+            ("zero", terminal(&[])),
+            ("large", terminal(&[("alice", 2_f64.powi(1023))])),
+        ],
+    );
+    let declaration = declared(vec![("choose", "alice", &["choose"])]);
+    let probability = 2_f64.powi(-49);
+    for i in 0..22 {
+        let root = node(&format!("tiny-chance-{i}"));
+        source.game.nodes.insert(
+            root.clone(),
+            Node::Chance {
+                edges: vec![
+                    ChanceEdge {
+                        probability,
+                        target: source.game.root.clone(),
+                    },
+                    ChanceEdge {
+                        probability: 1.0 - probability,
+                        target: node("zero"),
+                    },
+                ],
+            },
+        );
+        source.game.root = root;
+    }
+    let graph = build_information_set_graph(&source, &declaration).unwrap();
+    let id = declaration.sets[0].id.clone();
+    let strategy = CfrStrategy {
+        action_order: BTreeMap::from([(id.clone(), vec![action("L"), action("R")])]),
+        probabilities: BTreeMap::from([(id, vec![0.0, 1.0])]),
+    };
+    assert_eq!(
+        cfr_best_response_value(&source, &graph, &strategy, &player("alice")),
+        Err(CfrError::Underflow)
+    );
+    assert_eq!(
+        cfr_nash_conv(&source, &graph, &strategy),
+        Err(CfrError::Underflow)
+    );
+    for variant in [CfrVariant::Cfr, CfrVariant::CfrPlus] {
+        assert_eq!(
+            train_counterfactual_regret(
+                &source,
+                &declaration,
+                &CfrConfig {
+                    variant,
+                    iterations: 1
+                }
+            ),
+            Err(CfrError::Underflow)
+        );
     }
 }

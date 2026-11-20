@@ -8,13 +8,18 @@
 //! two-player value of the `OpenSpiel` rule set; that comparison is not a proof
 //! that every equilibrium has been found.
 
+mod dag;
+
 use std::collections::{BTreeMap, BTreeSet};
+
+use dag::IndexedGame;
 
 use thiserror::Error;
 
 use paignia_core::{
     build_information_set_graph, ActionId, GameSpecification, InformationSetDeclaration,
-    InformationSetError, InformationSetGraph, InformationSetId, Node, NodeId, PlayerId,
+    InformationSetDefinition, InformationSetError, InformationSetGraph, InformationSetId, NodeId,
+    PlayerId,
 };
 
 /// Version of the regret-matching, averaging and admission rules in this module.
@@ -71,6 +76,18 @@ pub enum Error {
     InformationSet(#[from] InformationSetError),
     #[error("CFR iteration count {iterations} is outside 1..={MAX_ITERATIONS}")]
     IterationBudget { iterations: u32 },
+    #[error("information-set graph does not match its source and declared partition")]
+    GraphMismatch,
+    #[error("strategy domains do not match the admitted information sets")]
+    StrategyDomain,
+    #[error("invalid action probabilities at information set {0:?}")]
+    InvalidDistribution(InformationSetId),
+    #[error("counterfactual calculation exceeded finite arithmetic")]
+    NonFiniteArithmetic,
+    #[error("a nonzero counterfactual quantity underflowed the available precision")]
+    Underflow,
+    #[error("floating-point evaluation gave a negative unilateral gain")]
+    NegativeGain,
     #[error("decision node {node:?} has action {action:?} outside its admitted information set")]
     InconsistentActionOrder { node: NodeId, action: ActionId },
     #[error("information set {0:?} is reachable from itself under perfect-recall traversal")]
@@ -87,7 +104,8 @@ pub enum Error {
 /// # Errors
 ///
 /// Returns an information-set admission error, or [`Error::IterationBudget`]
-/// when the requested length is zero or above [`MAX_ITERATIONS`].
+/// when the requested length is zero or above [`MAX_ITERATIONS`]. Returns an
+/// arithmetic error if a finite payoff, reach or regret cannot be represented.
 pub fn train(
     source: &GameSpecification,
     declaration: &InformationSetDeclaration,
@@ -99,46 +117,33 @@ pub fn train(
         });
     }
     let graph = build_information_set_graph(source, declaration)?;
+    let game = IndexedGame::new(source, &graph);
     let players = players_of(&graph);
-    let tree = index_tree(source, &graph, &players)?;
-    let mut regrets = zero_tables(&graph);
-    let mut strategy_sum = zero_tables(&graph);
+    let mut regrets = zero_table(&graph);
+    let mut sums = zero_table(&graph);
 
     for _ in 0..config.iterations {
-        match config.variant {
-            Variant::Cfr => {
-                let snapshot = regret_matching(&graph, &regrets);
-                let mut delta = zero_tables(&graph);
-                for (player_index, _) in players.iter().enumerate() {
-                    walk_indexed(
-                        &tree,
-                        player_index,
-                        &snapshot,
-                        &mut delta,
-                        &mut strategy_sum,
-                    );
-                }
-                add_regret(&mut regrets, &delta, false);
+        let mut strategy = normalized(&regrets)?;
+        for (index, player) in players.iter().enumerate() {
+            if index != 0 && config.variant == Variant::CfrPlus {
+                strategy = normalized(&regrets)?;
             }
-            Variant::CfrPlus => {
-                for (player_index, _) in players.iter().enumerate() {
-                    let snapshot = regret_matching(&graph, &regrets);
-                    let mut delta = zero_tables(&graph);
-                    walk_indexed(
-                        &tree,
-                        player_index,
-                        &snapshot,
-                        &mut delta,
-                        &mut strategy_sum,
-                    );
-                    add_regret(&mut regrets, &delta, true);
-                }
-            }
+            // Only the updating player's sets change. Vanilla keeps the
+            // snapshot fixed until every player has applied this iteration.
+            game.update(&strategy, player, &mut regrets, &mut sums, config.variant)?;
         }
     }
 
-    let average_strategy = average_strategy(&graph, &strategy_sum);
-    let root_values = profile_values(source, &graph, &average_strategy)?;
+    let rows = normalized(&sums)?;
+    let root_values = game.profile_values(&rows)?;
+    let average_strategy = Strategy {
+        action_order: graph
+            .sets
+            .iter()
+            .map(|(id, set)| (id.clone(), set.legal_actions.clone()))
+            .collect(),
+        probabilities: graph.sets.keys().cloned().zip(rows).collect(),
+    };
     Ok(Training {
         variant: config.variant,
         iterations: config.iterations,
@@ -147,667 +152,166 @@ pub fn train(
     })
 }
 
-/// Expected payoffs of `strategy` for every participating player.
+/// Expected payoffs of a validated behavioral strategy for all participants.
 ///
 /// # Errors
 ///
-/// Returns [`Error::InconsistentActionOrder`] when a node edge does not follow
-/// the strategy's admitted action order.
+/// Rejects inconsistent source/partition data, invalid action distributions
+/// and out-of-range arithmetic.
 pub fn profile_values(
     source: &GameSpecification,
     graph: &InformationSetGraph,
     strategy: &Strategy,
 ) -> Result<BTreeMap<PlayerId, f64>, Error> {
-    let players = participating_players(source, graph);
-    let mut memo = BTreeMap::new();
-    values_at(
-        source,
-        graph,
-        strategy,
-        &players,
-        &source.game.root,
-        &mut memo,
-    )
+    let (game, rows) = checked_profile(source, graph, strategy)?;
+    game.profile_values(&rows)
 }
 
-/// Expected payoff for `player` when that player unilaterally switches to a
-/// pure best response and everyone else keeps `strategy`.
+/// Expected payoff of a unilateral pure best response at the player's information sets.
 ///
 /// # Errors
 ///
-/// Returns [`Error::RecallCycle`] when an information set can reach itself, or
-/// [`Error::UnsolvedInformationSet`] when a downstream action is missing.
+/// Propagates admission, distribution and finite arithmetic errors.
 pub fn best_response_value(
     source: &GameSpecification,
     graph: &InformationSetGraph,
     strategy: &Strategy,
     player: &PlayerId,
 ) -> Result<f64, Error> {
-    let reaches = counterfactual_reaches(source, graph, strategy, player);
-    let order = best_response_order(source, graph, player)?;
-    let mut policy = BTreeMap::new();
-    let mut memo = BTreeMap::new();
-    for set_id in order {
-        let set = &graph.sets[&set_id];
-        let mut best_index = 0_usize;
-        let mut best_value = f64::NEG_INFINITY;
-        for action_index in 0..set.legal_actions.len() {
-            let mut value = 0.0;
-            for member in &set.members {
-                let target = action_target(source, graph, member, action_index)?;
-                value += reaches.get(member).copied().unwrap_or(0.0)
-                    * response_value(source, graph, strategy, &policy, player, &target, &mut memo)?;
-            }
-            if value > best_value {
-                best_value = value;
-                best_index = action_index;
-            }
-        }
-        policy.insert(set_id, best_index);
-    }
-    response_value(
-        source,
-        graph,
-        strategy,
-        &policy,
-        player,
-        &source.game.root,
-        &mut memo,
-    )
+    let (game, rows) = checked_profile(source, graph, strategy)?;
+    game.best_response(&rows, player)
 }
 
-/// Sum of unilateral pure best-response gains against `strategy`.
-///
-/// For a two-player zero-sum game this is the usual exploitability. It is not
-/// a certificate that the strategy is a Nash equilibrium.
+/// Sum of unilateral best-response gains. In the usual two-player zero-sum
+/// convention exploitability is half this sum.
 ///
 /// # Errors
 ///
-/// Propagates the errors of [`profile_values`] and [`best_response_value`].
+/// Propagates admission, distribution and arithmetic errors, including a
+/// negative unilateral gain due to floating-point evaluation.
 pub fn nash_conv(
     source: &GameSpecification,
     graph: &InformationSetGraph,
     strategy: &Strategy,
 ) -> Result<f64, Error> {
-    let values = profile_values(source, graph, strategy)?;
+    let (game, rows) = checked_profile(source, graph, strategy)?;
+    let values = game.profile_values(&rows)?;
     let mut total = 0.0;
     for player in players_of(graph) {
-        let current = values.get(&player).copied().unwrap_or(0.0);
-        total += best_response_value(source, graph, strategy, &player)? - current;
+        let gain = finite(game.best_response(&rows, player)? - values[player])?;
+        if gain < 0.0 {
+            return Err(Error::NegativeGain);
+        }
+        total = finite(total + gain)?;
     }
     Ok(total)
 }
 
-fn players_of(graph: &InformationSetGraph) -> Vec<PlayerId> {
+fn checked_profile<'a>(
+    source: &'a GameSpecification,
+    graph: &'a InformationSetGraph,
+    strategy: &Strategy,
+) -> Result<(IndexedGame<'a>, Vec<Vec<f64>>), Error> {
+    // Graphs are public DTOs. Validate even when a caller retained a graph and
+    // subsequently changed its membership, assignments, or source.
+    let declaration = InformationSetDeclaration {
+        schema_version: graph.schema_version.clone(),
+        semantic_profile: graph.semantic_profile.clone(),
+        sets: graph
+            .sets
+            .iter()
+            .map(|(id, set)| InformationSetDefinition {
+                id: id.clone(),
+                player: set.player.clone(),
+                members: set.members.clone(),
+            })
+            .collect(),
+    };
+    if build_information_set_graph(source, &declaration)? != *graph {
+        return Err(Error::GraphMismatch);
+    }
+    if !strategy.action_order.keys().eq(graph.sets.keys())
+        || !strategy.probabilities.keys().eq(graph.sets.keys())
+    {
+        return Err(Error::StrategyDomain);
+    }
+    for (id, set) in &graph.sets {
+        let order = &strategy.action_order[id];
+        let row = &strategy.probabilities[id];
+        if order.len() != set.legal_actions.len() || row.len() != order.len() {
+            return Err(Error::InvalidDistribution(id.clone()));
+        }
+        for (declared, supplied) in set.legal_actions.iter().zip(order) {
+            if supplied != declared {
+                return Err(Error::InconsistentActionOrder {
+                    node: set.members[0].clone(),
+                    action: supplied.clone(),
+                });
+            }
+        }
+        if row.iter().any(|p| !(0.0..=1.0).contains(p))
+            || (row.iter().sum::<f64>() - 1.0).abs() > 1e-12
+        {
+            return Err(Error::InvalidDistribution(id.clone()));
+        }
+    }
+    Ok((
+        IndexedGame::new(source, graph),
+        strategy.probabilities.values().cloned().collect(),
+    ))
+}
+
+fn players_of(graph: &InformationSetGraph) -> BTreeSet<&PlayerId> {
+    graph.sets.values().map(|set| &set.player).collect()
+}
+
+fn zero_table(graph: &InformationSetGraph) -> Vec<Vec<f64>> {
     graph
         .sets
         .values()
-        .map(|set| set.player.clone())
-        .collect::<BTreeSet<_>>()
-        .into_iter()
+        .map(|set| vec![0.0; set.legal_actions.len()])
         .collect()
 }
 
-fn participating_players(source: &GameSpecification, graph: &InformationSetGraph) -> Vec<PlayerId> {
-    let mut players = players_of(graph).into_iter().collect::<BTreeSet<_>>();
-    for node in source.game.nodes.values() {
-        if let Node::Terminal { payoffs } = node {
-            players.extend(payoffs.keys().cloned());
-        }
-    }
-    players.into_iter().collect()
-}
-
-fn zero_tables(graph: &InformationSetGraph) -> BTreeMap<InformationSetId, Vec<f64>> {
-    graph
-        .sets
+// Use the ordinary total when representable (exact for common small
+// dyadic counts). Scale by the largest regret if the total overflows.
+fn normalized(table: &[Vec<f64>]) -> Result<Vec<Vec<f64>>, Error> {
+    table
         .iter()
-        .map(|(id, set)| (id.clone(), vec![0.0; set.legal_actions.len()]))
-        .collect()
-}
-
-fn regret_matching(
-    graph: &InformationSetGraph,
-    regrets: &BTreeMap<InformationSetId, Vec<f64>>,
-) -> BTreeMap<InformationSetId, Vec<f64>> {
-    graph
-        .sets
-        .iter()
-        .map(|(id, set)| {
-            let regret = &regrets[id];
-            let positive = regret
-                .iter()
-                .map(|value| value.max(0.0))
-                .collect::<Vec<_>>();
-            let total: f64 = positive.iter().sum();
-            let probabilities = if total > 0.0 {
-                positive.into_iter().map(|value| value / total).collect()
-            } else {
-                uniform(set.legal_actions.len())
-            };
-            (id.clone(), probabilities)
+        .map(|row| {
+            let mut weights: Vec<_> = row.iter().map(|r| r.max(0.0)).collect();
+            let mut mass = weights.iter().sum::<f64>();
+            if mass == 0.0 {
+                let width = u32::try_from(row.len()).map_err(|_| Error::NonFiniteArithmetic)?;
+                return Ok(vec![1.0 / f64::from(width); row.len()]);
+            }
+            if !mass.is_finite() {
+                let scale = weights.iter().copied().fold(0.0, f64::max);
+                for weight in &mut weights {
+                    *weight = quotient(*weight, scale)?;
+                }
+                mass = finite(weights.iter().sum())?;
+            }
+            for weight in &mut weights {
+                *weight = quotient(*weight, mass)?;
+            }
+            Ok(weights)
         })
         .collect()
 }
 
-fn uniform(len: usize) -> Vec<f64> {
-    let width = u32::try_from(len).expect("an information set has a finite action list");
-    vec![1.0 / f64::from(width); len]
+fn quotient(value: f64, divisor: f64) -> Result<f64, Error> {
+    let result = finite(value / divisor)?;
+    if result == 0.0 && value != 0.0 {
+        return Err(Error::Underflow);
+    }
+    Ok(result)
 }
 
-fn add_regret(
-    regrets: &mut BTreeMap<InformationSetId, Vec<f64>>,
-    delta: &BTreeMap<InformationSetId, Vec<f64>>,
-    floor_at_zero: bool,
-) {
-    for (id, change) in delta {
-        let slot = regrets.get_mut(id).expect("regret table covers every set");
-        for (index, value) in change.iter().enumerate() {
-            slot[index] += value;
-            if floor_at_zero {
-                slot[index] = slot[index].max(0.0);
-            }
-        }
-    }
-}
-
-fn average_strategy(
-    graph: &InformationSetGraph,
-    strategy_sum: &BTreeMap<InformationSetId, Vec<f64>>,
-) -> Strategy {
-    let mut action_order = BTreeMap::new();
-    let mut probabilities = BTreeMap::new();
-    for (id, set) in &graph.sets {
-        let weights = &strategy_sum[id];
-        let total: f64 = weights.iter().sum();
-        let probs = if total > 0.0 {
-            weights.iter().map(|value| value / total).collect()
-        } else {
-            uniform(set.legal_actions.len())
-        };
-        action_order.insert(id.clone(), set.legal_actions.clone());
-        probabilities.insert(id.clone(), probs);
-    }
-    Strategy {
-        action_order,
-        probabilities,
-    }
-}
-
-enum IndexedNode {
-    Terminal(Vec<f64>),
-    Chance(Vec<(f64, usize)>),
-    Decision {
-        player: usize,
-        set: usize,
-        children: Vec<usize>,
-    },
-}
-
-struct IndexedTree {
-    root: usize,
-    nodes: Vec<IndexedNode>,
-}
-
-fn index_tree(
-    source: &GameSpecification,
-    graph: &InformationSetGraph,
-    players: &[PlayerId],
-) -> Result<IndexedTree, Error> {
-    let ids = source.game.nodes.keys().cloned().collect::<Vec<_>>();
-    let mut index_of = BTreeMap::new();
-    for (index, id) in ids.iter().enumerate() {
-        index_of.insert(id, index);
-    }
-    let mut set_index = BTreeMap::new();
-    for (index, set_id) in graph.sets.keys().enumerate() {
-        set_index.insert(set_id, index);
-    }
-    let mut nodes = Vec::with_capacity(ids.len());
-    for id in &ids {
-        let indexed = match &source.game.nodes[id] {
-            Node::Terminal { payoffs } => IndexedNode::Terminal(
-                players
-                    .iter()
-                    .map(|player| payoffs.get(player).copied().unwrap_or(0.0))
-                    .collect(),
-            ),
-            Node::Chance { edges } => IndexedNode::Chance(
-                edges
-                    .iter()
-                    .map(|edge| (edge.probability, index_of[&edge.target]))
-                    .collect(),
-            ),
-            Node::Decision { player, edges } => {
-                let set_id = &graph.assignments[id];
-                let legal_actions = &graph.sets[set_id].legal_actions;
-                let mut children = Vec::with_capacity(edges.len());
-                for (action_index, edge) in edges.iter().enumerate() {
-                    if legal_actions.get(action_index) != Some(&edge.action) {
-                        return Err(Error::InconsistentActionOrder {
-                            node: id.clone(),
-                            action: edge.action.clone(),
-                        });
-                    }
-                    children.push(index_of[&edge.target]);
-                }
-                IndexedNode::Decision {
-                    player: players
-                        .iter()
-                        .position(|candidate| candidate == player)
-                        .expect("every decision player owns an information set"),
-                    set: set_index[set_id],
-                    children,
-                }
-            }
-        };
-        nodes.push(indexed);
-    }
-    Ok(IndexedTree {
-        root: index_of[&source.game.root],
-        nodes,
-    })
-}
-
-struct IndexedWalk<'a> {
-    tree: &'a IndexedTree,
-    updating: usize,
-    strategy: &'a [Vec<f64>],
-    delta: &'a mut [Vec<f64>],
-    strategy_sum: &'a mut [Vec<f64>],
-}
-
-fn walk_indexed(
-    tree: &IndexedTree,
-    updating: usize,
-    strategy: &BTreeMap<InformationSetId, Vec<f64>>,
-    delta: &mut BTreeMap<InformationSetId, Vec<f64>>,
-    strategy_sum: &mut BTreeMap<InformationSetId, Vec<f64>>,
-) {
-    let strategy_rows = strategy.values().cloned().collect::<Vec<_>>();
-    let mut delta_rows = delta.values().cloned().collect::<Vec<_>>();
-    let mut sum_rows = strategy_sum.values().cloned().collect::<Vec<_>>();
-    IndexedWalk {
-        tree,
-        updating,
-        strategy: &strategy_rows,
-        delta: &mut delta_rows,
-        strategy_sum: &mut sum_rows,
-    }
-    .visit(tree.root, 1.0, 1.0);
-    for (row, accumulated) in delta.values_mut().zip(delta_rows) {
-        *row = accumulated;
-    }
-    for (row, accumulated) in strategy_sum.values_mut().zip(sum_rows) {
-        *row = accumulated;
-    }
-}
-
-impl IndexedWalk<'_> {
-    fn visit(&mut self, node_index: usize, player_reach: f64, counterfactual: f64) -> f64 {
-        match &self.tree.nodes[node_index] {
-            IndexedNode::Terminal(payoffs) => payoffs[self.updating],
-            IndexedNode::Chance(edges) => {
-                let edges = edges.clone();
-                let mut value = 0.0;
-                for (probability, target) in edges {
-                    value += probability
-                        * self.visit(target, player_reach, counterfactual * probability);
-                }
-                value
-            }
-            IndexedNode::Decision {
-                player,
-                set,
-                children,
-            } => {
-                let updating_player = *player == self.updating;
-                let set = *set;
-                let children = children.clone();
-                let probabilities = self.strategy[set].clone();
-                let mut action_values = Vec::with_capacity(children.len());
-                let mut value = 0.0;
-                for (index, target) in children.into_iter().enumerate() {
-                    let probability = probabilities[index];
-                    let next_player_reach = if updating_player {
-                        player_reach * probability
-                    } else {
-                        player_reach
-                    };
-                    let next_counterfactual = if updating_player {
-                        counterfactual
-                    } else {
-                        counterfactual * probability
-                    };
-                    let action_value = self.visit(target, next_player_reach, next_counterfactual);
-                    value += probability * action_value;
-                    action_values.push(action_value);
-                }
-                if updating_player {
-                    let regret = &mut self.delta[set];
-                    for (index, action_value) in action_values.iter().enumerate() {
-                        regret[index] += counterfactual * (action_value - value);
-                    }
-                    let sum = &mut self.strategy_sum[set];
-                    for (index, probability) in probabilities.iter().enumerate() {
-                        sum[index] += player_reach * probability;
-                    }
-                }
-                value
-            }
-        }
-    }
-}
-
-fn values_at(
-    source: &GameSpecification,
-    graph: &InformationSetGraph,
-    strategy: &Strategy,
-    players: &[PlayerId],
-    node_id: &NodeId,
-    memo: &mut BTreeMap<NodeId, BTreeMap<PlayerId, f64>>,
-) -> Result<BTreeMap<PlayerId, f64>, Error> {
-    if let Some(existing) = memo.get(node_id) {
-        return Ok(existing.clone());
-    }
-    let value = match &source.game.nodes[node_id] {
-        Node::Terminal { payoffs } => players
-            .iter()
-            .map(|player| (player.clone(), payoffs.get(player).copied().unwrap_or(0.0)))
-            .collect(),
-        Node::Chance { edges } => {
-            let mut totals = players
-                .iter()
-                .map(|player| (player.clone(), 0.0))
-                .collect::<BTreeMap<_, _>>();
-            for edge in edges {
-                let child = values_at(source, graph, strategy, players, &edge.target, memo)?;
-                for player in players {
-                    *totals.get_mut(player).expect("player totals exist") +=
-                        edge.probability * child.get(player).copied().unwrap_or(0.0);
-                }
-            }
-            totals
-        }
-        Node::Decision { edges, .. } => {
-            let set_id = &graph.assignments[node_id];
-            let probabilities = &strategy.probabilities[set_id];
-            let mut totals = players
-                .iter()
-                .map(|player| (player.clone(), 0.0))
-                .collect::<BTreeMap<_, _>>();
-            for (index, edge) in edges.iter().enumerate() {
-                if strategy.action_order[set_id].get(index) != Some(&edge.action) {
-                    return Err(Error::InconsistentActionOrder {
-                        node: node_id.clone(),
-                        action: edge.action.clone(),
-                    });
-                }
-                let child = values_at(source, graph, strategy, players, &edge.target, memo)?;
-                for player in players {
-                    *totals.get_mut(player).expect("player totals exist") +=
-                        probabilities[index] * child.get(player).copied().unwrap_or(0.0);
-                }
-            }
-            totals
-        }
-    };
-    memo.insert(node_id.clone(), value.clone());
-    Ok(value)
-}
-
-fn action_target(
-    source: &GameSpecification,
-    graph: &InformationSetGraph,
-    node_id: &NodeId,
-    action_index: usize,
-) -> Result<NodeId, Error> {
-    match &source.game.nodes[node_id] {
-        Node::Decision { edges, .. } => {
-            let edge = &edges[action_index];
-            let set_id = &graph.assignments[node_id];
-            if graph.sets[set_id].legal_actions.get(action_index) != Some(&edge.action) {
-                return Err(Error::InconsistentActionOrder {
-                    node: node_id.clone(),
-                    action: edge.action.clone(),
-                });
-            }
-            Ok(edge.target.clone())
-        }
-        Node::Chance { .. } | Node::Terminal { .. } => {
-            unreachable!("best response only targets admitted decision nodes")
-        }
-    }
-}
-
-fn counterfactual_reaches(
-    source: &GameSpecification,
-    graph: &InformationSetGraph,
-    strategy: &Strategy,
-    player: &PlayerId,
-) -> BTreeMap<NodeId, f64> {
-    let mut reach = BTreeMap::new();
-    reach.insert(source.game.root.clone(), 1.0);
-    for node_id in topological_order(source) {
-        let weight = reach.get(&node_id).copied().unwrap_or(0.0);
-        match &source.game.nodes[&node_id] {
-            Node::Terminal { .. } => {}
-            Node::Chance { edges } => {
-                for edge in edges {
-                    *reach.entry(edge.target.clone()).or_insert(0.0) += weight * edge.probability;
-                }
-            }
-            Node::Decision {
-                player: owner,
-                edges,
-            } if owner == player => {
-                for edge in edges {
-                    *reach.entry(edge.target.clone()).or_insert(0.0) += weight;
-                }
-            }
-            Node::Decision { edges, .. } => {
-                let set_id = &graph.assignments[&node_id];
-                for (index, edge) in edges.iter().enumerate() {
-                    let probability = strategy.probabilities[set_id][index];
-                    *reach.entry(edge.target.clone()).or_insert(0.0) += weight * probability;
-                }
-            }
-        }
-    }
-    reach
-}
-
-fn best_response_order(
-    source: &GameSpecification,
-    graph: &InformationSetGraph,
-    player: &PlayerId,
-) -> Result<Vec<InformationSetId>, Error> {
-    let owned = graph
-        .sets
-        .iter()
-        .filter(|(_, set)| set.player == *player)
-        .map(|(id, _)| id.clone())
-        .collect::<Vec<_>>();
-    let mut dependencies = BTreeMap::new();
-    for set_id in &owned {
-        dependencies.insert(
-            set_id.clone(),
-            reachable_infosets(source, graph, player, set_id)?,
-        );
-    }
-    let mut remaining = dependencies;
-    let mut ready = remaining
-        .iter()
-        .filter(|(_, deps)| deps.is_empty())
-        .map(|(id, _)| id.clone())
-        .collect::<BTreeSet<_>>();
-    let mut ordered = Vec::new();
-    let mut done = BTreeSet::new();
-    while let Some(set_id) = ready.pop_first() {
-        if !done.insert(set_id.clone()) {
-            continue;
-        }
-        ordered.push(set_id.clone());
-        for (other, deps) in &mut remaining {
-            if done.contains(other) {
-                continue;
-            }
-            deps.remove(&set_id);
-            if deps.is_empty() {
-                ready.insert(other.clone());
-            }
-        }
-    }
-    if ordered.len() != owned.len() {
-        let unresolved = owned
-            .into_iter()
-            .find(|id| !done.contains(id))
-            .expect("a missing set");
-        return Err(Error::RecallCycle(unresolved));
-    }
-    Ok(ordered)
-}
-
-fn reachable_infosets(
-    source: &GameSpecification,
-    graph: &InformationSetGraph,
-    player: &PlayerId,
-    origin: &InformationSetId,
-) -> Result<BTreeSet<InformationSetId>, Error> {
-    let mut stack = Vec::new();
-    for member in &graph.sets[origin].members {
-        match &source.game.nodes[member] {
-            Node::Decision { edges, .. } => {
-                for edge in edges {
-                    stack.push(edge.target.clone());
-                }
-            }
-            Node::Chance { .. } | Node::Terminal { .. } => {}
-        }
-    }
-    let mut seen = BTreeSet::new();
-    let mut found = BTreeSet::new();
-    while let Some(node_id) = stack.pop() {
-        if !seen.insert(node_id.clone()) {
-            continue;
-        }
-        match &source.game.nodes[&node_id] {
-            Node::Terminal { .. } => {}
-            Node::Chance { edges } => {
-                for edge in edges {
-                    stack.push(edge.target.clone());
-                }
-            }
-            Node::Decision {
-                player: owner,
-                edges,
-            } => {
-                if owner == player {
-                    let set_id = &graph.assignments[&node_id];
-                    if set_id == origin {
-                        return Err(Error::RecallCycle(origin.clone()));
-                    }
-                    found.insert(set_id.clone());
-                }
-                for edge in edges {
-                    stack.push(edge.target.clone());
-                }
-            }
-        }
-    }
-    Ok(found)
-}
-
-fn response_value(
-    source: &GameSpecification,
-    graph: &InformationSetGraph,
-    strategy: &Strategy,
-    policy: &BTreeMap<InformationSetId, usize>,
-    player: &PlayerId,
-    node_id: &NodeId,
-    memo: &mut BTreeMap<NodeId, f64>,
-) -> Result<f64, Error> {
-    if let Some(value) = memo.get(node_id) {
-        return Ok(*value);
-    }
-    let value = match &source.game.nodes[node_id] {
-        Node::Terminal { payoffs } => payoffs.get(player).copied().unwrap_or(0.0),
-        Node::Chance { edges } => {
-            let mut total = 0.0;
-            for edge in edges {
-                total += edge.probability
-                    * response_value(source, graph, strategy, policy, player, &edge.target, memo)?;
-            }
-            total
-        }
-        Node::Decision {
-            player: owner,
-            edges,
-        } if owner == player => {
-            let set_id = &graph.assignments[node_id];
-            let Some(index) = policy.get(set_id).copied() else {
-                return Err(Error::UnsolvedInformationSet(set_id.clone()));
-            };
-            response_value(
-                source,
-                graph,
-                strategy,
-                policy,
-                player,
-                &edges[index].target,
-                memo,
-            )?
-        }
-        Node::Decision { edges, .. } => {
-            let set_id = &graph.assignments[node_id];
-            let probabilities = &strategy.probabilities[set_id];
-            let mut total = 0.0;
-            for (index, edge) in edges.iter().enumerate() {
-                total += probabilities[index]
-                    * response_value(source, graph, strategy, policy, player, &edge.target, memo)?;
-            }
-            total
-        }
-    };
-    memo.insert(node_id.clone(), value);
-    Ok(value)
-}
-
-fn topological_order(source: &GameSpecification) -> Vec<NodeId> {
-    let mut indegree = source
-        .game
-        .nodes
-        .keys()
-        .map(|node| (node.clone(), 0_usize))
-        .collect::<BTreeMap<_, _>>();
-    for node in source.game.nodes.values() {
-        for target in targets(node) {
-            *indegree.get_mut(&target).expect("validated targets exist") += 1;
-        }
-    }
-    let mut ready = indegree
-        .iter()
-        .filter(|(_, degree)| **degree == 0)
-        .map(|(node, _)| node.clone())
-        .collect::<BTreeSet<_>>();
-    let mut order = Vec::with_capacity(source.game.nodes.len());
-    while let Some(node_id) = ready.pop_first() {
-        order.push(node_id.clone());
-        for target in targets(&source.game.nodes[&node_id]) {
-            let degree = indegree.get_mut(&target).expect("validated targets exist");
-            *degree -= 1;
-            if *degree == 0 {
-                ready.insert(target);
-            }
-        }
-    }
-    order
-}
-
-fn targets(node: &Node) -> Vec<NodeId> {
-    match node {
-        Node::Decision { edges, .. } => edges.iter().map(|edge| edge.target.clone()).collect(),
-        Node::Chance { edges } => edges.iter().map(|edge| edge.target.clone()).collect(),
-        Node::Terminal { .. } => Vec::new(),
+fn finite(value: f64) -> Result<f64, Error> {
+    if value.is_finite() {
+        Ok(value)
+    } else {
+        Err(Error::NonFiniteArithmetic)
     }
 }
