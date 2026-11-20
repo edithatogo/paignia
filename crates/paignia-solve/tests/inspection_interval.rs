@@ -1,9 +1,9 @@
 //! Exact Nash projections for one moving inspection parameter.
 
 use paignia_solve::{
-    inspection_deviation_gains, inspection_nash_box, inspection_nash_projection,
-    inspection_nash_rectangle, inspection_simultaneous_nash, InspectionError, InspectionParameter,
-    InspectionParameters, InspectionRatio, ParameterInterval,
+    inspection_deviation_gains, inspection_nash_box, inspection_nash_hull,
+    inspection_nash_projection, inspection_nash_rectangle, inspection_simultaneous_nash,
+    InspectionError, InspectionParameter, InspectionParameters, InspectionRatio, ParameterInterval,
 };
 
 fn ratio(numerator: i64, denominator: i64) -> InspectionRatio {
@@ -276,5 +276,38 @@ fn a_box_that_mixes_regimes_or_repeats_a_parameter_is_rejected() {
     assert_eq!(
         inspection_nash_box(repeated),
         Err(InspectionError::RepeatedParameter)
+    );
+}
+
+#[test]
+fn a_convex_hull_spans_its_vertices_and_covers_an_interior_point() {
+    let vertices = [game(1, 6, 1, 4), game(2, 8, 2, 2), game(1, 8, 1, 2)];
+    let projection = inspection_nash_hull(&vertices).expect("hull");
+    assert_eq!(projection.inspect.lower, ratio(1, 5));
+    assert_eq!(projection.inspect.upper, ratio(1, 2));
+    assert_eq!(projection.evade.lower, ratio(1, 8));
+    assert_eq!(projection.evade.upper, ratio(1, 4));
+    assert_eq!(projection.leader.lower, ratio(-2, 1));
+    assert_eq!(projection.leader.upper, ratio(-1, 1));
+    assert_eq!(projection.follower.lower, ratio(0, 1));
+    let midpoint =
+        InspectionParameters::try_new(ratio(3, 2), ratio(7, 1), ratio(3, 2), ratio(3, 1))
+            .expect("midpoint");
+    let witness = inspection_simultaneous_nash(midpoint).expect("midpoint nash");
+    assert_eq!(witness.inspect, ratio(1, 3));
+    assert_eq!(witness.evade, ratio(3, 14));
+    assert!(witness.inspect >= projection.inspect.lower);
+    assert!(witness.inspect <= projection.inspect.upper);
+    assert!(witness.evade >= projection.evade.lower);
+    assert!(witness.evade <= projection.evade.upper);
+}
+
+#[test]
+fn a_hull_that_is_empty_or_mixed_is_rejected() {
+    assert_eq!(inspection_nash_hull(&[]), Err(InspectionError::EmptyHull));
+    let mixed = [game(1, 4, 1, 2), game(5, 4, 1, 2)];
+    assert_eq!(
+        inspection_nash_hull(&mixed),
+        Err(InspectionError::HullRegimeChange)
     );
 }
