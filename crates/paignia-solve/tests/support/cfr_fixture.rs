@@ -4,6 +4,20 @@ use paignia_solve::{CfrVariant, CFR_VERSION};
 use serde::{de::Error, Deserialize, Deserializer};
 
 const SOURCE: &str = include_str!("../../../../fixtures/conformance/cfr-reference-v1.json");
+const INDEPENDENT_LEDUC: &str =
+    include_str!("../../../../fixtures/conformance/leduc-open-spiel-v1.json");
+// Frozen payoff and NashConv pairs from the recorded OpenSpiel CSV. These
+// bind the samples to the run even if a fixture keeps valid schedule labels.
+const RECORDED_LEDUC_CHECKPOINTS: [[(f64, f64); 2]; 2] = [
+    [
+        (-0.091_211_783_171_159_65, 0.079_626_554_629_196_66),
+        (-0.088_422_478_833_235_26, 0.034_685_342_220_880_946),
+    ],
+    [
+        (-0.085_730_220_924_806_17, 0.011_737_789_016_919_464),
+        (-0.085_637_227_475_745_73, 0.002_932_121_222_831_971),
+    ],
+];
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -78,6 +92,83 @@ pub(super) struct PublishedCheck {
     pub(super) iterations: u32,
     pub(super) absolute_tolerance: f64,
     pub(super) nash_conv_upper_bound: f64,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct IndependentLeduc {
+    schema: String,
+    open_spiel_commit: String,
+    game: String,
+    average_weight: String,
+    cfr_plus_update_order: [u8; 2],
+    curves: [IndependentCurve; 2],
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct IndependentCurve {
+    method: Method,
+    samples: [TrainingSample; 2],
+}
+
+#[derive(Debug, Clone, Copy, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct TrainingSample {
+    pub(super) iterations: u32,
+    pub(super) first_player_value: f64,
+    pub(super) nash_conv: f64,
+}
+
+pub(super) fn independent_leduc_training(
+    variant: CfrVariant,
+    budgets: [u32; 2],
+) -> [TrainingSample; 2] {
+    let reference = qualify_independent_leduc(INDEPENDENT_LEDUC, budgets)
+        .expect("invalid independent Leduc training fixture");
+    reference
+        .curves
+        .into_iter()
+        .find(|curve| curve.method.0 == variant)
+        .expect("reference curve for this variant")
+        .samples
+}
+
+fn qualify_independent_leduc(input: &str, budgets: [u32; 2]) -> Result<IndependentLeduc, String> {
+    let reference: IndependentLeduc =
+        serde_json::from_str(input).map_err(|error| error.to_string())?;
+    if reference.schema != "paignia/leduc-open-spiel/1.0.0"
+        || reference.open_spiel_commit != "4956843d7375e29a4c986425c66f897d7ac15340"
+        || reference.game != "leduc_poker"
+        || reference.average_weight != "own_reach"
+        || reference.cfr_plus_update_order != [1, 0]
+    {
+        return Err("independent Leduc source or schedule".to_owned());
+    }
+    let [vanilla, plus] = &reference.curves;
+    if [vanilla.method.0, plus.method.0] != [CfrVariant::Cfr, CfrVariant::CfrPlus] {
+        return Err("independent Leduc methods".to_owned());
+    }
+    for (curve, recorded) in reference.curves.iter().zip(RECORDED_LEDUC_CHECKPOINTS) {
+        if curve.samples.map(|sample| sample.iterations) != budgets
+            || curve.samples.iter().any(|sample| {
+                !sample.first_player_value.is_finite()
+                    || !sample.nash_conv.is_finite()
+                    || sample.nash_conv < 0.0
+            })
+            || curve.samples[1].nash_conv >= curve.samples[0].nash_conv
+        {
+            return Err("independent Leduc budgets or training values".to_owned());
+        }
+        if curve
+            .samples
+            .map(|sample| (sample.first_player_value, sample.nash_conv))
+            != recorded
+        {
+            return Err("independent Leduc checkpoints differ from the recorded run".to_owned());
+        }
+    }
+    Ok(reference)
 }
 
 fn fraction<'de, D: Deserializer<'de>>(input: D) -> Result<f64, D::Error> {
@@ -170,6 +261,28 @@ fn with_literal(pointer: &str, literal: &str) -> String {
 #[test]
 fn fixture_qualifies_numeric_targets_methods_and_budgets() {
     fixture();
+}
+
+#[test]
+fn independent_leduc_fixture_rejects_the_unmatched_cfr_plus_schedule() {
+    let mut input: serde_json::Value = serde_json::from_str(INDEPENDENT_LEDUC).unwrap();
+    input["cfr_plus_update_order"] = serde_json::json!([0, 1]);
+    assert_eq!(
+        qualify_independent_leduc(&input.to_string(), [1_000, 4_000]).unwrap_err(),
+        "independent Leduc source or schedule"
+    );
+}
+
+#[test]
+fn independent_leduc_fixture_rejects_values_from_the_wrong_schedule() {
+    let mut input: serde_json::Value = serde_json::from_str(INDEPENDENT_LEDUC).unwrap();
+    let early_cfr_plus = &mut input["curves"][1]["samples"][0];
+    early_cfr_plus["first_player_value"] = serde_json::json!(-0.086_337_731_296_827_06);
+    early_cfr_plus["nash_conv"] = serde_json::json!(0.013_886_401_842_352_361);
+    assert_eq!(
+        qualify_independent_leduc(&input.to_string(), [1_000, 4_000]).unwrap_err(),
+        "independent Leduc checkpoints differ from the recorded run"
+    );
 }
 
 #[test]

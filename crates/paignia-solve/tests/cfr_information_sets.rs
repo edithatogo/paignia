@@ -639,6 +639,7 @@ fn leduc_all_call_matches_both_seat_best_responses_and_nash_conv() {
 #[test]
 fn leduc_cfr_plus_checks_published_value_and_nash_conv() {
     let fixture = cfr_fixture::fixture();
+    let variant = fixture.leduc.published_value_check.method.0;
 
     let (source, declaration) = leduc();
     assert_eq!(declaration.sets.len(), fixture.leduc.information_states);
@@ -648,14 +649,14 @@ fn leduc_cfr_plus_checks_published_value_and_nash_conv() {
         &source,
         &declaration,
         &graph,
-        fixture.leduc.published_value_check.method.0,
+        variant,
         fixture.leduc.iteration_counts[0],
     );
     let late = checked_leduc_run(
         &source,
         &declaration,
         &graph,
-        fixture.leduc.published_value_check.method.0,
+        variant,
         fixture.leduc.published_value_check.iterations,
     );
     assert!(
@@ -671,6 +672,7 @@ fn leduc_cfr_plus_checks_published_value_and_nash_conv() {
         late.nash_conv < fixture.leduc.published_value_check.nash_conv_upper_bound,
         "CFR+ NashConv: {late:?}"
     );
+    compare_independent_leduc_training(&fixture.leduc, variant, [&early, &late]);
 }
 
 #[test]
@@ -702,12 +704,53 @@ fn vanilla_leduc_nash_conv_shrinks_between_independently_checked_budgets() {
         late.nash_conv < early.nash_conv,
         "vanilla CFR NashConv: {early:?} to {late:?}"
     );
+    compare_independent_leduc_training(&fixture.leduc, variant, [&early, &late]);
 }
 
 #[derive(Debug)]
 struct LeducRun {
     value: f64,
     nash_conv: f64,
+}
+
+fn compare_independent_leduc_training(
+    leduc: &cfr_fixture::Leduc,
+    variant: CfrVariant,
+    paignia: [&LeducRun; 2],
+) {
+    let open_spiel = cfr_fixture::independent_leduc_training(variant, leduc.iteration_counts);
+    assert!(
+        paignia[1].nash_conv < open_spiel[0].nash_conv,
+        "{variant:?}: Paignia late NashConv {} must be below OpenSpiel early NashConv {}",
+        paignia[1].nash_conv,
+        open_spiel[0].nash_conv
+    );
+    for (actual, reference) in paignia.into_iter().zip(open_spiel) {
+        // Each policy's NashConv bounds its distance to the zero-sum minimax value.
+        let value_gap = (actual.value - reference.first_player_value).abs();
+        let regret_bound = actual.nash_conv + reference.nash_conv;
+        assert!(
+            value_gap <= regret_bound + 1e-9,
+            "{variant:?} {}: value gap {value_gap} exceeds combined NashConv {regret_bound}",
+            reference.iterations
+        );
+        eprintln!(
+            "{variant:?} {}: OpenSpiel first value {}, NashConv {}, value gap {value_gap}",
+            reference.iterations, reference.first_player_value, reference.nash_conv
+        );
+    }
+    if variant == leduc.published_value_check.method.0 {
+        let late = open_spiel[1];
+        assert!(
+            (late.first_player_value - leduc.player_one_value).abs()
+                < leduc.published_value_check.absolute_tolerance,
+            "OpenSpiel value: {late:?}"
+        );
+        assert!(
+            late.nash_conv < leduc.published_value_check.nash_conv_upper_bound,
+            "OpenSpiel NashConv: {late:?}"
+        );
+    }
 }
 
 fn checked_leduc_run(
