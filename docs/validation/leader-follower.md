@@ -50,6 +50,22 @@ U_E(p,q) = q*(g - (g+f)*p)
 on the four pure profiles and on the unattained approach `p = 2/3`. That path
 does not call the four-cell sum.
 
+## One-parameter Nash projection
+
+`inspection_nash_projection` lets one of `c`, `h`, `g`, or `f` range over a
+closed positive interval while the other three stay fixed. Inside a strict
+regime the unique witness is monotone, so each coordinate's image is the span
+of the regime endpoints. An interval that contains `c = h` also includes the
+indifference segment: inspection probabilities from 0 through `g/(g+f)`, evasion
+probability 1, and follower payoffs from 0 through `g`. Every reported endpoint
+is attained, and the endpoint gap is exactly zero.
+
+The four intervals are projections. A combination drawn from all four at once
+need not be a Nash witness for any parameter in the interval. The crossing-cost
+test uses inspection probability `1/6` and evasion probability `1/4`, which lies
+inside the projected box and has a profitable deviation at the low cost, the
+equal-cost boundary, and the high cost.
+
 ## What this slice does not establish
 
 - This is not a general Stackelberg algorithm, a multi-channel model, or an
@@ -64,5 +80,5 @@ does not call the four-cell sum.
 - No operational, welfare, or empirical claim follows from the constants.
 
 ```bash
-cargo test --locked -p paignia-solve --test leader_follower
+cargo test --locked -p paignia-solve --test leader_follower --test inspection_interval
 ```
