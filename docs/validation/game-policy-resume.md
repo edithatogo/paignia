@@ -29,10 +29,12 @@ cargo test --locked --manifest-path crates/paignia-kairos/Cargo.toml --test poli
 ```
 
 The fixture captures after a chance draw and before a second chance and stateful
-policy choice. The resumed branch reproduces full native event IDs, times and
-ordering, chance outcomes, policy action and terminal payoff across 64 seeds
-per stream profile. A sibling changes its decoded policy and reaches a different
-payoff without changing the original or the checkpoint. Negative cases reject
+policy choice. Prior native dispatch and cancellation distinguish scheduler
+history from the game revision. The resumed branch reproduces full native
+event IDs, time, counters, ordering, chance outcomes, policy action and payoff
+across 64 seeds per stream profile. A sibling changes its decoded policy and
+reaches a different payoff while the original and checkpoint remain intact.
+Negative cases reject
 incompatible formats, version, invalid policy bytes and a nonfresh scheduler.
 
 The candidate uses the native scheduler state change in

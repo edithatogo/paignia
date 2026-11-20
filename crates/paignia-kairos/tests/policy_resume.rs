@@ -136,6 +136,25 @@ fn comparison_resume_preserves_paired_chance_and_future_policy_streams() {
     }));
 }
 
+fn scheduler_with_prior_history() -> Scheduler {
+    let mut scheduler = Scheduler::new();
+    let prior = scheduler.schedule(ScheduleRequest {
+        at: SimTime::from_ticks(50),
+        priority: 7,
+        entity: None,
+        kind: EventKind::custom(301),
+    });
+    assert_eq!(scheduler.step().into_dispatched().unwrap().id, prior);
+    let cancelled = scheduler.schedule(ScheduleRequest {
+        at: SimTime::from_ticks(90),
+        priority: -4,
+        entity: None,
+        kind: EventKind::custom(302),
+    });
+    assert!(scheduler.cancel(cancelled));
+    scheduler
+}
+
 fn exercise_replay(comparison: Option<ComparisonRandomness<'_>>) {
     let source = model();
     let mut world = World::new();
@@ -145,7 +164,7 @@ fn exercise_replay(comparison: Option<ComparisonRandomness<'_>>) {
     let mut differing_second_draws = 0;
 
     for seed in 0..64 {
-        let mut original_scheduler = Scheduler::new();
+        let mut original_scheduler = scheduler_with_prior_history();
         let mut original = match comparison {
             Some(comparison) => NativeGame::start_comparison(
                 &source,
@@ -217,6 +236,15 @@ fn exercise_replay(comparison: Option<ComparisonRandomness<'_>>) {
         assert_eq!(recovered.terminal_payoffs(), original.terminal_payoffs());
         assert_ne!(recovered.terminal_payoffs(), sibling.terminal_payoffs());
         assert_eq!(recovered_policy.0, 2);
+
+        let final_stats = original_scheduler.stats();
+        assert_eq!(final_stats.now, SimTime::from_ticks(54));
+        assert_eq!(final_stats.scheduled_events, 6);
+        assert_eq!(final_stats.dispatched_events, 5);
+        assert_eq!(final_stats.cancelled_events, 1);
+        assert_eq!(final_stats.pending_events, 0);
+        assert_eq!(recovered_scheduler.stats(), final_stats);
+        assert_eq!(sibling_scheduler.stats(), final_stats);
     }
     assert!(differing_second_draws > 0);
 }
