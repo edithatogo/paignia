@@ -266,6 +266,9 @@ pub enum Error {
     /// A constructed Nash witness had a positive deviation gain.
     #[error("the constructed witness has a profitable deviation")]
     InconsistentWitness,
+    /// An interval was ordered from its larger endpoint to its smaller one.
+    #[error("the interval lower bound exceeds its upper bound")]
+    UnorderedInterval,
 }
 
 /// Expected payoffs from the four declared cells.
@@ -496,4 +499,293 @@ fn gcd(mut left: i128, mut right: i128) -> i128 {
         right = next;
     }
     left
+}
+
+/// One strictly positive parameter of the inspection family.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum VariedParameter {
+    /// Inspection cost `c`.
+    InspectionCost,
+    /// Undetected harm `h`.
+    UndetectedHarm,
+    /// Undetected evasion gain `g`.
+    EvasionGain,
+    /// Detected loss `f`.
+    DetectedLoss,
+}
+
+/// Closed interval for the parameter named by [`VariedParameter`].
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ParameterInterval {
+    /// Parameter that moves. The other three stay at the baseline.
+    pub parameter: VariedParameter,
+    /// Lower endpoint, strictly positive.
+    pub lower: Ratio,
+    /// Upper endpoint, strictly positive and at least `lower`.
+    pub upper: Ratio,
+}
+
+/// Closed projection of one scalar.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct RatioBounds {
+    /// Smallest value attained by a Nash witness in the interval.
+    pub lower: Ratio,
+    /// Largest value attained by a Nash witness in the interval.
+    pub upper: Ratio,
+}
+
+/// Coordinate-wise bounds on Nash action shares and payoffs.
+///
+/// Each endpoint is attained by some witness. A point inside the four intervals
+/// at once is not claimed to be a witness.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct NashProjection {
+    /// Projection of the inspection probability.
+    pub inspect: RatioBounds,
+    /// Projection of the evasion probability.
+    pub evade: RatioBounds,
+    /// Projection of the leader payoff.
+    pub leader: RatioBounds,
+    /// Projection of the follower payoff.
+    pub follower: RatioBounds,
+    /// Gap between each reported endpoint and a witness that attains it.
+    /// The closed form makes this zero. It is not a floating-point tolerance.
+    pub endpoint_gap: Ratio,
+}
+
+/// Exact Nash projections while one parameter ranges over a closed interval.
+///
+/// Within each strict regime the witness is monotone, so the image is the span
+/// of the regime endpoints. Where cost equals harm, the whole indifference
+/// segment is included. The result is a projection, not a joint equilibrium set.
+///
+/// # Errors
+///
+/// Returns [`Error::NonPositiveParameter`], [`Error::UnorderedInterval`], or
+/// [`Error::Overflow`].
+pub fn nash_projection(
+    baseline: Parameters,
+    interval: ParameterInterval,
+) -> Result<NashProjection, Error> {
+    if interval.lower <= Ratio::zero() || interval.upper <= Ratio::zero() {
+        return Err(Error::NonPositiveParameter);
+    }
+    if interval.lower > interval.upper {
+        return Err(Error::UnorderedInterval);
+    }
+    let image = match interval.parameter {
+        VariedParameter::InspectionCost => {
+            project_threshold(baseline, interval, baseline.undetected_harm, true)?
+        }
+        VariedParameter::UndetectedHarm => {
+            project_threshold(baseline, interval, baseline.inspection_cost, false)?
+        }
+        VariedParameter::EvasionGain | VariedParameter::DetectedLoss => {
+            project_without_threshold(baseline, interval)?
+        }
+    };
+    Ok(NashProjection {
+        inspect: image.inspect.bounds(),
+        evade: image.evade.bounds(),
+        leader: image.leader.bounds(),
+        follower: image.follower.bounds(),
+        endpoint_gap: Ratio::zero(),
+    })
+}
+
+#[derive(Clone, Copy)]
+struct Span {
+    lower: Ratio,
+    upper: Ratio,
+}
+
+impl Span {
+    fn point(value: Ratio) -> Self {
+        Self {
+            lower: value,
+            upper: value,
+        }
+    }
+
+    fn cover(left: Ratio, right: Ratio) -> Self {
+        if left <= right {
+            Self {
+                lower: left,
+                upper: right,
+            }
+        } else {
+            Self {
+                lower: right,
+                upper: left,
+            }
+        }
+    }
+
+    fn union(self, other: Self) -> Self {
+        Self {
+            lower: if self.lower <= other.lower {
+                self.lower
+            } else {
+                other.lower
+            },
+            upper: if self.upper >= other.upper {
+                self.upper
+            } else {
+                other.upper
+            },
+        }
+    }
+
+    fn bounds(self) -> RatioBounds {
+        RatioBounds {
+            lower: self.lower,
+            upper: self.upper,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+struct Image {
+    inspect: Span,
+    evade: Span,
+    leader: Span,
+    follower: Span,
+}
+
+impl Image {
+    fn union(self, other: Self) -> Self {
+        Self {
+            inspect: self.inspect.union(other.inspect),
+            evade: self.evade.union(other.evade),
+            leader: self.leader.union(other.leader),
+            follower: self.follower.union(other.follower),
+        }
+    }
+}
+
+fn with_varied(
+    baseline: Parameters,
+    parameter: VariedParameter,
+    value: Ratio,
+) -> Result<Parameters, Error> {
+    let (mut cost, mut harm, mut gain, mut loss) = (
+        baseline.inspection_cost,
+        baseline.undetected_harm,
+        baseline.evasion_gain,
+        baseline.detected_loss,
+    );
+    match parameter {
+        VariedParameter::InspectionCost => cost = value,
+        VariedParameter::UndetectedHarm => harm = value,
+        VariedParameter::EvasionGain => gain = value,
+        VariedParameter::DetectedLoss => loss = value,
+    }
+    Parameters::try_new(cost, harm, gain, loss)
+}
+
+fn unique_image(game: Parameters) -> Result<Image, Error> {
+    let witness = simultaneous_nash(game)?;
+    Ok(Image {
+        inspect: Span::point(witness.inspect),
+        evade: Span::point(witness.evade),
+        leader: Span::point(witness.payoffs.leader),
+        follower: Span::point(witness.payoffs.follower),
+    })
+}
+
+fn segment_image(game: Parameters) -> Result<Image, Error> {
+    let theta = threshold(game)?;
+    Ok(Image {
+        inspect: Span::cover(Ratio::zero(), theta),
+        evade: Span::point(Ratio::one()),
+        leader: Span::point(game.inspection_cost.neg()?),
+        follower: Span::cover(Ratio::zero(), game.evasion_gain),
+    })
+}
+
+fn unique_at(
+    baseline: Parameters,
+    parameter: VariedParameter,
+    value: Ratio,
+) -> Result<Image, Error> {
+    unique_image(with_varied(baseline, parameter, value)?)
+}
+
+fn project_without_threshold(
+    baseline: Parameters,
+    interval: ParameterInterval,
+) -> Result<Image, Error> {
+    if baseline.inspection_cost == baseline.undetected_harm {
+        let lower = segment_image(with_varied(baseline, interval.parameter, interval.lower)?)?;
+        let upper = segment_image(with_varied(baseline, interval.parameter, interval.upper)?)?;
+        return Ok(lower.union(upper));
+    }
+    Ok(
+        unique_at(baseline, interval.parameter, interval.lower)?.union(unique_at(
+            baseline,
+            interval.parameter,
+            interval.upper,
+        )?),
+    )
+}
+
+fn project_threshold(
+    baseline: Parameters,
+    interval: ParameterInterval,
+    boundary: Ratio,
+    interior_below: bool,
+) -> Result<Image, Error> {
+    let interior = |value: Ratio| {
+        if interior_below {
+            value < boundary
+        } else {
+            value > boundary
+        }
+    };
+    let dominated = |value: Ratio| {
+        if interior_below {
+            value > boundary
+        } else {
+            value < boundary
+        }
+    };
+    let mut image: Option<Image> = None;
+    if interior(interval.lower) {
+        push_image(
+            &mut image,
+            unique_at(baseline, interval.parameter, interval.lower)?,
+        );
+    }
+    if interior(interval.upper) {
+        push_image(
+            &mut image,
+            unique_at(baseline, interval.parameter, interval.upper)?,
+        );
+    }
+    if interval.lower <= boundary && boundary <= interval.upper {
+        push_image(
+            &mut image,
+            segment_image(with_varied(baseline, interval.parameter, boundary)?)?,
+        );
+    }
+    if dominated(interval.lower) {
+        push_image(
+            &mut image,
+            unique_at(baseline, interval.parameter, interval.lower)?,
+        );
+    }
+    if dominated(interval.upper) {
+        push_image(
+            &mut image,
+            unique_at(baseline, interval.parameter, interval.upper)?,
+        );
+    }
+    image.ok_or(Error::InconsistentWitness)
+}
+
+fn push_image(image: &mut Option<Image>, next: Image) {
+    *image = Some(match image.take() {
+        Some(current) => current.union(next),
+        None => next,
+    });
 }

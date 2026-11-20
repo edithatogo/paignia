@@ -30,11 +30,12 @@ pub use correlated_equilibrium::{
 pub use leader_follower::{
     commitment_at as inspection_commitment_at, commitment_bound as inspection_commitment_bound,
     deviation_gains as inspection_deviation_gains, expected_payoffs as inspection_expected_payoffs,
+    nash_projection as inspection_nash_projection,
     simultaneous_nash as inspection_simultaneous_nash, Commitment as InspectionCommitment,
     Error as InspectionError, FollowerTie as InspectionFollowerTie, Gains as InspectionGains,
-    NashWitness as InspectionNash, Parameters as InspectionParameters,
-    Payoffs as InspectionPayoffs, Ratio as InspectionRatio,
-    VERSION as INSPECTION_COMMITMENT_VERSION,
+    NashProjection, NashWitness as InspectionNash, ParameterInterval,
+    Parameters as InspectionParameters, Payoffs as InspectionPayoffs, Ratio as InspectionRatio,
+    RatioBounds, VariedParameter as InspectionParameter, VERSION as INSPECTION_COMMITMENT_VERSION,
 };
 
 pub use mixed_nash::{
