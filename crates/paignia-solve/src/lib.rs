@@ -33,6 +33,7 @@ pub use leader_follower::{
     commitment_bound as inspection_commitment_bound,
     commitment_bound_with_detection as inspection_commitment_bound_with_detection,
     detection_nash_projection as inspection_detection_projection,
+    detection_nash_rectangle as inspection_detection_rectangle,
     deviation_gains as inspection_deviation_gains, expected_payoffs as inspection_expected_payoffs,
     expected_payoffs_with_detection as inspection_expected_payoffs_with_detection,
     nash_projection as inspection_nash_projection, nash_rectangle as inspection_nash_rectangle,
