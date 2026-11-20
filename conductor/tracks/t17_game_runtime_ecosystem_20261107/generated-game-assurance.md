@@ -11,10 +11,13 @@ finite 2-by-2 games, then invokes the production Rust APIs:
   opponent externalities. The unique actions and utilities have closed forms.
   Each game also checks that a half/half false witness exposes the expected
   profitable deviations for both players.
-- 972 games derive from a signed zero-sum family with an analytic interior
-  equilibrium. Independent positive payoff scales, additive offsets and reversed
-  action labels must preserve the corresponding strategies and transformed
-  utilities.
+- 1,944 games derive from an asymmetric zero-sum family with an analytic interior
+  equilibrium. Indifference determines both players' mixing probabilities.
+  Independent positive payoff scales, additive offsets, and independent
+  row and column reversals preserve the corresponding strategies and transformed
+  utilities. The independent review confirmed that the mix distinguishes
+  row reversal in all 1,944 cases and column reversal in 1,896 cases. The
+  other column mixes are uniform.
 - 24 mutations place NaN or either infinity in every payoff position for each
   player and must produce the typed non-finite input error.
 

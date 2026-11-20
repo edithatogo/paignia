@@ -117,13 +117,21 @@ fn generated_dominance_games_recover_unique_actions_and_expose_false_mixtures() 
     assert_eq!(cases, 576);
 }
 
-fn affine(matrix: &Matrix, scale: f64, offset: f64, reverse: bool) -> Matrix {
+fn affine(
+    matrix: &Matrix,
+    scale: f64,
+    offset: f64,
+    reverse_rows: bool,
+    reverse_columns: bool,
+) -> Matrix {
     let mut result: Matrix = matrix
         .iter()
         .map(|row| row.iter().map(|value| value * scale + offset).collect())
         .collect();
-    if reverse {
+    if reverse_rows {
         result.reverse();
+    }
+    if reverse_columns {
         for row in &mut result {
             row.reverse();
         }
@@ -137,23 +145,34 @@ fn generated_zero_sum_witnesses_survive_affine_payoffs_and_action_relabelling() 
     for left in 1..=9 {
         for right in 1..=9 {
             let (left, right) = (f64::from(left), f64::from(right));
-            let a = vec![vec![left, -right], vec![-left, right]];
-            let b = affine(&a, -1.0, 0.0, false);
+            let a = vec![vec![left, -right], vec![-2.0 * left, 3.0 * right]];
+            let b = affine(&a, -1.0, 0.0, false, false);
+            let denominator = 3.0 * left + 4.0 * right;
+            // Indifference of the two pure responses determines the opponent's mix.
+            let row = (2.0 * left + 3.0 * right) / denominator;
+            let column = 4.0 * right / denominator;
+            let value = left * right / denominator;
             for row_scale in [1.0, 2.0, 4.0] {
                 for column_scale in [1.0, 3.0] {
-                    for reverse in [false, true] {
-                        let mut q = [right / (left + right), left / (left + right)];
-                        if reverse {
-                            q.reverse();
+                    for (reverse_rows, reverse_columns) in
+                        [(false, false), (true, false), (false, true), (true, true)]
+                    {
+                        let mut row_strategy = [row, 1.0 - row];
+                        let mut column_strategy = [column, 1.0 - column];
+                        if reverse_rows {
+                            row_strategy.reverse();
+                        }
+                        if reverse_columns {
+                            column_strategy.reverse();
                         }
                         witness(
                             &unique_candidate(
-                                &affine(&a, row_scale, -3.0, reverse),
-                                &affine(&b, column_scale, 7.0, reverse),
+                                &affine(&a, row_scale, -3.0, reverse_rows, reverse_columns),
+                                &affine(&b, column_scale, 7.0, reverse_rows, reverse_columns),
                             ),
-                            [0.5, 0.5],
-                            q,
-                            [-3.0, 7.0],
+                            row_strategy,
+                            column_strategy,
+                            [row_scale * value - 3.0, 7.0 - column_scale * value],
                         );
                         cases += 1;
                     }
@@ -161,7 +180,7 @@ fn generated_zero_sum_witnesses_survive_affine_payoffs_and_action_relabelling() 
             }
         }
     }
-    assert_eq!(cases, 972);
+    assert_eq!(cases, 1_944);
 }
 
 #[test]
