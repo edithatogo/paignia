@@ -1258,3 +1258,97 @@ fn unilateral_gain_survives_rounding_of_the_two_root_values() {
     // on the left to the right earns 1/4 * 8 = 2 in the original units.
     assert!((cfr_nash_conv(&source, &graph, &strategy).unwrap() - 2.0).abs() < f64::EPSILON);
 }
+
+#[test]
+fn nested_lottery_preserves_the_gain_below_one_ulp_of_the_payoff() {
+    let base = 2_f64.powi(54);
+    let source = specification(
+        "root",
+        vec![
+            (
+                "root",
+                decision("alice", &[("lottery", "lottery"), ("sure", "high")]),
+            ),
+            ("lottery", chance(&[(0.5, "high"), (0.5, "low")])),
+            ("high", terminal(&[("alice", base)])),
+            ("low", terminal(&[("alice", base - 2.0)])),
+        ],
+    );
+    let declaration = declared(vec![("choice", "alice", &["root"])]);
+    let graph = build_information_set_graph(&source, &declaration).unwrap();
+    let id = declaration.sets[0].id.clone();
+    let strategy = CfrStrategy {
+        action_order: BTreeMap::from([(id.clone(), vec![action("lottery"), action("sure")])]),
+        probabilities: BTreeMap::from([(id, vec![1.0, 0.0])]),
+    };
+    assert!((cfr_nash_conv(&source, &graph, &strategy).unwrap() - 1.0).abs() < f64::EPSILON);
+}
+
+#[test]
+fn a_rounded_subnormal_cannot_supply_a_deviation_certificate() {
+    let source = specification(
+        "root",
+        vec![
+            (
+                "root",
+                chance(&[(f64::from_bits(1), "choice"), (1.0, "zero")]),
+            ),
+            (
+                "choice",
+                decision("alice", &[("L", "zero"), ("R", "positive")]),
+            ),
+            ("zero", terminal(&[])),
+            ("positive", terminal(&[("alice", 1.5 * 2_f64.powi(1023))])),
+        ],
+    );
+    let declaration = declared(vec![("choice", "alice", &["choice"])]);
+    let graph = build_information_set_graph(&source, &declaration).unwrap();
+    let id = declaration.sets[0].id.clone();
+    let strategy = CfrStrategy {
+        action_order: BTreeMap::from([(id.clone(), vec![action("L"), action("R")])]),
+        probabilities: BTreeMap::from([(id, vec![1.0, 0.0])]),
+    };
+    assert_eq!(
+        cfr_nash_conv(&source, &graph, &strategy),
+        Err(CfrError::Underflow)
+    );
+}
+
+#[test]
+fn admission_accounts_for_small_probabilities_after_a_unit_mass() {
+    let order: Vec<_> = (0..=16_384).map(|i| action(&i.to_string())).collect();
+    let edges = order
+        .iter()
+        .cloned()
+        .map(|action| ActionEdge {
+            action,
+            target: node("end"),
+        })
+        .collect();
+    let source = specification(
+        "root",
+        vec![
+            (
+                "root",
+                Node::Decision {
+                    player: player("alice"),
+                    edges,
+                },
+            ),
+            ("end", terminal(&[])),
+        ],
+    );
+    let declaration = declared(vec![("wide", "alice", &["root"])]);
+    let graph = build_information_set_graph(&source, &declaration).unwrap();
+    let id = declaration.sets[0].id.clone();
+    let mut row = vec![2_f64.powi(-53); order.len()];
+    row[0] = 1.0;
+    let strategy = CfrStrategy {
+        action_order: BTreeMap::from([(id.clone(), order)]),
+        probabilities: BTreeMap::from([(id.clone(), row)]),
+    };
+    assert_eq!(
+        cfr_profile_values(&source, &graph, &strategy),
+        Err(CfrError::InvalidDistribution(id))
+    );
+}
