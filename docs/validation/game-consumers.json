@@ -15,7 +15,12 @@
     "path": "docs/validation/receipts/t17-bd880dd-package-msrv.json",
     "sha256": "4dedd2b14aad9ffc12e0975202c82091ff678a372bd9312bafff2b97be4e7c01"
   },
-  "consumer_receipts": [],
+  "consumer_receipts": [
+    {
+      "path": "docs/validation/receipts/t17-reimbursement-chapter8.json",
+      "sha256": "f9d0d6f79b3864f6c790fab3e139adf3a55dab11f0ca5a81278ba1268fe027d3"
+    }
+  ],
   "capabilities": [
     "backward_induction"
   ],
@@ -42,7 +47,7 @@
     }
   },
   "limitations": [
-    "No two real application artifact receipts have been received.",
+    "The reimbursement Chapter 8 case supplies the first receipt. A second distinct application receipt is still required.",
     "Reimbursement and Innovate currently pin different provider revisions.",
     "A package smoke test or synthetic admission test is not application acceptance.",
     "Registry publication and full T17 archival remain separate decisions.",

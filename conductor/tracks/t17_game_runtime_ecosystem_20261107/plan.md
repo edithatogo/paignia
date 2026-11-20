@@ -30,7 +30,7 @@ does not close T17.
 The [naming supplement](paignia-identity-and-promotion.md) records the bounded
 seed rename and source-level consumer slices without adding competing leaves.
 
-## Current acceptance — 17 November 2026
+## Static provider acceptance — 17 November 2026
 
 [Accepted source and Conductor review](../../../docs/validation/t17-review-20261117.md):
 `bd880dd756d2ba56cc5f479bc078cea31b53c1d1`, hosted native run
@@ -47,11 +47,14 @@ Kairos Track 110 separately retains source regression, migration and retirement.
 Native wire serialization, a general normal-form envelope and a mandatory Gambit
 run were not added as unsupported extra prerequisites.
 
-**Nine leaves remain open:** .07, .08, .09, .10, .11, .12, .15, .16 and .17.
-Their external contracts and real application evidence remain necessary. The
-package handoff now binds actual immutable source/profile/archive evidence;
-the eligibility guard's sole current error is the missing two application
-receipts. Registry publication stays disabled and full-track archival is ineligible.
+## Current acceptance — 21 November 2026
+
+T17.09 records the first application artifact receipt. Eight leaves remain
+open: .07, .08, .10, .11, .12, .15, .16 and .17. The optional adapter,
+separate random streams and replay are merged. Their upstream Kairos
+`K01.port` acceptance remains open. The bounded release check still requires
+the second application receipt before eligibility. Full-track archival also
+requires the outstanding scientific and native acceptance work.
 
 Earlier dated paragraphs retain historical source, failure and review evidence,
 including then-future paths and then-pending PR/merge wording. The current
@@ -500,7 +503,7 @@ oracle and result contract. Exclusion is not scientific completion.
 
 ## Phase C — optional execution and representation gaps
 
-### [ ] T17.08 — execute a supported game trace through the Rust Kairos adapter
+### [~] T17.08 — execute a supported game trace through the Rust Kairos adapter
 
 - Behavior: translate the supported game execution plan into actual native
   Kairos events for one selected policy/chance path.
@@ -511,12 +514,10 @@ oracle and result contract. Exclusion is not scientific completion.
   leaf; .13 static completion does not wait for them. This is not a static
   package prerequisite.
 - Execution: specialist, public execution contract.
-- Files (5): `Cargo.toml`, `Cargo.lock`,
-  `crates/paignia-kairos/Cargo.toml` (future),
-  `crates/paignia-kairos/src/lib.rs` (future),
-  `crates/paignia-kairos/tests/native_replay.rs` (future).
-- Check: `cargo test --locked -p paignia-kairos --test native_replay`
-  (future package/target). A tiny two-action/one-chance case dispatches only the
+- Files (5): `Cargo.toml` and the separate `crates/paignia-kairos` workspace's
+  `Cargo.toml`, `Cargo.lock`, `src/lib.rs` and `tests/native_replay.rs`.
+- Check: `cargo test --locked --manifest-path crates/paignia-kairos/Cargo.toml
+  --all-targets`. A tiny two-action/one-chance case dispatches only the
   chosen causal path. `Solution.trace` includes postorder hypothetical branches:
   preserving it for diagnostics must never schedule those alternatives or treat
   expected payoffs as sampled outcomes. Repeated execution with declared inputs
@@ -526,6 +527,12 @@ oracle and result contract. Exclusion is not scientific completion.
   zero-time loops explicitly. This leaf does not qualify all lifecycle features,
   stochastic stream isolation or checkpoint resume. The adapter depends on game
   core and Kairos; static solving stays independent and still passes T17.02.
+- Candidate evidence: the adapter binds a live entity generation and empty
+  scheduler at Kairos `bac331fc`. It schedules one native event per chosen
+  action or chance outcome and records the dispatched ID, tick, sequence and
+  revision. The separate Rust 1.99 and stable CI matrix exercises the bounded
+  adapter. `K01.port` provider acceptance remains with Kairos Track 114.
+  [Execution contract](../../../docs/architecture/game-native-execution-v1.md)
 
 ### [x] T17.13 — reject semantically lossy game-profile conversions
 
@@ -580,18 +587,18 @@ oracle and result contract. Exclusion is not scientific completion.
   Offline solvers may inspect the mathematical game without granting that access
   to an acting policy. A static solver with no live policy API need not wait here.
 
-### [ ] T17.15 — isolate solver exploration from simulation random streams
+### [~] T17.15 — isolate solver exploration from simulation random streams
 
 - Behavior: keep exogenous simulation draws invariant when solver exploration
   or its iteration budget changes under the declared coupling policy.
 - Depends on: T17.08 and T17.13 for stable runtime identity mapping.
 - Execution: specialist, RNG and comparison semantics.
 - Files (4): `crates/paignia-kairos/src/lib.rs`,
-  `crates/paignia-kairos/src/randomness.rs` (future),
-  `crates/paignia-kairos/tests/rng_isolation.rs` (future),
-  `docs/validation/game-rng-isolation.md` (future).
-- Check: `cargo test --locked -p paignia-kairos --test rng_isolation`
-  (future target). Use native purpose/identity streams and record algorithm,
+  `crates/paignia-kairos/src/randomness.rs`,
+  `crates/paignia-kairos/tests/rng_isolation.rs`,
+  `docs/validation/game-rng-isolation.md`.
+- Check: `cargo test --locked --manifest-path crates/paignia-kairos/Cargo.toml
+  --test rng_isolation`. Use native purpose/identity streams and record algorithm,
   stream/distribution versions and the intended strategy/draw coupling. Changed
   solver budgets, reordered construction and policy branches preserve declared
   exogenous draws; intentionally independent streams remain distinct. The
@@ -601,23 +608,33 @@ oracle and result contract. Exclusion is not scientific completion.
   expectation-based solving draws nothing. A future stochastic static solver
   receives an explicit RNG/configuration without a Kairos dependency; it must
   not borrow a simulation-global stream. A shared seed alone is not this oracle.
+- Candidate evidence: comparison execution keys separate native policy and
+  chance streams by canonical model, scenario and draw. Real policy exploration
+  changes the realized path while the shared chance-node result stays paired.
+  Independent policy and draw configurations exercise distinct outcomes.
+  [Comparison randomness](../../../docs/validation/game-rng-isolation.md)
 
-### [ ] T17.16 — restore qualified policy and native state for causal replay
+### [~] T17.16 — restore qualified policy and native state for causal replay
 
 - Behavior: resume the supported game execution from one checkpoint with the
   same subsequent causal events and outcomes as uninterrupted execution.
 - Depends on: T17.08 and T17.15.
 - Execution: specialist, state ownership and replay.
-- Files (4): `crates/paignia-kairos/src/lib.rs`,
-  `crates/paignia-kairos/src/checkpoint.rs` (future),
-  `crates/paignia-kairos/tests/policy_resume.rs` (future),
-  `docs/validation/game-policy-resume.md` (future).
-- Check: `cargo test --locked -p paignia-kairos --test policy_resume`
-  (future target). Restore live policy state, identity mapping, native state and
+- Files (5): `crates/paignia-kairos/src/lib.rs`,
+  `crates/paignia-kairos/src/checkpoint.rs`, `crates/paignia-kairos/src/randomness.rs`,
+  `crates/paignia-kairos/tests/policy_resume.rs`, and
+  `docs/validation/game-policy-resume.md`. The adapter manifest and lock carry
+  the separately qualified Kairos pin.
+- Check: `cargo test --locked --manifest-path crates/paignia-kairos/Cargo.toml
+  --test policy_resume`. Restore live policy state, identity mapping, native state and
   qualified RNG checkpoints together; a sibling branch remains isolated. Keep
   frozen offline training provenance distinct from live replay state. Reject
   incompatible versions or unsupported mutable policy state before resuming;
   matching a solver's diagnostic trace alone does not establish replay.
+- Candidate evidence: capture after a committed transition into chance, restore
+  the Kairos snapshot into a fresh scheduler and decode a separate live policy
+  before committing the resume. Both native stream modes exercise deterministic
+  replay and sibling isolation. [Replay contract](../../../docs/validation/game-policy-resume.md)
 
 ### [~] T17.17 — validate an ECS-independent information-set representation
 
@@ -655,7 +672,7 @@ oracle and result contract. Exclusion is not scientific completion.
 
 ## Phase D — real application consumers
 
-### [ ] T17.09 — external reimbursement consumer qualification
+### [x] T17.09 — external reimbursement consumer qualification
 
 - Owner: [new-drug-reimbursement-game T17](https://github.com/edithatogo/new-drug-reimbursement-game/tree/main/conductor/tracks/t17_game_runtime_ecosystem_20261107).
   This entry is an ownership/dependency link, not a second local implementation.
@@ -663,9 +680,16 @@ oracle and result contract. Exclusion is not scientific completion.
   Paignia artifacts against an independent expected result. Only capabilities
   used by the application add numerical or native prerequisites.
 - Depends on: T17.03. Static acceptance does not require the optional adapter.
-- Files: none in this provider leaf; application owner resolves its bounded file
-  list. Its `paignia_static_game` source test is a genuine starting call, not an
-  installed-artifact/real-model release receipt or a second application.
+- The application owns the finite Chapter 8 Game 1 and payoff valuation.
+  Its six native tests use the independently derived equation 8.2 benchmark
+  and the maintained example's synthetic inputs. The run on application
+  `63a3801d378e04f59fec4124e67281f7cbba0b94` resolved to the qualified
+  `bd880dd` archive pair with both optional feature sets empty. Cargo resolution,
+  compilation and tests ran under one macOS policy that denied network and
+  provider source reads, including the Cargo Git cache.
+  [Application #114](https://github.com/edithatogo/new-drug-reimbursement-game/pull/114)
+  [Receipt](../../../docs/validation/receipts/t17-reimbursement-chapter8.json)
+  [Execution log](../../../docs/validation/receipts/t17-reimbursement-chapter8.log)
 - Check: record the actual consumer Cargo target, nonzero tests, exact Git/package
   revision and artifact/profile hashes in that repository. Reimbursement-local
   valuation stays there. Paignia T17.12 reads the resulting receipt.
@@ -723,7 +747,8 @@ oracle and result contract. Exclusion is not scientific completion.
 - Current evidence: `docs/validation/receipts/t17-bd880dd-handoff.json` binds a
   clean immutable provider, exact profile and both qualified archive bytes,
   independently matched to the downloaded hosted artifact. The current guard
-  runs and returns exit 1 solely for the missing two real application receipts.
+  admits the first reimbursement receipt and still returns exit 1 because
+  eligibility requires a second distinct application receipt.
   Its selected release capability is backward induction through the graph
   profile; separate bimatrix/ODE claims retain their method/input requirements.
 
