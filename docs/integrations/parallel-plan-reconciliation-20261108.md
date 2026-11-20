@@ -806,3 +806,40 @@ The next outstanding inputs are UOGTO's executable information-set profile,
 Kairos's native game port and source-side S04 disposition, the two actual
 consumer receipts, reimbursement's valued-payoff contract, and the
 T18.03 application handoff. Each keeps its linked owner and acceptance criteria.
+
+## T17.17 acceptance on 21 November 2026
+
+Chat `01a1f635-4bc4-73f0-b6f2-2d2541bb46a0` records the UOGTO evidence using
+the isolated Git worktree
+`/Volumes/PortableSSD/GitHub/paignia-t17-information-set-acceptance`.
+The acceptance scope is the registry, the T17 index, plan and metadata, and
+this handoff. The next operation is to verify the paired profile receipt and
+integrate the bounded acceptance through Paignia CI.
+[UOGTO receipt](https://github.com/edithatogo/UOGTO/actions/runs/44776528908)
+
+## Kairos execution-port acceptance on 21 November 2026
+
+Chat `01a1f635-4bc4-73f0-b6f2-2d2541bb46a0` reuses the isolated worktree
+`/Volumes/PortableSSD/GitHub/paignia-t17-information-set-acceptance` on
+`codex/t17-kairos-port-acceptance-20261121`. The registry, T17 index, plan,
+metadata and this handoff record the qualified port. The next operation
+is Paignia CI for the bounded acceptance of T17.08, T17.15 and T17.16.
+[Kairos port acceptance](https://github.com/edithatogo/kairos/blob/f7484751c4a058581f2425ca493faec8e85e5637/conductor/contracts/game-port-acceptance.md)
+
+## T17.07 acceptance on 21 November 2026
+
+Chat `01a1f635-4bc4-73f0-b6f2-2d2541bb46a0` owns the Paignia status
+readback in the isolated worktree
+`/Volumes/PortableSSD/GitHub/paignia-t17-information-set-acceptance` on
+`codex/t17-s04-closeout-20261121`. The primary checkout at
+`/Volumes/PortableSSD/GitHub/paignia` holds `main`. This update covers
+the T17 registry, index, plan, metadata and this handoff.
+
+Paignia PR #62 merged the reviewed two-budget OpenSpiel Leduc comparison.
+Kairos PR #406 retired the legacy production Kuhn CFR API and passed
+the unchanged zero-regression coverage check. The two merged revisions
+close T17.07 for the declared graph and training methods. The next
+operation is hosted CI for the Conductor status update. T17.10, T17.11
+and T17.12 retain their owners and acceptance criteria.
+[Paignia #62](https://github.com/edithatogo/paignia/pull/62) ·
+[Kairos #406](https://github.com/edithatogo/kairos/pull/406)

@@ -1,18 +1,23 @@
 # T17 Paignia native library and ecosystem handoff
 
-Status: active, with eight bounded provider leaves complete: T17.01–.06,
-.13 and .14. The native static contract, package boundary/artifacts, RK4/Euler,
-mixed Nash, optional correlated equilibrium, static conversion and owned
-observations have accepted independent review and integrated compiler/package
+T17 is active. Thirteen provider leaves are complete (T17.01–.08 and
+.13–.17). The native static contract, package boundary/artifacts, RK4/Euler,
+mixed Nash, optional correlated equilibrium, CFR/CFR+, static conversion
+and owned observations have accepted independent review and integrated compiler/package
 checks. The [17 November receipt](../../../docs/validation/t17-review-20261117.md)
 records exact source, corrections, nonzero test counts and remaining limits.
 
 T17.09 supplies the first application artifact receipt for the reimbursement
-Chapter 8 model. Eight leaves remain open. The perfect-recall information-set,
-CFR, native adapter, stream isolation and replay implementations are merged.
-UOGTO profile acceptance, Kairos port and legacy caller acceptance, the second
-application receipt and remaining valued-payoff work are open. All seventeen
-original IDs stay visible. [Consumer evidence](../../../docs/validation/game-consumers.json)
+Chapter 8 model. UOGTO accepted the executable information-set profile.
+Kairos accepted the bounded adapter, random-stream isolation and checkpoint
+replay. The independent Leduc comparison and Kairos's legacy CFR retirement
+complete T17.07. Three leaves remain open for the second application receipt,
+the remaining valued-payoff work and bounded release eligibility.
+[CFR validation](../../../docs/validation/cfr.md) ·
+[Kairos S04 retirement](https://github.com/edithatogo/kairos/pull/406) ·
+[Kairos port acceptance](https://github.com/edithatogo/kairos/blob/f7484751c4a058581f2425ca493faec8e85e5637/conductor/contracts/game-port-acceptance.md) ·
+[UOGTO information-set profile](https://github.com/edithatogo/UOGTO/blob/3000c231b2c102e18bf7c3294bec498f00f1976c/docs/contracts/executable-information-set-profile-v1.md) ·
+[Consumer evidence](../../../docs/validation/game-consumers.json)
 
 - [Specification](spec.md)
 - [Provider implementation plan and external owner entries](plan.md)

@@ -3,12 +3,12 @@
 - [~] **T17 Paignia native packages and scientific maturity**
   [Specification, plan and handoff](tracks/t17_game_runtime_ecosystem_20261107/index.md).
   Fourteen provider-owned leaves plus three external consumer/valuation handoffs
-  retain all seventeen IDs. Eight bounded provider leaves (.01–.06, .13, .14)
-  are complete after independent review and both compiler/artifact gates.
-  T17.09 adds the first real application artifact receipt. Eight leaves remain
-  open. The bounded information-set, CFR/CFR+, native adapter, stream isolation
-  and replay code are merged. Upstream acceptance, a second matching consumer
-  receipt and the remaining valued-payoff handoff are open.
+  retain all seventeen IDs. Thirteen provider leaves are complete after
+  review and qualification, including the independent CFR/CFR+ checks and
+  Kairos S01–S04 source retirement. T17.09 supplies the first application
+  artifact receipt. Three leaves remain open (.10, .11 and .12) for the
+  second matching application receipt, the valued-payoff handoff and
+  bounded release eligibility.
 
 - [~] **T18 Illicit-supply border-enforcement and retail-inspection game contracts for tobac**
   [Specification, plan and handoff](tracks/t18_illicit_enforcement_inspection_games_20261110/index.md).

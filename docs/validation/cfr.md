@@ -101,25 +101,99 @@ after summing across compatible hidden cards. It reads only the exported action
 labels and probabilities. Both seat values, both best responses and NashConv
 must agree with Paignia within `1e-9` at each tested budget.
 
-## What this slice does not establish
+## Independently trained Leduc checkpoints
 
-- The Leduc comparison uses the two-player OpenSpiel rule set and the published
-  first-player value `-0.085606`. Four thousand CFR+ iterations must land within
-  `0.02`, with NashConv below `0.05`. Vanilla CFR and CFR+ NashConv both decrease
-  between 1,000 and 4,000 iterations. The published equilibrium value is
-  checked only for CFR+ at 4,000 iterations. S04 and comparison with an independently trained
-  iteration curve remain open.
-- No iteration curve is claimed to match OpenSpiel, Gambit, or any other
-  implementation. Those programs use their own averaging and update schedules.
-  The Kuhn budgets above only show this trainer's NashConv shrinking
-  under its own independent enumerator.
-- This is not an equilibrium catalogue, a welfare claim, or a production
-  tolerance. Running more iterations is not automatic acceptance.
-- Kairos storage, ontology labels, live observations, and stream isolation are
-  not involved.
-- T17.17's bounded native graph passed specialist review and hosted CI.
-  UOGTO executable profile acceptance and the Kairos source disposition
-  remain separate obligations. [20 November review](provider-review-20261120.md)
+OpenSpiel separately trained both variants on its default two-player Leduc
+game. Both engines use own-reach averaging without an iteration multiplier.
+Vanilla uses simultaneous updates. CFR+ updates seat 1 first in the Paignia
+fixture because its player ID `one` sorts before `zero`. The comparison uses
+this order in OpenSpiel as well. First-player payoff always means seat 0.
+The Rust tests read the pinned OpenSpiel values and NashConv from the
+[training fixture](../../fixtures/conformance/leduc-open-spiel-v1.json).
+
+| Variant | Iterations | Paignia payoff | OpenSpiel payoff | Paignia NashConv | OpenSpiel NashConv |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Vanilla CFR | 1,000 | −0.09121178 | −0.09121178 | 0.07962657 | 0.07962655 |
+| Vanilla CFR | 4,000 | −0.08815894 | −0.08842248 | 0.03271565 | 0.03468534 |
+| CFR+ | 1,000 | −0.08573116 | −0.08573022 | 0.01173366 | 0.01173779 |
+| CFR+ | 4,000 | −0.08563728 | −0.08563723 | 0.00293114 | 0.00293212 |
+
+Each trainer's NashConv decreases across the two budgets. Paignia's later
+NashConv must also fall below OpenSpiel's earlier result for the same variant.
+In a two-player zero-sum game the minimax value lies between the seat-0 payoff
+after either player's unilateral best response. Thus each policy's distance
+to the minimax value is bounded by its NashConv. The difference between the
+trainers' payoffs must be at most the sum of their NashConv, with `1e-9` for
+roundoff. At 4,000 CFR+ iterations both engines must also be within `0.02` of
+the published value `-0.085606` and have NashConv below `0.05`.
+
+OpenSpiel's default seat order with the iteration multiplier disabled gave
+CFR+ NashConv of 0.01388640 and 0.00347892. With linear averaging and that
+order it gave 0.00049230 and 0.00004309. Linear averaging with the matched
+seat order gave 0.00051866 and 0.00005101. These controls show why the tested
+variant records its averaging and update schedule. The comparisons cover
+the stated game and checkpoints. Equivalence between implementations and
+convergence on other games require their own evidence.
+
+### Reproduce the OpenSpiel training run
+
+Use the [OpenSpiel checkout](https://github.com/google-deepmind/open_spiel/tree/4956843d7375e29a4c986425c66f897d7ac15340)
+at `4956843d7375e29a4c986425c66f897d7ac15340` and its configured source
+dependencies at these revisions.
+
+| Source under the OpenSpiel checkout | Revision |
+| --- | --- |
+| `open_spiel/abseil-cpp` | `d38452e1ee03523a208362186fd42248ff2609f6` |
+| `open_spiel/json` | `55f93686c01528224f448c19128836e7df245f72` |
+| `open_spiel/games/bridge/double_dummy_solver` | `091ea94358a4016d4fb6069dea5c452cdc98d0bd` |
+
+In `open_spiel/algorithms/cfr.cc`, change the alternating-update loop in
+`CFRSolverBase::EvaluateAndUpdatePolicy` to
+`for (int player = game_->NumPlayers() - 1; player >= 0; --player)`.
+Copy the [reference driver](../../fixtures/conformance/leduc-open-spiel-reference.cc)
+to `open_spiel/paignia_leduc_reference.cc` and append this target to
+`open_spiel/CMakeLists.txt`.
+
+```cmake
+add_executable(paignia_leduc_reference paignia_leduc_reference.cc)
+target_link_libraries(paignia_leduc_reference PRIVATE
+  open_spiel::open_spiel
+  open_spiel::games::leduc_poker::leduc_poker
+  open_spiel::algorithms::cfr
+  open_spiel::algorithms::expected_returns
+  open_spiel::algorithms::tabular_exploitability
+)
+```
+
+With `spiel_checkout` set to that source checkout and `build_dir` set to
+a fresh build directory, build and run the reference executable.
+
+```bash
+OPEN_SPIEL_BUILD_WITH_PYTHON=OFF cmake -S "$spiel_checkout/open_spiel" \
+  -B "$build_dir" -DCMAKE_BUILD_TYPE=Release \
+  -DOPEN_SPIEL_BUILD_WITH_PYTHON=OFF -DJSON_BuildTests=OFF
+cmake --build "$build_dir" --target paignia_leduc_reference --parallel 4
+"$build_dir/paignia_leduc_reference"
+```
+
+The recorded run used CMake 4.5.1 and AppleClang 21.0.0.21000401 on arm64.
+Its full CSV has SHA-256
+`84435a0069019b8bff3aba4d1d66da6a7089bd150083d0cd32642a2f7b66a6c4`.
+The two matched schedules supply the Rust fixture. The fixture reader checks
+each numeric pair against the recorded run. Paignia uses the C++ executable
+as development evidence. Its solver and shipped dependencies stay Rust.
+
+## Scope of acceptance
+
+The Kuhn budgets use the independent deal and pure-policy enumerators. The
+Leduc budgets additionally use the independently trained OpenSpiel checkpoints.
+The numerical acceptance covers finite-game training and the stated payoff
+and regret diagnostics. Separate contracts govern live observations, ontology
+and simulation replay.
+UOGTO accepted the bounded executable information-set profile in
+[UOGTO #139](https://github.com/edithatogo/UOGTO/pull/139).
+Kairos owns the legacy CFR caller and source disposition in
+[Kairos #406](https://github.com/edithatogo/kairos/pull/406).
 
 ```bash
 cargo test --locked -p paignia-solve --test cfr_information_sets

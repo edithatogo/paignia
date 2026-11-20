@@ -49,12 +49,23 @@ run were not added as unsupported extra prerequisites.
 
 ## Current acceptance — 21 November 2026
 
-T17.09 records the first application artifact receipt. Eight leaves remain
-open: .07, .08, .10, .11, .12, .15, .16 and .17. The optional adapter,
-separate random streams and replay are merged. Their upstream Kairos
-`K01.port` acceptance remains open. The bounded release check still requires
-the second application receipt before eligibility. Full-track archival also
-requires the outstanding scientific and native acceptance work.
+T17.09 records the first application artifact receipt and T17.17 has the
+accepted executable profile. The merged Kairos `K01.port` receipt qualifies
+T17.08, T17.15 and T17.16. T17.07 is complete after the independent Leduc
+comparison and the legacy Kairos CFR retirement. Three leaves remain open
+(.10, .11 and .12). The bounded release check still requires a second matching
+application receipt. The valued-payoff handoff stays open.
+[Kairos port acceptance](https://github.com/edithatogo/kairos/blob/f7484751c4a058581f2425ca493faec8e85e5637/conductor/contracts/game-port-acceptance.md)
+
+Kairos withdrew the legacy S01 RK4 export at `ae9ae116` and the S03
+correlated-equilibrium exports at `01156707`. Paignia retained the two S03
+oracles and their weighted incentive threshold before the Kairos retirement.
+Kairos retired the legacy mixed-strategy exports (S02) at `9f51775` after
+removing the product-equilibrium caller. The exact-base native coverage gate
+passed at 33,121/38,353 against 33,170/38,412. [Kairos #409](https://github.com/edithatogo/kairos/pull/409) · [Coverage result](https://github.com/edithatogo/kairos/actions/runs/44813475869/job/136563716910)
+[Kairos #407](https://github.com/edithatogo/kairos/pull/407) ·
+[Paignia #64](https://github.com/edithatogo/paignia/pull/64) ·
+[Kairos #408](https://github.com/edithatogo/kairos/pull/408)
 
 Earlier dated paragraphs retain historical source, failure and review evidence,
 including then-future paths and then-pending PR/merge wording. The current
@@ -461,7 +472,7 @@ oracle and result contract. Exclusion is not scientific completion.
   from a product distribution. Evaluate existing Clarabel capability before
   custom optimization; any dependency/lock change gets a separate bounded leaf.
 
-### [~] T17.07 — train CFR/CFR+ on a supported information-set graph (S04)
+### [x] T17.07 — train CFR/CFR+ on a supported information-set graph (S04)
 
 - Behavior: update a policy on general supported information sets using the
   declared CFR variant rather than a hard-coded Kuhn-game implementation.
@@ -491,19 +502,34 @@ oracle and result contract. Exclusion is not scientific completion.
   iterations than at 4,000. The published value is checked only for CFR+.
   On Kuhn, both variants are also checked at 100, 1,000, and 12,000
   iterations: exploitability shrinks at each step, and the independent value
-  stays within `5e-3` of `-1/18`. The value error is not monotone, and there is
-  still no published Leduc iteration curve. This does not close S04, T17.07, or
-  T17.17.
+  stays within `5e-3` of `-1/18`. Value error can fluctuate. The independent
+  Leduc training comparison and Kairos source disposition were pending at
+  this checkpoint.
 
 - Review and integration: PRs #39, #40 and #51–#53 implement and check the
   bounded provider. Independent references check both players' best responses
   and NashConv at the recorded Kuhn and Leduc budgets. The hosted Rust profiles
-  pass. UOGTO profile acceptance and the Kairos S04 source disposition remain
-  pending. [20 November review](../../../docs/validation/provider-review-20261120.md)
+  pass. The UOGTO profile now qualifies T17.17.
+  [20 November review](../../../docs/validation/provider-review-20261120.md)
+- Acceptance on 21 November 2026. Paignia PR #62 added independently trained
+  OpenSpiel Leduc checkpoints at 1,000 and 4,000 iterations for both variants.
+  The specialist-reviewed fixture reproduces the four recorded numeric rows
+  and rejects substituted values under the same schedule label. Both hosted
+  Rust profiles passed, including isolated artifact consumption. Offline
+  security was queued at the merge under the maintainer's instruction.
+  Kairos PR #406 retired the production Kuhn CFR API after confirming the caller
+  disposition. Historical tests stay in Kairos, and supported game training
+  stays in Paignia. The Kairos source integrated at
+  `5209fe488d5844936d97f35d9f0e884214d7efbb` after native checks and the
+  zero-regression workspace coverage gate passed.
+  [Paignia #62](https://github.com/edithatogo/paignia/pull/62) ·
+  [Paignia CI](https://github.com/edithatogo/paignia/actions/runs/44793502947) ·
+  [Kairos #406](https://github.com/edithatogo/kairos/pull/406) ·
+  [Kairos CI](https://github.com/edithatogo/kairos/actions/runs/44792232351)
 
 ## Phase C — optional execution and representation gaps
 
-### [~] T17.08 — execute a supported game trace through the Rust Kairos adapter
+### [x] T17.08 — execute a supported game trace through the Rust Kairos adapter
 
 - Behavior: translate the supported game execution plan into actual native
   Kairos events for one selected policy/chance path.
@@ -530,9 +556,12 @@ oracle and result contract. Exclusion is not scientific completion.
 - Candidate evidence: the adapter binds a live entity generation and empty
   scheduler at Kairos `bac331fc`. It schedules one native event per chosen
   action or chance outcome and records the dispatched ID, tick, sequence and
-  revision. The separate Rust 1.99 and stable CI matrix exercises the bounded
-  adapter. `K01.port` provider acceptance remains with Kairos Track 114.
-  [Execution contract](../../../docs/architecture/game-native-execution-v1.md)
+  revision. The receiving adapter pins Kairos `235e6a3`. The qualified
+  fixture covers one selected action, one sampled chance outcome, typed
+  preflight rejections and an owned policy observation on the native path.
+  Linux CI exercises the receiving adapter on Rust 1.99.0 and stable.
+  [Execution contract](../../../docs/architecture/game-native-execution-v1.md) ·
+  [Kairos port acceptance](https://github.com/edithatogo/kairos/blob/f7484751c4a058581f2425ca493faec8e85e5637/conductor/contracts/game-port-acceptance.md)
 
 ### [x] T17.13 — reject semantically lossy game-profile conversions
 
@@ -587,7 +616,7 @@ oracle and result contract. Exclusion is not scientific completion.
   Offline solvers may inspect the mathematical game without granting that access
   to an acting policy. A static solver with no live policy API need not wait here.
 
-### [~] T17.15 — isolate solver exploration from simulation random streams
+### [x] T17.15 — isolate solver exploration from simulation random streams
 
 - Behavior: keep exogenous simulation draws invariant when solver exploration
   or its iteration budget changes under the declared coupling policy.
@@ -608,13 +637,13 @@ oracle and result contract. Exclusion is not scientific completion.
   expectation-based solving draws nothing. A future stochastic static solver
   receives an explicit RNG/configuration without a Kairos dependency; it must
   not borrow a simulation-global stream. A shared seed alone is not this oracle.
-- Candidate evidence: comparison execution keys separate native policy and
-  chance streams by canonical model, scenario and draw. Real policy exploration
-  changes the realized path while the shared chance-node result stays paired.
-  Independent policy and draw configurations exercise distinct outcomes.
+- Accepted comparison controls use actual policy exploration and chance draws.
+  They vary the exploration budget, policy identity, entity construction and
+  realized detour on the same graph. The shared chance-node sample stays paired
+  across 64 seeds. The independent mode exercises distinct streams and outcomes.
   [Comparison randomness](../../../docs/validation/game-rng-isolation.md)
 
-### [~] T17.16 — restore qualified policy and native state for causal replay
+### [x] T17.16 — restore qualified policy and native state for causal replay
 
 - Behavior: resume the supported game execution from one checkpoint with the
   same subsequent causal events and outcomes as uninterrupted execution.
@@ -631,12 +660,15 @@ oracle and result contract. Exclusion is not scientific completion.
   frozen offline training provenance distinct from live replay state. Reject
   incompatible versions or unsupported mutable policy state before resuming;
   matching a solver's diagnostic trace alone does not establish replay.
-- Candidate evidence: capture after a committed transition into chance, restore
-  the Kairos snapshot into a fresh scheduler and decode a separate live policy
-  before committing the resume. Both native stream modes exercise deterministic
-  replay and sibling isolation. [Replay contract](../../../docs/validation/game-policy-resume.md)
+- Accepted replay controls capture after a committed transition into chance.
+  Each resume restores the native scheduler and decodes branch-owned policy
+  state. Entity-bound and shared-comparison execution reproduce native events
+  and outcomes. A sibling can reach a different payoff without changing the
+  original or the checkpoint.
+  The supported boundary is in-process replay.
+  [Replay contract](../../../docs/validation/game-policy-resume.md)
 
-### [~] T17.17 — validate an ECS-independent information-set representation
+### [x] T17.17 — validate an ECS-independent information-set representation
 
 - Behavior: validate the declared finite information-set graph without importing
   Kairos storage or treating ontology labels as implemented semantics.
@@ -666,9 +698,21 @@ oracle and result contract. Exclusion is not scientific completion.
 
 - Review and integration: PR #37 merged the perfect-recall graph after the
   specialist review and both hosted Rust profiles passed. The review tightened
-  the space bound for decisions shared by many paths. The UOGTO executable
-  information-set profile remains pending.
+  the space bound for decisions shared by many paths.
   [20 November review](../../../docs/validation/provider-review-20261120.md)
+
+- Semantic acceptance on 21 November. UOGTO merged the scoped RDF profile
+  and the wheel check in PR #139. The profile preserves the specification,
+  representation, root, typed states and complete decision membership.
+  Its Linux gate invokes the Rust 1.75.0 witness pinned to Paignia
+  `d4047c0`. The witness verifies full identifiers and preserved legal-action
+  order. Four native rejection controls cover ownership, missing coverage,
+  changed order and imperfect recall. The 39 source-profile tests exercise
+  the selected graph, roles, representation and membership boundaries.
+  Paignia's exact provider revision passed both Linux compiler and isolated
+  package profiles.
+  [UOGTO contract](https://github.com/edithatogo/UOGTO/blob/3000c231b2c102e18bf7c3294bec498f00f1976c/docs/contracts/executable-information-set-profile-v1.md), [Native witness](https://github.com/edithatogo/UOGTO/actions/runs/44776528908),
+  [Provider CI](https://github.com/edithatogo/paignia/actions/runs/44758809445)
 
 ## Phase D — real application consumers
 
