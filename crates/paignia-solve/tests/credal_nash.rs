@@ -50,6 +50,29 @@ fn matching_pennies_keeps_every_cell_touching_the_dyadic_equilibrium() {
 }
 
 #[test]
+fn identity_game_residual_is_the_maximum_over_retained_cells() {
+    let identity = [[1, 0], [0, 1]];
+    let coordination = game(identity, identity);
+    let enclosure = enclose_credal_nash(&[coordination], 4).unwrap();
+    assert_eq!((enclosure.total_cells, enclosure.retained_cells), (16, 6));
+    assert_eq!(enclosure.max_deviation_gain, r(3, 8));
+
+    // Shares (1, 0) select row 0 and column 1.
+    for (range, share) in enclosure
+        .first_action_shares
+        .into_iter()
+        .zip([r(1, 1), r(0, 1)])
+    {
+        assert!(range.lower <= share && share <= range.upper);
+    }
+    let row = coordination.row_payoffs;
+    let column = coordination.column_payoffs;
+    let row_gain = row[1][1].checked_sub(row[0][1]).unwrap();
+    let column_gain = column[0][0].checked_sub(column[0][1]).unwrap();
+    assert_eq!(row_gain.max(column_gain), r(1, 1));
+}
+
+#[test]
 fn strict_dominance_retains_the_cell_at_the_correct_pure_corner() {
     // First row wins by 2 and second column wins by 4 for every opponent mix.
     let dominant = game([[3, 3], [1, 1]], [[0, 4], [0, 4]]);
