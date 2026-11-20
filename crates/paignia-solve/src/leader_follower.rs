@@ -237,6 +237,23 @@ pub struct Commitment {
     pub evade: Option<Ratio>,
 }
 
+/// Commitment value while one parameter ranges over a closed interval.
+///
+/// The value bounds are the image on that interval. Action shares are present
+/// only when every commitment in the interval attains its value. A point inside
+/// the share bounds is not, by itself, a commitment for every parameter value.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct CommitmentProjection {
+    /// Lower and upper leader commitment values.
+    pub value: RatioBounds,
+    /// `false` when either endpoint value is an unattained supremum.
+    pub attained: bool,
+    /// Attaining inspection probabilities, absent when `attained` is false.
+    pub inspect: Option<RatioBounds>,
+    /// Attaining follower responses, absent when `attained` is false.
+    pub evade: Option<RatioBounds>,
+}
+
 /// Rejection of an inspection-family request.
 #[derive(Clone, Copy, Debug, Error, Eq, PartialEq)]
 pub enum Error {
@@ -286,6 +303,9 @@ pub enum Error {
     /// The corners of a parameter rectangle are not in one strict Nash regime.
     #[error("parameter rectangle changes the Nash regime")]
     RectangleRegimeChange,
+    /// The interval is not contained in one strict commitment piece.
+    #[error("the interval is not inside one strict commitment piece")]
+    CommitmentRegimeChange,
 }
 
 /// Expected payoffs from the four declared cells.
@@ -675,6 +695,147 @@ pub fn commitment_bound_with_detection(
             evade: None,
         },
     })
+}
+
+/// Commitment value while one parameter ranges over a closed positive interval.
+///
+/// The bound is affine on each side of the follower's threshold, and the
+/// threshold and the evasion-branch slope are each monotone in every single
+/// parameter. Matching strict pieces at the two endpoints therefore keep the
+/// whole interval in that piece, and the image is the endpoint span.
+///
+/// # Errors
+///
+/// Returns [`Error::CommitmentRegimeChange`] when the interval meets the
+/// threshold or a zero slope, or when the endpoints are different pieces. Also
+/// returns the interval and budget admission errors.
+pub fn commitment_projection(
+    baseline: Parameters,
+    interval: ParameterInterval,
+    budget: Ratio,
+    tie: FollowerTie,
+) -> Result<CommitmentProjection, Error> {
+    admit_interval(interval)?;
+    require_probability(budget)?;
+    let lower_game = with_varied(baseline, interval.parameter, interval.lower)?;
+    let upper_game = with_varied(baseline, interval.parameter, interval.upper)?;
+    project_commitment(
+        lower_game,
+        upper_game,
+        Ratio::one(),
+        Ratio::one(),
+        budget,
+        tie,
+    )
+}
+
+/// Commitment value while detection ranges over a closed subinterval of `(0, 1]`.
+///
+/// Detection moves the threshold and the evasion-branch slope in opposite
+/// directions. The projection is the endpoint span only when both endpoints
+/// lie in the same strict piece.
+///
+/// # Errors
+///
+/// Returns [`Error::CommitmentRegimeChange`], [`Error::DetectionOutOfRange`],
+/// [`Error::UnorderedInterval`], or [`Error::ProbabilityOutOfRange`].
+pub fn detection_commitment_projection(
+    baseline: Parameters,
+    detection_lower: Ratio,
+    detection_upper: Ratio,
+    budget: Ratio,
+    tie: FollowerTie,
+) -> Result<CommitmentProjection, Error> {
+    require_detection(detection_lower)?;
+    require_detection(detection_upper)?;
+    if detection_lower > detection_upper {
+        return Err(Error::UnorderedInterval);
+    }
+    require_probability(budget)?;
+    project_commitment(
+        baseline,
+        baseline,
+        detection_lower,
+        detection_upper,
+        budget,
+        tie,
+    )
+}
+
+fn project_commitment(
+    lower_game: Parameters,
+    upper_game: Parameters,
+    lower_detection: Ratio,
+    upper_detection: Ratio,
+    budget: Ratio,
+    tie: FollowerTie,
+) -> Result<CommitmentProjection, Error> {
+    let lower_piece = commitment_piece(lower_game, lower_detection, budget)?;
+    let upper_piece = commitment_piece(upper_game, upper_detection, budget)?;
+    if lower_piece != upper_piece {
+        return Err(Error::CommitmentRegimeChange);
+    }
+    let lower = commitment_bound_with_detection(lower_game, lower_detection, budget, tie)?;
+    let upper = commitment_bound_with_detection(upper_game, upper_detection, budget, tie)?;
+    if lower.attained != upper.attained {
+        return Err(Error::CommitmentRegimeChange);
+    }
+    let value = Span::cover(lower.value, upper.value).bounds();
+    if !lower.attained {
+        return Ok(CommitmentProjection {
+            value,
+            attained: false,
+            inspect: None,
+            evade: None,
+        });
+    }
+    Ok(CommitmentProjection {
+        value,
+        attained: true,
+        inspect: Some(
+            Span::cover(
+                lower.inspect.ok_or(Error::InconsistentWitness)?,
+                upper.inspect.ok_or(Error::InconsistentWitness)?,
+            )
+            .bounds(),
+        ),
+        evade: Some(
+            Span::cover(
+                lower.evade.ok_or(Error::InconsistentWitness)?,
+                upper.evade.ok_or(Error::InconsistentWitness)?,
+            )
+            .bounds(),
+        ),
+    })
+}
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+enum CommitmentPiece {
+    ThresholdBelowBudget,
+    EvadeIncreasing,
+    EvadeDecreasing,
+}
+
+fn commitment_piece(
+    game: Parameters,
+    detection: Ratio,
+    budget: Ratio,
+) -> Result<CommitmentPiece, Error> {
+    let theta = detection_threshold(game, detection)?;
+    if theta < budget {
+        return Ok(CommitmentPiece::ThresholdBelowBudget);
+    }
+    if theta == budget {
+        return Err(Error::CommitmentRegimeChange);
+    }
+    let slope = detection
+        .mul(game.undetected_harm)?
+        .sub(game.inspection_cost)?;
+    match slope.cmp(&Ratio::zero()) {
+        Ordering::Greater => Ok(CommitmentPiece::EvadeIncreasing),
+        Ordering::Less => Ok(CommitmentPiece::EvadeDecreasing),
+        Ordering::Equal => Err(Error::CommitmentRegimeChange),
+    }
 }
 
 fn threshold(game: Parameters) -> Result<Ratio, Error> {

@@ -2,6 +2,7 @@
 
 use paignia_solve::{
     inspection_commitment_bound, inspection_commitment_bound_with_detection,
+    inspection_commitment_projection, inspection_detection_commitment_projection,
     inspection_detection_projection, inspection_detection_rectangle,
     inspection_expected_payoffs_with_detection, inspection_nash_with_detection,
     inspection_simultaneous_nash, InspectionError, InspectionFollowerTie, InspectionParameter,
@@ -209,4 +210,81 @@ fn a_detection_rectangle_that_changes_regime_is_rejected() {
         ratio(1, 1),
     );
     assert_eq!(error, Err(InspectionError::RectangleRegimeChange));
+}
+
+#[test]
+fn commitment_value_spans_the_cost_endpoints_above_the_threshold() {
+    let optimistic = inspection_commitment_projection(
+        game(1, 4, 1, 2),
+        cost_interval(1, 2),
+        ratio(1, 1),
+        InspectionFollowerTie::Optimistic,
+    )
+    .expect("optimistic");
+    assert!(optimistic.attained);
+    assert_eq!(optimistic.value.lower, ratio(-2, 3));
+    assert_eq!(optimistic.value.upper, ratio(-1, 3));
+    let inspect = optimistic.inspect.expect("attained inspection");
+    assert_eq!(inspect.lower, ratio(1, 3));
+    assert_eq!(inspect.upper, ratio(1, 3));
+    let pessimistic = inspection_commitment_projection(
+        game(1, 4, 1, 2),
+        cost_interval(1, 2),
+        ratio(1, 1),
+        InspectionFollowerTie::Pessimistic,
+    )
+    .expect("pessimistic");
+    assert!(!pessimistic.attained);
+    assert_eq!(pessimistic.value.lower, ratio(-2, 3));
+    assert_eq!(pessimistic.value.upper, ratio(-1, 3));
+    assert!(pessimistic.inspect.is_none());
+}
+
+#[test]
+fn commitment_below_the_threshold_moves_with_cost() {
+    let projection = inspection_commitment_projection(
+        game(1, 4, 1, 2),
+        cost_interval(1, 2),
+        ratio(1, 4),
+        InspectionFollowerTie::Optimistic,
+    )
+    .expect("below threshold");
+    assert!(projection.attained);
+    assert_eq!(projection.value.lower, ratio(-7, 2));
+    assert_eq!(projection.value.upper, ratio(-13, 4));
+    let inspect = projection.inspect.expect("budget commitment");
+    assert_eq!(inspect.lower, ratio(1, 4));
+    assert_eq!(inspect.upper, ratio(1, 4));
+}
+
+#[test]
+fn detection_commitment_spans_the_scaled_threshold() {
+    let projection = inspection_detection_commitment_projection(
+        game(1, 4, 1, 2),
+        ratio(1, 2),
+        ratio(1, 1),
+        ratio(1, 1),
+        InspectionFollowerTie::Optimistic,
+    )
+    .expect("detection commitment");
+    assert_eq!(projection.value.lower, ratio(-2, 3));
+    assert_eq!(projection.value.upper, ratio(-1, 3));
+    let inspect = projection.inspect.expect("threshold commitments");
+    assert_eq!(inspect.lower, ratio(1, 3));
+    assert_eq!(inspect.upper, ratio(2, 3));
+}
+
+#[test]
+fn a_commitment_interval_that_crosses_the_threshold_is_rejected() {
+    let error = inspection_commitment_projection(
+        game(1, 4, 1, 2),
+        ParameterInterval {
+            parameter: InspectionParameter::EvasionGain,
+            lower: ratio(1, 1),
+            upper: ratio(5, 1),
+        },
+        ratio(1, 2),
+        InspectionFollowerTie::Optimistic,
+    );
+    assert_eq!(error, Err(InspectionError::CommitmentRegimeChange));
 }

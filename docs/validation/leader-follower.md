@@ -74,6 +74,18 @@ parameter. Every corner must stay in one strict regime. With cost in `[1, 3/2]`
 and detection in `[1/2, 1]`, inspection runs from `1/3` to `2/3`, evasion from
 `1/4` to `3/4`, and the leader value from `-3` to `-1`.
 
+## Commitment over one interval
+
+`inspection_commitment_projection` spans the commitment value only when both
+endpoints lie in one strict piece: the threshold strictly below the budget, or
+evasion strictly increasing or decreasing on the whole budget. Inside that
+piece the value is monotone, so the image is the endpoint span. Cost in
+`[1, 2]` with a full budget moves the leader value from `-1/3` to `-2/3`. The
+pessimistic value is the same span and is not attained. A gain interval that
+pushes the threshold across the budget is rejected. Detection from `1/2` to
+`1` moves the attained inspection share from `2/3` to `1/3` and the value from
+`-2/3` to `-1/3`.
+
 ## Imperfect detection
 
 `inspection_nash_with_detection` admits a detection probability in `(0, 1]`.
