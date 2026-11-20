@@ -69,6 +69,14 @@ span of the corners is the image and the endpoint gap is zero. A rectangle that
 mixes those regimes, or that repeats one parameter, is rejected. Equal cost and
 harm at a corner still has no unique witness.
 
+`inspection_nash_box` varies all four parameters. The sixteen corners are
+solved only while every corner stays in one strict regime. Cost in `[1, 2]`,
+harm in `[6, 8]`, gain in `[1, 2]` and detected loss in `[2, 4]` give
+inspection `[1/5, 1/2]`, evasion `[1/8, 1/3]` and leader value `[-2, -1]`.
+The corner with cost `1` has leader value `-1` and evasion at most `1/6`, so
+the reported leader upper bound and evasion upper bound are not a joint
+witness. This is not a credal set over arbitrary payoff matrices.
+
 `inspection_detection_rectangle` varies detection together with one other
 parameter. Every corner must stay in one strict regime. With cost in `[1, 3/2]`
 and detection in `[1/2, 1]`, inspection runs from `1/3` to `2/3`, evasion from

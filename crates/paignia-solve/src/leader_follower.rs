@@ -303,6 +303,9 @@ pub enum Error {
     /// The corners of a parameter rectangle are not in one strict Nash regime.
     #[error("parameter rectangle changes the Nash regime")]
     RectangleRegimeChange,
+    /// The corners of a four-parameter box are not in one strict Nash regime.
+    #[error("parameter box changes the Nash regime")]
+    BoxRegimeChange,
     /// The interval is not contained in one strict commitment piece.
     #[error("the interval is not inside one strict commitment piece")]
     CommitmentRegimeChange,
@@ -1049,6 +1052,89 @@ pub fn nash_rectangle(
         follower: image.follower.bounds(),
         endpoint_gap: Ratio::zero(),
     })
+}
+
+/// Nash projection on a box that varies all four family parameters.
+///
+/// The sixteen corners are solved. Inside the interior regime and inside the
+/// pure-skip regime, each coordinate is monotone, so the corner span is the
+/// image. The four reported intervals are still separate projections: a point
+/// taken from all four at once need not be a witness for any parameter value
+/// in the box. This is not a credal set over arbitrary payoff matrices.
+///
+/// # Errors
+///
+/// Returns [`Error::RepeatedParameter`] when the four intervals do not name
+/// the four distinct parameters, [`Error::BoxRegimeChange`] when the corners
+/// change regime, [`Error::LeaderIndifferent`] when a corner has equal cost
+/// and harm, or the interval admission errors.
+pub fn nash_box(intervals: [ParameterInterval; 4]) -> Result<NashProjection, Error> {
+    let (cost, harm, gain, loss) = box_axes(intervals)?;
+    let mut image: Option<Image> = None;
+    let mut pure_skip: Option<bool> = None;
+    for cost_value in [cost.lower, cost.upper] {
+        for harm_value in [harm.lower, harm.upper] {
+            for gain_value in [gain.lower, gain.upper] {
+                for loss_value in [loss.lower, loss.upper] {
+                    let game = Parameters::try_new(cost_value, harm_value, gain_value, loss_value)?;
+                    let witness = simultaneous_nash(game)?;
+                    let corner_is_pure = witness.inspect == Ratio::zero();
+                    match pure_skip {
+                        None => pure_skip = Some(corner_is_pure),
+                        Some(previous) if previous != corner_is_pure => {
+                            return Err(Error::BoxRegimeChange);
+                        }
+                        Some(_) => {}
+                    }
+                    push_image(&mut image, witness_image(witness));
+                }
+            }
+        }
+    }
+    let image = image.ok_or(Error::InconsistentWitness)?;
+    Ok(NashProjection {
+        inspect: image.inspect.bounds(),
+        evade: image.evade.bounds(),
+        leader: image.leader.bounds(),
+        follower: image.follower.bounds(),
+        endpoint_gap: Ratio::zero(),
+    })
+}
+
+fn box_axes(
+    intervals: [ParameterInterval; 4],
+) -> Result<
+    (
+        ParameterInterval,
+        ParameterInterval,
+        ParameterInterval,
+        ParameterInterval,
+    ),
+    Error,
+> {
+    let mut cost = None;
+    let mut harm = None;
+    let mut gain = None;
+    let mut loss = None;
+    for interval in intervals {
+        admit_interval(interval)?;
+        let slot = match interval.parameter {
+            VariedParameter::InspectionCost => &mut cost,
+            VariedParameter::UndetectedHarm => &mut harm,
+            VariedParameter::EvasionGain => &mut gain,
+            VariedParameter::DetectedLoss => &mut loss,
+        };
+        if slot.is_some() {
+            return Err(Error::RepeatedParameter);
+        }
+        *slot = Some(interval);
+    }
+    Ok((
+        cost.ok_or(Error::RepeatedParameter)?,
+        harm.ok_or(Error::RepeatedParameter)?,
+        gain.ok_or(Error::RepeatedParameter)?,
+        loss.ok_or(Error::RepeatedParameter)?,
+    ))
 }
 
 /// Nash projection while detection and one other parameter vary together.
