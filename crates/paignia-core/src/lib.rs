@@ -5,8 +5,16 @@
 //! UOGTO.
 
 mod conversion;
+mod information_sets;
 mod observation;
 mod result;
+
+pub use information_sets::{
+    build as build_information_set_graph, Declaration as InformationSetDeclaration,
+    Error as InformationSetError, Graph as InformationSetGraph, InformationSetId,
+    RejectedNodeKind as InformationSetNodeKind, Set as InformationSet,
+    SetDeclaration as InformationSetDefinition, SCHEMA_VERSION as INFORMATION_SET_SCHEMA_VERSION,
+};
 
 pub use conversion::{
     convert as convert_static_game, restore as restore_static_game,
@@ -86,6 +94,14 @@ pub const GAME_SPEC_SCHEMA_VERSION: &str = "1.0.0";
 /// solver-result version, or numerical qualification receipt.
 pub const STATIC_GAME_PROFILE_V1: &str =
     "paignia/static-finite-perfect-information-sparse-zero/1.0.0";
+
+/// Exact profile for a complete declared information-set partition of the
+/// static graph, restricted to perfect recall.
+///
+/// This is a Paignia input-validation profile layered over
+/// [`STATIC_GAME_PROFILE_V1`], not a UOGTO vocabulary IRI or solver receipt.
+pub const INFORMATION_SET_PROFILE_V1: &str =
+    "paignia/static-finite-information-set-perfect-recall/1.0.0";
 
 /// Component schema for [`ResultIdentityRecord`], not a complete result envelope.
 pub const RESULT_IDENTITY_SCHEMA_VERSION: &str = "1.0.0";
