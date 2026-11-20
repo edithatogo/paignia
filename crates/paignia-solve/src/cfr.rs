@@ -12,7 +12,7 @@ mod dag;
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use dag::IndexedGame;
+use dag::{probability_mass, IndexedGame, ResponseMeasure};
 
 use thiserror::Error;
 
@@ -84,7 +84,7 @@ pub enum Error {
     InvalidDistribution(InformationSetId),
     #[error("counterfactual calculation exceeded finite arithmetic")]
     NonFiniteArithmetic,
-    #[error("a nonzero counterfactual quantity underflowed the available precision")]
+    #[error("a nonzero counterfactual quantity entered the unsupported underflow range")]
     Underflow,
     #[error("floating-point evaluation gave a negative unilateral gain")]
     NegativeGain,
@@ -179,7 +179,7 @@ pub fn best_response_value(
     player: &PlayerId,
 ) -> Result<f64, Error> {
     let (game, rows) = checked_profile(source, graph, strategy)?;
-    game.best_response(&rows, player)
+    game.best_response(&rows, player, ResponseMeasure::Payoff)
 }
 
 /// Sum of unilateral best-response gains. In the usual two-player zero-sum
@@ -195,10 +195,9 @@ pub fn nash_conv(
     strategy: &Strategy,
 ) -> Result<f64, Error> {
     let (game, rows) = checked_profile(source, graph, strategy)?;
-    let values = game.profile_values(&rows)?;
     let mut total = 0.0;
     for player in players_of(graph) {
-        let gain = finite(game.best_response(&rows, player)? - values[player])?;
+        let gain = game.best_response(&rows, player, ResponseMeasure::Gain)?;
         if gain < 0.0 {
             return Err(Error::NegativeGain);
         }
@@ -250,7 +249,7 @@ fn checked_profile<'a>(
             }
         }
         if row.iter().any(|p| !(0.0..=1.0).contains(p))
-            || (row.iter().sum::<f64>() - 1.0).abs() > 1e-12
+            || (probability_mass(row)? - 1.0).abs() > 1e-12
         {
             return Err(Error::InvalidDistribution(id.clone()));
         }
@@ -273,25 +272,25 @@ fn zero_table(graph: &InformationSetGraph) -> Vec<Vec<f64>> {
         .collect()
 }
 
-// Use the ordinary total when representable (exact for common small
-// dyadic counts). Scale by the largest regret if the total overflows.
+// Scale by an exact power of two and use a compensated total. Common
+// dyadic counts keep their exact proportions, including in very wide rows.
 fn normalized(table: &[Vec<f64>]) -> Result<Vec<Vec<f64>>, Error> {
     table
         .iter()
         .map(|row| {
             let mut weights: Vec<_> = row.iter().map(|r| r.max(0.0)).collect();
-            let mut mass = weights.iter().sum::<f64>();
-            if mass == 0.0 {
+            let largest = weights.iter().copied().fold(0.0, f64::max);
+            if largest == 0.0 {
                 let width = u32::try_from(row.len()).map_err(|_| Error::NonFiniteArithmetic)?;
                 return Ok(vec![1.0 / f64::from(width); row.len()]);
             }
-            if !mass.is_finite() {
-                let scale = weights.iter().copied().fold(0.0, f64::max);
+            let scale = dag::power_of_two_scale(largest);
+            if scale > 1.0 {
                 for weight in &mut weights {
                     *weight = quotient(*weight, scale)?;
                 }
-                mass = finite(weights.iter().sum())?;
             }
+            let mass = probability_mass(&weights)?;
             for weight in &mut weights {
                 *weight = quotient(*weight, mass)?;
             }
