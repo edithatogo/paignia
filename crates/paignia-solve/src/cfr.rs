@@ -12,7 +12,7 @@ mod dag;
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use dag::IndexedGame;
+use dag::{IndexedGame, ResponseMeasure};
 
 use thiserror::Error;
 
@@ -179,7 +179,7 @@ pub fn best_response_value(
     player: &PlayerId,
 ) -> Result<f64, Error> {
     let (game, rows) = checked_profile(source, graph, strategy)?;
-    game.best_response(&rows, player)
+    game.best_response(&rows, player, ResponseMeasure::Payoff)
 }
 
 /// Sum of unilateral best-response gains. In the usual two-player zero-sum
@@ -195,10 +195,9 @@ pub fn nash_conv(
     strategy: &Strategy,
 ) -> Result<f64, Error> {
     let (game, rows) = checked_profile(source, graph, strategy)?;
-    let values = game.profile_values(&rows)?;
     let mut total = 0.0;
     for player in players_of(graph) {
-        let gain = finite(game.best_response(&rows, player)? - values[player])?;
+        let gain = game.best_response(&rows, player, ResponseMeasure::Gain)?;
         if gain < 0.0 {
             return Err(Error::NegativeGain);
         }

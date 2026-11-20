@@ -1292,3 +1292,26 @@ fn positive_reach_that_underflows_is_reported() {
         );
     }
 }
+
+#[test]
+fn unilateral_gain_survives_rounding_of_the_two_root_values() {
+    let base = 2_f64.powi(55);
+    let source = specification(
+        "root",
+        vec![
+            ("root", decision("alice", &[("L", "left"), ("R", "right")])),
+            ("left", terminal(&[("alice", base)])),
+            ("right", terminal(&[("alice", base + 8.0)])),
+        ],
+    );
+    let declaration = declared(vec![("root", "alice", &["root"])]);
+    let graph = build_information_set_graph(&source, &declaration).unwrap();
+    let id = declaration.sets[0].id.clone();
+    let strategy = CfrStrategy {
+        action_order: BTreeMap::from([(id.clone(), vec![action("L"), action("R")])]),
+        probabilities: BTreeMap::from([(id, vec![0.25, 0.75])]),
+    };
+    // Both f64 root payoffs round to base+8. Switching the 1/4 played
+    // on the left to the right earns 1/4 * 8 = 2 in the original units.
+    assert!((cfr_nash_conv(&source, &graph, &strategy).unwrap() - 2.0).abs() < f64::EPSILON);
+}
