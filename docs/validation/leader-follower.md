@@ -91,7 +91,9 @@ vertices `(1, 6, 1, 4)`, `(2, 8, 2, 2)` and `(1, 8, 1, 2)` give inspection
 `[1/5, 1/2]` and evasion `[1/8, 1/4]`. The midpoint of the first two vertices
 has inspection `1/3` and evasion `3/14`, both inside that span. Imperfect
 detection is not included, because a mixture of interior detection games can
-leave the interior.
+leave the interior. The same vertex span does not bound the commitment
+value. The games `(1, 4, 4, 1)` and `(2, 4, 2, 3)` both have optimistic
+full-budget value `-4/5`, while their midpoint has value `-9/10`.
 
 `inspection_detection_rectangle` varies detection together with one other
 parameter. Every corner must stay in one strict regime. With cost in `[1, 3/2]`

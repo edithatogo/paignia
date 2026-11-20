@@ -1,9 +1,10 @@
 //! Exact Nash projections for one moving inspection parameter.
 
 use paignia_solve::{
-    inspection_deviation_gains, inspection_nash_box, inspection_nash_hull,
-    inspection_nash_projection, inspection_nash_rectangle, inspection_simultaneous_nash,
-    InspectionError, InspectionParameter, InspectionParameters, InspectionRatio, ParameterInterval,
+    inspection_commitment_bound, inspection_deviation_gains, inspection_nash_box,
+    inspection_nash_hull, inspection_nash_projection, inspection_nash_rectangle,
+    inspection_simultaneous_nash, InspectionError, InspectionFollowerTie, InspectionParameter,
+    InspectionParameters, InspectionRatio, ParameterInterval,
 };
 
 fn ratio(numerator: i64, denominator: i64) -> InspectionRatio {
@@ -300,6 +301,30 @@ fn a_convex_hull_spans_its_vertices_and_covers_an_interior_point() {
     assert!(witness.inspect <= projection.inspect.upper);
     assert!(witness.evade >= projection.evade.lower);
     assert!(witness.evade <= projection.evade.upper);
+}
+
+#[test]
+fn commitment_on_a_convex_hull_is_not_the_vertex_span() {
+    let left = game(1, 4, 4, 1);
+    let right = game(2, 4, 2, 3);
+    let midpoint =
+        InspectionParameters::try_new(ratio(3, 2), ratio(4, 1), ratio(3, 1), ratio(2, 1))
+            .expect("midpoint");
+    let tie = InspectionFollowerTie::Optimistic;
+    let budget = ratio(1, 1);
+    let left_value = inspection_commitment_bound(left, budget, tie)
+        .expect("left")
+        .value;
+    let right_value = inspection_commitment_bound(right, budget, tie)
+        .expect("right")
+        .value;
+    let middle_value = inspection_commitment_bound(midpoint, budget, tie)
+        .expect("middle")
+        .value;
+    assert_eq!(left_value, ratio(-4, 5));
+    assert_eq!(right_value, ratio(-4, 5));
+    assert_eq!(middle_value, ratio(-9, 10));
+    assert!(middle_value < left_value.min(right_value));
 }
 
 #[test]
