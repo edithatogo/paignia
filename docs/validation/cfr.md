@@ -97,8 +97,9 @@ must agree with Paignia within `1e-9` at each tested budget.
 
 - The Leduc comparison uses the two-player OpenSpiel rule set and the published
   first-player value `-0.085606`. Four thousand CFR+ iterations must land within
-  `0.02`, with NashConv below `0.05`. CFR+ NashConv also decreases between
-  1,000 and 4,000 iterations. S04 and comparison with an independently trained
+  `0.02`, with NashConv below `0.05`. Vanilla CFR and CFR+ NashConv both decrease
+  between 1,000 and 4,000 iterations. The published equilibrium value is
+  checked only for CFR+ at 4,000 iterations. S04 and comparison with an independently trained
   iteration curve remain open.
 - No iteration curve is claimed to match OpenSpiel, Gambit, or any other
   implementation. Those programs use their own averaging and update schedules.

@@ -661,6 +661,24 @@ fn leduc_cfr_plus_checks_published_value_and_nash_conv() {
     assert!(late.nash_conv < 0.05, "CFR+ NashConv: {late:?}");
 }
 
+#[test]
+fn vanilla_leduc_nash_conv_shrinks_between_independently_checked_budgets() {
+    let (source, declaration) = leduc();
+    let graph = build_information_set_graph(&source, &declaration).expect("Leduc is admissible");
+    let early = checked_leduc_run(&source, &declaration, &graph, CfrVariant::Cfr, 1_000);
+    let late = checked_leduc_run(
+        &source,
+        &declaration,
+        &graph,
+        CfrVariant::Cfr,
+        LEDUC_ITERATIONS,
+    );
+    assert!(
+        late.nash_conv < early.nash_conv,
+        "vanilla CFR NashConv: {early:?} to {late:?}"
+    );
+}
+
 #[derive(Debug)]
 struct LeducRun {
     value: f64,
