@@ -5,9 +5,9 @@ eligibility decision. The deliverable is two real application receipts for the
 **same qualified package bytes and semantic profile**, supported by executed
 application models and independently justified expected results.
 
-The checked-in [consumer manifest](game-consumers.json) currently has no real
-application receipts and remains ineligible. This document supplies instructions;
-it is not an application receipt, a scientific qualification or T17 completion.
+The [consumer manifest](game-consumers.json) records the first application
+receipt for the reimbursement Chapter 8 case. The eligibility check requires
+a second distinct application receipt against the same archives and profile.
 The [evidence guard](../../scripts/validate_game_consumer_evidence.py) defines
 schema version `1`; the [package qualifier](../../scripts/validate_game_packages.py)
 defines how the native archives and package receipt are produced.

@@ -5,9 +5,10 @@
   Fourteen provider-owned leaves plus three external consumer/valuation handoffs
   retain all seventeen IDs. Eight bounded provider leaves (.01–.06, .13, .14)
   are complete after independent review and both compiler/artifact gates.
-  Nine leaves remain open. The bounded information-set and CFR/CFR+ code is
-  merged. Upstream semantic and source acceptance, the native adapter,
-  and real application receipts remain outstanding.
+  T17.09 adds the first real application artifact receipt. Eight leaves remain
+  open. The bounded information-set, CFR/CFR+, native adapter, stream isolation
+  and replay code are merged. Upstream acceptance, a second matching consumer
+  receipt and the remaining valued-payoff handoff are open.
 
 - [~] **T18 Illicit-supply border-enforcement and retail-inspection game contracts for tobac**
   [Specification, plan and handoff](tracks/t18_illicit_enforcement_inspection_games_20261110/index.md).
