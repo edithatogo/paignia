@@ -1,9 +1,9 @@
 //! Exact Nash projections for one moving inspection parameter.
 
 use paignia_solve::{
-    inspection_deviation_gains, inspection_nash_projection, inspection_nash_rectangle,
-    inspection_simultaneous_nash, InspectionError, InspectionParameter, InspectionParameters,
-    InspectionRatio, ParameterInterval,
+    inspection_deviation_gains, inspection_nash_box, inspection_nash_projection,
+    inspection_nash_rectangle, inspection_simultaneous_nash, InspectionError, InspectionParameter,
+    InspectionParameters, InspectionRatio, ParameterInterval,
 };
 
 fn ratio(numerator: i64, denominator: i64) -> InspectionRatio {
@@ -221,4 +221,60 @@ fn a_rectangle_that_mixes_regimes_or_repeats_a_parameter_is_rejected() {
         interval(InspectionParameter::InspectionCost, (1, 1), (2, 1)),
     );
     assert_eq!(repeated, Err(InspectionError::RepeatedParameter));
+}
+
+fn family_box() -> [ParameterInterval; 4] {
+    [
+        interval(InspectionParameter::InspectionCost, (1, 1), (2, 1)),
+        interval(InspectionParameter::UndetectedHarm, (6, 1), (8, 1)),
+        interval(InspectionParameter::EvasionGain, (1, 1), (2, 1)),
+        interval(InspectionParameter::DetectedLoss, (2, 1), (4, 1)),
+    ]
+}
+
+#[test]
+fn a_four_parameter_box_spans_its_sixteen_corners() {
+    let projection = inspection_nash_box(family_box()).expect("box");
+    assert_eq!(projection.endpoint_gap, ratio(0, 1));
+    assert_eq!(projection.inspect.lower, ratio(1, 5));
+    assert_eq!(projection.inspect.upper, ratio(1, 2));
+    assert_eq!(projection.evade.lower, ratio(1, 8));
+    assert_eq!(projection.evade.upper, ratio(1, 3));
+    assert_eq!(projection.leader.lower, ratio(-2, 1));
+    assert_eq!(projection.leader.upper, ratio(-1, 1));
+    assert_eq!(projection.follower.lower, ratio(0, 1));
+    let corner = inspection_simultaneous_nash(game(1, 8, 1, 4)).expect("corner");
+    assert_eq!(corner.inspect, ratio(1, 5));
+    assert_eq!(corner.evade, ratio(1, 8));
+    let gains =
+        inspection_deviation_gains(game(1, 8, 1, 4), corner.inspect, corner.evade).expect("gains");
+    assert_eq!(gains.leader, ratio(0, 1));
+    assert_eq!(gains.follower, ratio(0, 1));
+}
+
+#[test]
+fn a_box_projection_is_not_a_joint_equilibrium() {
+    let projection = inspection_nash_box(family_box()).expect("box");
+    assert_eq!(projection.leader.upper, ratio(-1, 1));
+    assert_eq!(projection.evade.upper, ratio(1, 3));
+    let low_cost = inspection_simultaneous_nash(game(1, 6, 1, 2)).expect("low cost");
+    assert_eq!(low_cost.payoffs.leader, ratio(-1, 1));
+    assert!(low_cost.evade < ratio(1, 3));
+}
+
+#[test]
+fn a_box_that_mixes_regimes_or_repeats_a_parameter_is_rejected() {
+    let mut mixed = family_box();
+    mixed[0] = interval(InspectionParameter::InspectionCost, (1, 1), (8, 1));
+    mixed[1] = interval(InspectionParameter::UndetectedHarm, (4, 1), (6, 1));
+    assert_eq!(
+        inspection_nash_box(mixed),
+        Err(InspectionError::BoxRegimeChange)
+    );
+    let mut repeated = family_box();
+    repeated[3] = interval(InspectionParameter::InspectionCost, (1, 1), (2, 1));
+    assert_eq!(
+        inspection_nash_box(repeated),
+        Err(InspectionError::RepeatedParameter)
+    );
 }
