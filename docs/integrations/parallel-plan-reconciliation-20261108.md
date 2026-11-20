@@ -806,3 +806,13 @@ The next outstanding inputs are UOGTO's executable information-set profile,
 Kairos's native game port and source-side S04 disposition, the two actual
 consumer receipts, reimbursement's valued-payoff contract, and the
 T18.03 application handoff. Each keeps its linked owner and acceptance criteria.
+
+## T17.17 acceptance on 21 November 2026
+
+Chat `01a1f635-4bc4-73f0-b6f2-2d2541bb46a0` records the UOGTO evidence using
+the isolated Git worktree
+`/Volumes/PortableSSD/GitHub/paignia-t17-information-set-acceptance`.
+The acceptance scope is the registry, the T17 index, plan and metadata, and
+this handoff. The next operation is to verify the paired profile receipt and
+integrate the bounded acceptance through Paignia CI.
+[UOGTO receipt](https://github.com/edithatogo/UOGTO/actions/runs/44776528908)
