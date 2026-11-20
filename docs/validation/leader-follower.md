@@ -60,6 +60,23 @@ test uses inspection probability `1/6` and evasion probability `1/4`, which lies
 inside the projected box and has a profitable deviation at the low cost, the
 equal-cost boundary, and the high cost.
 
+## Imperfect detection
+
+`inspection_nash_with_detection` admits a detection probability in `(0, 1]`.
+Perfect detection reproduces the witness above. Otherwise the detected branch
+prevents harm and imposes the detected loss only with that probability, and the
+complement leaves the harm and the evasion gain in place. The unique witness is
+the interior profile `p = g/(d(g+f))`, `q = c/(d h)` when both coordinates lie
+in `(0, 1)`. Its leader value is `-c/d` and the follower value is zero. If
+scaled harm is strictly below cost, the witness is skip and evade. If detection
+is too weak for indifference inside the unit interval but scaled harm still
+makes inspection strict, the witness is inspect and evade. A boundary with a
+segment of best responses returns `LeaderIndifferent`.
+
+`inspection_detection_projection` spans those witnesses only when both interval
+endpoints stay in the same strict regime. A change of regime is rejected rather
+than filled in.
+
 ## What this slice does not establish
 
 - This is not a general Stackelberg algorithm, a multi-channel model, or an
@@ -74,5 +91,5 @@ equal-cost boundary, and the high cost.
 - No operational, welfare, or empirical claim follows from the constants.
 
 ```bash
-cargo test --locked -p paignia-solve --test leader_follower --test inspection_interval
+cargo test --locked -p paignia-solve --test leader_follower --test inspection_interval --test inspection_detection
 ```
