@@ -79,7 +79,7 @@ impl Ratio {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::Overflow`] when the difference does not fit in `i64`.
+    /// Returns [`Error::Overflow`] when the reduced difference does not fit in `i64`.
     pub fn checked_sub(self, other: Self) -> Result<Self, Error> {
         self.sub(other)
     }
@@ -110,7 +110,11 @@ impl Ratio {
     }
 
     fn sub(self, other: Self) -> Result<Self, Error> {
-        self.add(other.neg()?)
+        from_i128(
+            i128::from(self.numerator) * i128::from(other.denominator)
+                - i128::from(other.numerator) * i128::from(self.denominator),
+            i128::from(self.denominator) * i128::from(other.denominator),
+        )
     }
 
     fn mul(self, other: Self) -> Result<Self, Error> {

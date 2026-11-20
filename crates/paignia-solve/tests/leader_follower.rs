@@ -88,6 +88,28 @@ fn rejects_parameters_and_commitments_outside_the_family() {
 }
 
 #[test]
+fn subtraction_accepts_a_minimum_numerator_when_the_difference_fits() {
+    let minimum = ratio(i64::MIN, 1);
+    assert_eq!(minimum.checked_sub(minimum), Ok(ratio(0, 1)));
+    assert_eq!(ratio(-1, 1).checked_sub(minimum), Ok(ratio(i64::MAX, 1)));
+    assert_eq!(
+        ratio(0, 1).checked_sub(minimum),
+        Err(InspectionError::Overflow)
+    );
+}
+
+#[test]
+fn deviation_gain_is_exact_for_a_payoff_with_a_minimum_numerator() {
+    let costly = game(2, 1, 1, 1);
+    let inspect = ratio(1, i64::MAX);
+    let evade = ratio(1, 1);
+    let payoffs = inspection_expected_payoffs(costly, inspect, evade).expect("payoffs");
+    assert_eq!(payoffs.leader, ratio(i64::MIN, i64::MAX));
+    let gains = inspection_deviation_gains(costly, inspect, evade).expect("representable gains");
+    assert_eq!((gains.leader, gains.follower), (inspect, ratio(0, 1)));
+}
+
+#[test]
 fn nash_witnesses_match_the_closed_form_and_have_zero_gains() {
     let fixture = include_str!("../../../verification/inspection_oracles/inspection_2x2_v1.json");
     assert!(fixture.contains("\"p\": \"1/3\", \"q\": \"1/4\", \"payoffs\": [\"-1\", \"0\"]"));
