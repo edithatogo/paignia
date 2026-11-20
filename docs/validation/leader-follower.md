@@ -102,15 +102,40 @@ and detection in `[1/2, 1]`, inspection runs from `1/3` to `2/3`, evasion from
 
 ## Commitment over one interval
 
-`inspection_commitment_projection` spans the commitment value only when both
-endpoints lie in one strict piece: the threshold strictly below the budget, or
-evasion strictly increasing or decreasing on the whole budget. Inside that
-piece the value is monotone, so the image is the endpoint span. Cost in
-`[1, 2]` with a full budget moves the leader value from `-1/3` to `-2/3`. The
-pessimistic value is the same span and is not attained. A gain interval that
-pushes the threshold across the budget is rejected. Detection from `1/2` to
-`1` moves the attained inspection share from `2/3` to `1/3` and the value from
-`-2/3` to `-1/3`.
+`inspection_commitment_projection` varies one of `c, h, g, f` at perfect
+detection. `inspection_detection_commitment_projection` varies detection `d`
+alone. Write `θ = g/(d(g+f))` for the follower's threshold and `B` for the
+budget. The table gives the pointwise value and the attaining shares `(p, q)`.
+
+| Conditions throughout the interval | Leader value | Optimistic | Pessimistic |
+|---|---|---|---|
+| `θ < B` and `cθ < h` | `-cθ` | `(θ, 0)` | Unattained supremum |
+| `θ < B` and `cθ > h` | `-h` | `(0, 1)` | `(0, 1)` |
+| `θ > B` and `d h > c` | `-h + B(d h - c)` | `(B, 1)` | `(B, 1)` |
+| `θ > B` and `d h < c` | `-h` | `(0, 1)` | `(0, 1)` |
+
+When `θ < B`, the leader compares skipping with deterring evasion. At `θ`,
+compliance gives the leader `h(1-dθ) > 0` more than evasion. Under pessimistic
+ties the leader can approach the deterrence value from above `θ`. When
+`cθ = h`, skipping attains the same value for either tie rule, and optimistic
+selection also permits deterrence at `θ`.
+
+Each comparison is monotone in the single varied input. If both endpoints lie
+in the same row, every intervening game does too. Values and attaining shares
+then span their endpoint values. Both projection functions return
+`CommitmentRegimeChange` when an interval touches a row boundary or crosses
+between rows, including singleton intervals on a boundary.
+
+For example, with `B = d = 1`, `c = 2`, `h = 1`, `f = 3` and gain in
+`[1, 5]`, the optimistic inspection shares at the endpoints are `1/4` and
+`0`. Gain `2` has a unique optimum at `2/5` with value `-4/5`. The switch
+at gain `3` explains why the endpoint shares cannot bound this interval.
+
+For the original game `(1, 4, 1, 2)` at full budget, raising cost from `1` to
+`2` moves the value from `-1/3` to `-2/3` under both tie rules. Each
+pessimistic value is an unattained supremum. With cost fixed at `1`, raising
+detection from `1/2` to `1` moves the optimistic inspection share from `2/3` to
+`1/3` and the value from `-2/3` to `-1/3`.
 
 ## Imperfect detection
 
