@@ -40,6 +40,8 @@ pub use leader_follower::{
     commitment_at_with_detection as inspection_commitment_at_with_detection,
     commitment_bound as inspection_commitment_bound,
     commitment_bound_with_detection as inspection_commitment_bound_with_detection,
+    commitment_projection as inspection_commitment_projection,
+    detection_commitment_projection as inspection_detection_commitment_projection,
     detection_nash_projection as inspection_detection_projection,
     detection_nash_rectangle as inspection_detection_rectangle,
     deviation_gains as inspection_deviation_gains, expected_payoffs as inspection_expected_payoffs,
@@ -47,11 +49,11 @@ pub use leader_follower::{
     nash_projection as inspection_nash_projection, nash_rectangle as inspection_nash_rectangle,
     simultaneous_nash as inspection_simultaneous_nash,
     simultaneous_nash_with_detection as inspection_nash_with_detection,
-    Commitment as InspectionCommitment, Error as InspectionError,
-    FollowerTie as InspectionFollowerTie, Gains as InspectionGains, NashProjection,
-    NashWitness as InspectionNash, ParameterInterval, Parameters as InspectionParameters,
-    Payoffs as InspectionPayoffs, Ratio as InspectionRatio, RatioBounds,
-    VariedParameter as InspectionParameter, VERSION as INSPECTION_COMMITMENT_VERSION,
+    Commitment as InspectionCommitment, CommitmentProjection as InspectionCommitmentProjection,
+    Error as InspectionError, FollowerTie as InspectionFollowerTie, Gains as InspectionGains,
+    NashProjection, NashWitness as InspectionNash, ParameterInterval,
+    Parameters as InspectionParameters, Payoffs as InspectionPayoffs, Ratio as InspectionRatio,
+    RatioBounds, VariedParameter as InspectionParameter, VERSION as INSPECTION_COMMITMENT_VERSION,
 };
 
 pub use mixed_nash::{

@@ -241,6 +241,24 @@ pub struct Commitment {
     pub evade: Option<Ratio>,
 }
 
+/// Commitment value while one parameter ranges over a closed interval.
+///
+/// The value bounds span the pointwise commitment values. On an admitted
+/// interval either every game attains its value or every game has an unattained
+/// supremum. In the former case each action bound describes one coordinate of
+/// the attaining witnesses across the interval.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct CommitmentProjection {
+    /// Lower and upper leader commitment values.
+    pub value: RatioBounds,
+    /// Whether every game in the admitted interval attains its value.
+    pub attained: bool,
+    /// Attaining inspection probabilities, absent when `attained` is false.
+    pub inspect: Option<RatioBounds>,
+    /// Attaining follower responses, absent when `attained` is false.
+    pub evade: Option<RatioBounds>,
+}
+
 /// Rejection of an inspection-family request.
 #[derive(Clone, Copy, Debug, Error, Eq, PartialEq)]
 pub enum Error {
@@ -293,6 +311,9 @@ pub enum Error {
     /// The corners of a parameter rectangle are not in one strict Nash regime.
     #[error("parameter rectangle changes the Nash regime")]
     RectangleRegimeChange,
+    /// The interval is not contained in one strict commitment piece.
+    #[error("the interval is not inside one strict commitment piece")]
+    CommitmentRegimeChange,
 }
 
 /// Expected payoffs from the four declared cells.
@@ -670,6 +691,154 @@ pub fn commitment_bound_with_detection(
     })
 }
 
+/// Commitment value while one parameter ranges over a closed positive interval.
+///
+/// When the follower's threshold `θ` lies below the budget, the competing
+/// leader values are `-h` for skipping and `-cθ` for deterrence. When `θ`
+/// exceeds the budget, the follower evades throughout the feasible interval
+/// and the sign of `h-c` selects its optimal endpoint. Each comparison is
+/// monotone in any one parameter, so matching strict choices give sharp
+/// coordinate bounds.
+///
+/// # Errors
+///
+/// Returns [`Error::CommitmentRegimeChange`] if the interval includes `θ = B`,
+/// `cθ = h` with `θ < B`, or `h = c` with `θ > B`, where `B` is the budget.
+/// Interval, budget and exact arithmetic errors propagate.
+pub fn commitment_projection(
+    baseline: Parameters,
+    interval: ParameterInterval,
+    budget: Ratio,
+    tie: FollowerTie,
+) -> Result<CommitmentProjection, Error> {
+    admit_interval(interval)?;
+    require_probability(budget)?;
+    let lower_game = with_varied(baseline, interval.parameter, interval.lower)?;
+    let upper_game = with_varied(baseline, interval.parameter, interval.upper)?;
+    project_commitment(
+        lower_game,
+        upper_game,
+        Ratio::one(),
+        Ratio::one(),
+        budget,
+        tie,
+    )
+}
+
+/// Commitment value while detection ranges over a closed subinterval of `(0, 1]`.
+///
+/// Uses the same strict comparisons as [`commitment_projection`], with threshold
+/// `θ = g/(d(g+f))` and evasion-branch slope `d h - c`. Both the comparison
+/// of `cθ` with `h` and the slope are monotone in detection `d`.
+///
+/// # Errors
+///
+/// Returns [`Error::CommitmentRegimeChange`], [`Error::DetectionOutOfRange`],
+/// [`Error::UnorderedInterval`], [`Error::ProbabilityOutOfRange`], or [`Error::Overflow`].
+pub fn detection_commitment_projection(
+    baseline: Parameters,
+    detection_lower: Ratio,
+    detection_upper: Ratio,
+    budget: Ratio,
+    tie: FollowerTie,
+) -> Result<CommitmentProjection, Error> {
+    require_detection(detection_lower)?;
+    require_detection(detection_upper)?;
+    if detection_lower > detection_upper {
+        return Err(Error::UnorderedInterval);
+    }
+    require_probability(budget)?;
+    project_commitment(
+        baseline,
+        baseline,
+        detection_lower,
+        detection_upper,
+        budget,
+        tie,
+    )
+}
+
+fn project_commitment(
+    lower_game: Parameters,
+    upper_game: Parameters,
+    lower_detection: Ratio,
+    upper_detection: Ratio,
+    budget: Ratio,
+    tie: FollowerTie,
+) -> Result<CommitmentProjection, Error> {
+    let lower_piece = commitment_piece(lower_game, lower_detection, budget)?;
+    let upper_piece = commitment_piece(upper_game, upper_detection, budget)?;
+    if lower_piece != upper_piece {
+        return Err(Error::CommitmentRegimeChange);
+    }
+    let lower = commitment_bound_with_detection(lower_game, lower_detection, budget, tie)?;
+    let upper = commitment_bound_with_detection(upper_game, upper_detection, budget, tie)?;
+    if lower.attained != upper.attained {
+        return Err(Error::CommitmentRegimeChange);
+    }
+    let value = Span::cover(lower.value, upper.value).bounds();
+    if !lower.attained {
+        return Ok(CommitmentProjection {
+            value,
+            attained: false,
+            inspect: None,
+            evade: None,
+        });
+    }
+    Ok(CommitmentProjection {
+        value,
+        attained: true,
+        inspect: Some(
+            Span::cover(
+                lower.inspect.ok_or(Error::InconsistentWitness)?,
+                upper.inspect.ok_or(Error::InconsistentWitness)?,
+            )
+            .bounds(),
+        ),
+        evade: Some(
+            Span::cover(
+                lower.evade.ok_or(Error::InconsistentWitness)?,
+                upper.evade.ok_or(Error::InconsistentWitness)?,
+            )
+            .bounds(),
+        ),
+    })
+}
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+enum CommitmentPiece {
+    DeterrencePreferred,
+    SkippingPreferred,
+    EvadeIncreasing,
+    EvadeDecreasing,
+}
+
+fn commitment_piece(
+    game: Parameters,
+    detection: Ratio,
+    budget: Ratio,
+) -> Result<CommitmentPiece, Error> {
+    let theta = detection_threshold(game, detection)?;
+    if theta < budget {
+        let deterrence_value = game.inspection_cost.neg()?.mul(theta)?;
+        let skip_value = game.undetected_harm.neg()?;
+        return match deterrence_value.cmp(&skip_value) {
+            Ordering::Greater => Ok(CommitmentPiece::DeterrencePreferred),
+            Ordering::Less => Ok(CommitmentPiece::SkippingPreferred),
+            Ordering::Equal => Err(Error::CommitmentRegimeChange),
+        };
+    }
+    if theta == budget {
+        return Err(Error::CommitmentRegimeChange);
+    }
+    let prevented_harm = detection.mul(game.undetected_harm)?;
+    match prevented_harm.cmp(&game.inspection_cost) {
+        Ordering::Greater => Ok(CommitmentPiece::EvadeIncreasing),
+        Ordering::Less => Ok(CommitmentPiece::EvadeDecreasing),
+        Ordering::Equal => Err(Error::CommitmentRegimeChange),
+    }
+}
+
 fn threshold(game: Parameters) -> Result<Ratio, Error> {
     detection_threshold(game, Ratio::one())
 }
@@ -763,9 +932,9 @@ pub struct ParameterInterval {
 /// Closed projection of one scalar.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct RatioBounds {
-    /// Smallest value attained by a Nash witness in the interval.
+    /// Lower endpoint of this scalar projection.
     pub lower: Ratio,
-    /// Largest value attained by a Nash witness in the interval.
+    /// Upper endpoint of this scalar projection.
     pub upper: Ratio,
 }
 
