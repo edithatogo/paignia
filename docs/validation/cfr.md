@@ -63,8 +63,9 @@ itself monotone. These budgets are not an OpenSpiel or Gambit iteration curve.
 
 - The Leduc comparison uses the two-player OpenSpiel rule set and the published
   first-player value `-0.085606`. Four thousand CFR+ iterations must land within
-  `0.02`, with Nash conv below `0.05`. That is not an exact equilibrium, a
-  vanilla-CFR curve, or a claim that S04 is closed.
+  `0.02`, with Nash conv below `0.05`. The same run at 1,000 iterations has a
+  larger Nash conv. That pair is not an exact equilibrium, a vanilla-CFR curve,
+  or a claim that S04 is closed.
 - No iteration curve is claimed to match OpenSpiel, Gambit, or any other
   implementation. Those programs use their own averaging and update schedules.
   The Kuhn budgets above only show this trainer's exploitability shrinking

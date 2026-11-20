@@ -484,7 +484,8 @@ oracle and result contract. Exclusion is not scientific completion.
   Leduc uses the two-player OpenSpiel rules: 936 information states, an
   independent 120-deal check-call value, and CFR+ after 4,000 iterations within
   `0.02` of the published first-player value `-0.085606`, with Nash conv below
-  `0.05`. On Kuhn, both variants are also checked at 100, 1,000, and 12,000
+  `0.05`. CFR+ Nash conv at 1,000 Leduc iterations is larger than at 4,000.
+  On Kuhn, both variants are also checked at 100, 1,000, and 12,000
   iterations: exploitability shrinks at each step, and the independent value
   stays within `5e-3` of `-1/18`. The value error is not monotone, and there is
   still no published Leduc iteration curve. This does not close S04, T17.07, or

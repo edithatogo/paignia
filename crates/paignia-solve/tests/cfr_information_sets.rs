@@ -2,8 +2,9 @@
 
 use paignia_core::{
     build_information_set_graph, ActionEdge, ActionId, ChanceEdge, Game, GameSpecification,
-    InformationSetDeclaration, InformationSetDefinition, InformationSetError, InformationSetId,
-    Node, NodeId, PlayerId, INFORMATION_SET_PROFILE_V1, INFORMATION_SET_SCHEMA_VERSION,
+    InformationSetDeclaration, InformationSetDefinition, InformationSetError, InformationSetGraph,
+    InformationSetId, Node, NodeId, PlayerId, INFORMATION_SET_PROFILE_V1,
+    INFORMATION_SET_SCHEMA_VERSION,
 };
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
@@ -612,26 +613,52 @@ fn leduc_tree_matches_the_independent_check_call_value_and_trains_toward_the_pub
         cfr_profile_values(&source, &graph, &calling).expect("call value")[&player("zero")];
     assert!((library_call - independent_leduc_check_value()).abs() < 1e-9);
 
+    let early = leduc_cfr_plus(&source, &declaration, &graph, 1_000);
+    let trained = leduc_cfr_plus(&source, &declaration, &graph, LEDUC_ITERATIONS);
+    assert!(
+        trained.exploitability < early.exploitability,
+        "leduc exploitability early {} late {}",
+        early.exploitability,
+        trained.exploitability
+    );
+    assert!(
+        (trained.value - LEDUC_VALUE).abs() < 2e-2,
+        "leduc value {} target {LEDUC_VALUE} exploitability {}",
+        trained.value,
+        trained.exploitability
+    );
+    assert!(
+        trained.exploitability < 0.05,
+        "leduc exploitability {}",
+        trained.exploitability
+    );
+}
+
+struct LeducRun {
+    value: f64,
+    exploitability: f64,
+}
+
+fn leduc_cfr_plus(
+    source: &GameSpecification,
+    declaration: &InformationSetDeclaration,
+    graph: &InformationSetGraph,
+    iterations: u32,
+) -> LeducRun {
     let trained = train_counterfactual_regret(
-        &source,
-        &declaration,
+        source,
+        declaration,
         &CfrConfig {
             variant: CfrVariant::CfrPlus,
-            iterations: LEDUC_ITERATIONS,
+            iterations,
         },
     )
     .expect("Leduc trains");
-    let value = trained.root_values[&player("zero")];
-    let exploitability =
-        cfr_nash_conv(&source, &graph, &trained.average_strategy).expect("leduc nash");
-    assert!(
-        (value - LEDUC_VALUE).abs() < 2e-2,
-        "leduc value {value} target {LEDUC_VALUE} exploitability {exploitability}"
-    );
-    assert!(
-        exploitability < 0.05,
-        "leduc exploitability {exploitability}"
-    );
+    LeducRun {
+        value: trained.root_values[&player("zero")],
+        exploitability: cfr_nash_conv(source, graph, &trained.average_strategy)
+            .expect("leduc nash"),
+    }
 }
 
 fn independent_leduc_check_value() -> f64 {
