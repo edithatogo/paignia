@@ -235,6 +235,8 @@ version = "0.1.0"
 dependencies = [
  "clarabel",
  "paignia-core",
+ "serde",
+ "serde_json",
  "thiserror",
 ]
 

@@ -458,21 +458,39 @@ oracle and result contract. Exclusion is not scientific completion.
   from a product distribution. Evaluate existing Clarabel capability before
   custom optimization; any dependency/lock change gets a separate bounded leaf.
 
-### [ ] T17.07 — train CFR/CFR+ on a supported information-set graph (S04)
+### [~] T17.07 — train CFR/CFR+ on a supported information-set graph (S04)
 
 - Behavior: update a policy on general supported information sets using the
   declared CFR variant rather than a hard-coded Kuhn-game implementation.
 - Depends on: T17.01 and T17.17; exact upstream API/caller inventory recorded first.
 - Execution: specialist, extensive-game semantics and regret minimization.
 - Files (5): `crates/paignia-solve/src/lib.rs`,
-  `crates/paignia-solve/src/cfr.rs` (future),
-  `crates/paignia-solve/tests/cfr_information_sets.rs` (future),
-  `fixtures/conformance/cfr-reference-v1.json` (future),
-  `docs/validation/cfr.md` (future).
-- Check: `cargo test --locked -p paignia-solve --test cfr_information_sets`
-  (future target). Validate legal actions, chance weighting, imperfect-recall
-  rejection, and Kuhn/Leduc value and exploitability against pinned independent
-  references across iteration counts. Keep game-specific helpers separate.
+  `crates/paignia-solve/src/cfr.rs`,
+  `crates/paignia-solve/tests/cfr_information_sets.rs`,
+  `fixtures/conformance/cfr-reference-v1.json`,
+  `docs/validation/cfr.md`.
+- Check: `cargo test --locked -p paignia-solve --test cfr_information_sets`.
+  Validate legal actions, chance weighting, imperfect-recall rejection, and
+  Kuhn/Leduc value and exploitability against pinned independent references
+  across iteration counts. Keep game-specific helpers separate.
+- Implementation evidence — 20 November 2026: vanilla CFR and CFR+ train on the
+  graph admitted by T17.17. Regret matching, chance weighting, reach-weighted
+  averaging, pure best-response Nash conv, imperfect-recall rejection and
+  declared action order are covered by six focused tests. Kuhn's first-player
+  value `-1/18` is pinned in `fixtures/conformance/cfr-reference-v1.json` and
+  evaluated by a separate deal enumerator. At 12,000 iterations both variants
+  stay within `5e-3` of that constant, with independent exploitability below
+  `0.02`, and the library Nash conv matches that enumerator within `1e-8`.
+  Leduc uses the two-player OpenSpiel rules: 936 information states, an
+  independent 120-deal check-call value, and CFR+ after 4,000 iterations within
+  `0.02` of the published first-player value `-0.085606`, with Nash conv below
+  `0.05`. Vanilla CFR and CFR+ both have a larger Leduc Nash conv at 1,000
+  iterations than at 4,000. The published value is checked only for CFR+.
+  On Kuhn, both variants are also checked at 100, 1,000, and 12,000
+  iterations: exploitability shrinks at each step, and the independent value
+  stays within `5e-3` of `-1/18`. The value error is not monotone, and there is
+  still no published Leduc iteration curve. This does not close S04, T17.07, or
+  T17.17.
 
 ## Phase C — optional execution and representation gaps
 
