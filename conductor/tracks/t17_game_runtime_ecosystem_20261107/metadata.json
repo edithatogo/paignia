@@ -191,15 +191,15 @@
     "T17.05": "completed_for_declared_bounded_provider_capability",
     "T17.06": "completed_for_declared_bounded_provider_capability",
     "T17.07": "bounded_CFR_and_CFR_plus_merged; UOGTO_profile_accepted; Kairos_S04_disposition_pending",
-    "T17.08": "bounded_adapter_merged; Kairos_K01_port_acceptance_pending",
+    "T17.08": "accepted_bounded_native_game_execution",
     "T17.09": "accepted_reimbursement_Chapter_8_application_artifact_receipt",
     "T17.10": "external_second_application_receipt_pending",
     "T17.11": "external_valued_payoff_port_pending",
     "T17.12": "guard_admits_first_consumer; second_distinct_consumer_receipt_missing",
     "T17.13": "completed_for_declared_bounded_provider_capability",
     "T17.14": "completed_for_declared_bounded_provider_capability",
-    "T17.15": "bounded_stream_isolation_merged; Kairos_K01_port_acceptance_pending",
-    "T17.16": "bounded_checkpoint_replay_merged; Kairos_K01_port_acceptance_pending",
+    "T17.15": "accepted_bounded_policy_and_chance_stream_isolation",
+    "T17.16": "accepted_bounded_in_process_native_checkpoint_replay",
     "T17.17": "accepted_bounded_perfect_recall_graph_and_UOGTO_executable_information_set_profile"
   },
   "information_set_acceptance_20261121": {
@@ -213,9 +213,21 @@
     "native_admissions": 1,
     "native_rejections": 4
   },
+  "kairos_port_acceptance_20261121": {
+    "kairos_acceptance_commit": "f7484751c4a058581f2425ca493faec8e85e5637",
+    "kairos_pull_request": "https://github.com/edithatogo/kairos/pull/405",
+    "kairos_conductor_ci": "https://github.com/edithatogo/kairos/actions/runs/44783017818",
+    "kairos_contract": "https://github.com/edithatogo/kairos/blob/f7484751c4a058581f2425ca493faec8e85e5637/conductor/contracts/game-port-acceptance.md",
+    "kairos_adapter_pin": "235e6a333ccc6e690f5b41f2c5eaa9a6784fe147",
+    "paignia_runtime_revision": "d4047c0648a89f2aee4461ff70bbc9641e5320cd",
+    "native_adapter_tests": 12,
+    "adapter_rust_profile": "1.99.1",
+    "static_observation_tests": 32,
+    "static_rust_profile": "1.75.0",
+    "kairos_native_api_tests": 130
+  },
   "archive_eligible": false,
   "archive_blockers": [
-    "T17.08/.15/.16 retain upstream Kairos K01.port acceptance for the merged bounded adapter, stream isolation and replay.",
     "T17.10 needs a second matching-artifact receipt before T17.12 can report eligibility.",
     "T17.11 valued-payoff contract remains reimbursement-owned and unfinished.",
     "Kairos Track 110 retains S01-S04 source API/caller migration and retirement."
@@ -240,6 +252,6 @@
     "offline_security": "queued for central self-hosted runner; unexecuted, not passed",
     "limits": "No registry publication or two real application receipts; subsequent capability increments require their own integrated acceptance."
   },
-  "completed_leaf_count": 10,
-  "remaining_leaf_count": 7
+  "completed_leaf_count": 13,
+  "remaining_leaf_count": 4
 }

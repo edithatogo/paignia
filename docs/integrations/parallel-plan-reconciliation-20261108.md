@@ -816,3 +816,12 @@ The acceptance scope is the registry, the T17 index, plan and metadata, and
 this handoff. The next operation is to verify the paired profile receipt and
 integrate the bounded acceptance through Paignia CI.
 [UOGTO receipt](https://github.com/edithatogo/UOGTO/actions/runs/44776528908)
+
+## Kairos execution-port acceptance on 21 November 2026
+
+Chat `01a1f635-4bc4-73f0-b6f2-2d2541bb46a0` reuses the isolated worktree
+`/Volumes/PortableSSD/GitHub/paignia-t17-information-set-acceptance` on
+`codex/t17-kairos-port-acceptance-20261121`. The registry, T17 index, plan,
+metadata and this handoff record the qualified port. The next operation
+is Paignia CI for the bounded acceptance of T17.08, T17.15 and T17.16.
+[Kairos port acceptance](https://github.com/edithatogo/kairos/blob/f7484751c4a058581f2425ca493faec8e85e5637/conductor/contracts/game-port-acceptance.md)

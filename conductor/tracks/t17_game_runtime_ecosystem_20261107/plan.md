@@ -49,13 +49,12 @@ run were not added as unsupported extra prerequisites.
 
 ## Current acceptance — 21 November 2026
 
-T17.09 records the first application artifact receipt. T17.17 is complete
-after UOGTO's executable information-set profile passed the paired Rust
-admission check. Seven leaves remain open (.07, .08, .10, .11, .12, .15 and
-.16). The optional adapter, separate random streams and replay are merged.
-Upstream Kairos `K01.port` acceptance remains open. The bounded release check still requires
-the second application receipt before eligibility. Full-track archival also
-requires the outstanding scientific and native acceptance work.
+T17.09 records the first application artifact receipt and T17.17 has the
+accepted executable profile. The merged Kairos `K01.port` receipt qualifies
+T17.08, T17.15 and T17.16. Four leaves remain open (.07, .10, .11 and .12).
+The bounded release check still requires a second matching application receipt.
+The remaining S01–S04 source migration and valuation handoffs stay open.
+[Kairos port acceptance](https://github.com/edithatogo/kairos/blob/f7484751c4a058581f2425ca493faec8e85e5637/conductor/contracts/game-port-acceptance.md)
 
 Earlier dated paragraphs retain historical source, failure and review evidence,
 including then-future paths and then-pending PR/merge wording. The current
@@ -505,7 +504,7 @@ oracle and result contract. Exclusion is not scientific completion.
 
 ## Phase C — optional execution and representation gaps
 
-### [~] T17.08 — execute a supported game trace through the Rust Kairos adapter
+### [x] T17.08 — execute a supported game trace through the Rust Kairos adapter
 
 - Behavior: translate the supported game execution plan into actual native
   Kairos events for one selected policy/chance path.
@@ -532,9 +531,12 @@ oracle and result contract. Exclusion is not scientific completion.
 - Candidate evidence: the adapter binds a live entity generation and empty
   scheduler at Kairos `bac331fc`. It schedules one native event per chosen
   action or chance outcome and records the dispatched ID, tick, sequence and
-  revision. The separate Rust 1.99 and stable CI matrix exercises the bounded
-  adapter. `K01.port` provider acceptance remains with Kairos Track 114.
-  [Execution contract](../../../docs/architecture/game-native-execution-v1.md)
+  revision. The receiving adapter pins Kairos `235e6a3`. The qualified
+  fixture covers one selected action, one sampled chance outcome, typed
+  preflight rejections and an owned policy observation on the native path.
+  Linux CI exercises the receiving adapter on Rust 1.99.0 and stable.
+  [Execution contract](../../../docs/architecture/game-native-execution-v1.md) ·
+  [Kairos port acceptance](https://github.com/edithatogo/kairos/blob/f7484751c4a058581f2425ca493faec8e85e5637/conductor/contracts/game-port-acceptance.md)
 
 ### [x] T17.13 — reject semantically lossy game-profile conversions
 
@@ -589,7 +591,7 @@ oracle and result contract. Exclusion is not scientific completion.
   Offline solvers may inspect the mathematical game without granting that access
   to an acting policy. A static solver with no live policy API need not wait here.
 
-### [~] T17.15 — isolate solver exploration from simulation random streams
+### [x] T17.15 — isolate solver exploration from simulation random streams
 
 - Behavior: keep exogenous simulation draws invariant when solver exploration
   or its iteration budget changes under the declared coupling policy.
@@ -610,13 +612,13 @@ oracle and result contract. Exclusion is not scientific completion.
   expectation-based solving draws nothing. A future stochastic static solver
   receives an explicit RNG/configuration without a Kairos dependency; it must
   not borrow a simulation-global stream. A shared seed alone is not this oracle.
-- Candidate evidence: comparison execution keys separate native policy and
-  chance streams by canonical model, scenario and draw. Real policy exploration
-  changes the realized path while the shared chance-node result stays paired.
-  Independent policy and draw configurations exercise distinct outcomes.
+- Accepted comparison controls use actual policy exploration and chance draws.
+  They vary the exploration budget, policy identity, entity construction and
+  realized detour on the same graph. The shared chance-node sample stays paired
+  across 64 seeds. The independent mode exercises distinct streams and outcomes.
   [Comparison randomness](../../../docs/validation/game-rng-isolation.md)
 
-### [~] T17.16 — restore qualified policy and native state for causal replay
+### [x] T17.16 — restore qualified policy and native state for causal replay
 
 - Behavior: resume the supported game execution from one checkpoint with the
   same subsequent causal events and outcomes as uninterrupted execution.
@@ -633,10 +635,13 @@ oracle and result contract. Exclusion is not scientific completion.
   frozen offline training provenance distinct from live replay state. Reject
   incompatible versions or unsupported mutable policy state before resuming;
   matching a solver's diagnostic trace alone does not establish replay.
-- Candidate evidence: capture after a committed transition into chance, restore
-  the Kairos snapshot into a fresh scheduler and decode a separate live policy
-  before committing the resume. Both native stream modes exercise deterministic
-  replay and sibling isolation. [Replay contract](../../../docs/validation/game-policy-resume.md)
+- Accepted replay controls capture after a committed transition into chance.
+  Each resume restores the native scheduler and decodes branch-owned policy
+  state. Entity-bound and shared-comparison execution reproduce native events
+  and outcomes. A sibling can reach a different payoff without changing the
+  original or the checkpoint.
+  The supported boundary is in-process replay.
+  [Replay contract](../../../docs/validation/game-policy-resume.md)
 
 ### [x] T17.17 — validate an ECS-independent information-set representation
 
