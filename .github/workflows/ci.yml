@@ -29,6 +29,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - uses: ./.github/actions/project-python
       - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
         with:
           toolchain: ${{ matrix.toolchain }}
@@ -162,7 +163,7 @@ jobs:
           retention-days: 30
 
   numerical-oracles:
-    name: Synthetic numerical oracles (CPython 3.12.14)
+    name: Synthetic numerical oracles (CPython 3.15.2)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -174,9 +175,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
-        with:
-          python-version: "3.12.14"
+      - uses: ./.github/actions/project-python
       - name: Execute all 39 synthetic oracle tests
         shell: bash
         env:
@@ -198,13 +197,13 @@ jobs:
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: synthetic-numerical-oracles-python-3.12.14
+          name: synthetic-numerical-oracles-python-3.15.2
           path: numerical-oracles.log
           if-no-files-found: error
           retention-days: 30
 
   inspection-oracles:
-    name: Synthetic inspection oracles (CPython 3.12.14)
+    name: Synthetic inspection oracles (CPython 3.15.2)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -216,9 +215,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
-        with:
-          python-version: "3.12.14"
+      - uses: ./.github/actions/project-python
       - name: Execute all 28 synthetic inspection tests
         shell: bash
         env:
@@ -240,7 +237,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: synthetic-inspection-oracles-python-3.12.14
+          name: synthetic-inspection-oracles-python-3.15.2
           path: inspection-oracles.log
           if-no-files-found: error
           retention-days: 30

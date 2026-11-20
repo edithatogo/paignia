@@ -13,12 +13,14 @@ For bugs, provide the affected version or commit, environment, minimal reproduct
 Use the toolchain profiles in [Native CI](.github/workflows/ci.yml); both stable Rust and the declared minimum Rust version matter. From the repository root, the established native checks are:
 
 ```sh
+uv venv --python "$(cat .python-version)" target/dev-python
+target/dev-python/bin/python --version
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo test --workspace --all-targets --locked
 cargo doc --workspace --no-deps --locked
-python3 scripts/validate_extraction.py
-python3 scripts/validate_game_packages.py
+target/dev-python/bin/python scripts/validate_extraction.py
+target/dev-python/bin/python scripts/validate_game_packages.py
 ```
 
 Keep the committed lockfile and original source attribution. Add regression or reference cases for changed behaviour, including invalid inputs and method limitations. An extracted-source consumer test does not qualify a registry artifact or prove scientific validity. Publishing remains a separate operation.

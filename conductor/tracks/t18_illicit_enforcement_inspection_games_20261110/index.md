@@ -1,10 +1,13 @@
 # T18 Illicit-supply border-enforcement and retail-inspection game contracts for tobac
 
-Status: new; planning only. Native game representations and equilibrium solvers remain in `paignia-core` / `paignia-solve` (`T17`); tobacco-control institutions, customs seizure processes, wastewater calibration and partial-identification intervals remain in `edithatogo/tobac`.
+Status: in progress. T18.01 and T18.02 have merged and passed review for the
+declared binary game family and Nash payoff hull enclosure. The application
+handoff T18.03 remains open in `edithatogo/tobac`.
 
 - [Specification](spec.md)
 - [Provider and consumer implementation plan](plan.md)
 - [Metadata](metadata.json)
+- [Provider review and verification](../../../docs/validation/provider-review-20261120.md)
 - [T17 provider plan and external handoffs](../t17_game_runtime_ecosystem_20261107/index.md)
 - [Track registry](../../tracks.md)
 

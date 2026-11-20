@@ -1,6 +1,8 @@
 # Paignia project context
 
 - [Product boundary](product.md)
+- [Tech stack and verification](../README.md#packages-and-current-implementation)
+- [Contribution guidelines](../CONTRIBUTING.md)
 - [Implementation workflow](workflow.md)
 - [Track registry](tracks.md)
 - [T17 provider plan and external handoffs](tracks/t17_game_runtime_ecosystem_20261107/index.md)
@@ -8,7 +10,8 @@
 - [Source transfer map](../docs/architecture/paignia-transfer-map.md)
 
 The native source originated in the reimbursement incubator. The
-[current implementation/review receipt](../docs/validation/t17-review-20261117.md)
-records accepted static package capabilities and the remaining scientific/native
-and external consumer obligations. Source provenance stays in
-`extraction-manifest.json`; registry publication remains disabled.
+[17 November static package review](../docs/validation/t17-review-20261117.md)
+and [20 November provider review](../docs/validation/provider-review-20261120.md)
+record accepted capabilities and the outstanding scientific, native and consumer
+obligations. Source provenance stays in `extraction-manifest.json`.
+Registry publication remains disabled.
