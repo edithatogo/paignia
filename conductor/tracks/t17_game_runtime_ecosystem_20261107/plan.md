@@ -514,7 +514,7 @@ oracle and result contract. Exclusion is not scientific completion.
 - Files (5): `Cargo.toml` and the separate `crates/paignia-kairos` workspace's
   `Cargo.toml`, `Cargo.lock`, `src/lib.rs` and `tests/native_replay.rs`.
 - Check: `cargo test --locked --manifest-path crates/paignia-kairos/Cargo.toml
-  --test native_replay`. A tiny two-action/one-chance case dispatches only the
+  --all-targets`. A tiny two-action/one-chance case dispatches only the
   chosen causal path. `Solution.trace` includes postorder hypothetical branches:
   preserving it for diagnostics must never schedule those alternatives or treat
   expected payoffs as sampled outcomes. Repeated execution with declared inputs

@@ -193,7 +193,11 @@ fn selected_action_and_chance_are_the_only_native_dispatches() {
     let mut counts = [0; 3];
     for seed in 0..64 {
         let expected = execute(seed, false);
-        assert_eq!(execute(seed, true), expected);
+        for (mut replay, original) in execute(seed, true).into_iter().zip(&expected) {
+            assert_ne!(replay.identity.trace_id, original.identity.trace_id);
+            replay.identity.trace_id = original.identity.trace_id.clone();
+            assert_eq!(&replay, original);
+        }
         if let TransitionOutcome::Chance { edge_index } = expected[1].outcome {
             counts[edge_index] += 1;
         }
@@ -266,28 +270,66 @@ fn illegal_stale_delayed_and_cancelled_commands_do_not_dispatch() {
 }
 
 #[test]
-fn a_new_session_rejects_a_turn_from_an_earlier_binding_with_equal_labels() {
+fn separate_schedulers_have_distinct_trace_identities_with_equal_labels_and_events() {
     let source = start_model();
     let mut world = World::new();
     let entity = world.spawn();
+    let mut first_scheduler = Scheduler::new();
+    let mut first =
+        NativeGame::start(&source, &world, &mut first_scheduler, config(entity, 0)).unwrap();
+    let previous = first.observe().unwrap();
     let mut scheduler = Scheduler::new();
-    let previous = NativeGame::start(&source, &world, &mut scheduler, config(entity, 0))
-        .unwrap()
-        .observe()
-        .unwrap();
     let mut game = NativeGame::start(&source, &world, &mut scheduler, config(entity, 0)).unwrap();
     let current = game.observe().unwrap();
     assert_eq!(current.observation(), previous.observation());
     let at = game.next_transition_time().unwrap();
+    let action = ActionId("play".into());
     assert!(matches!(
         game.submit(Command::Act {
             turn: &previous,
-            action: &ActionId("play".into()),
+            action: &action,
             at
         }),
         Err(ExecutionError::StaleDecision)
     ));
     assert_eq!(game.observe().unwrap().observation(), current.observation());
+    let first = first
+        .submit(Command::Act {
+            turn: &previous,
+            action: &action,
+            at,
+        })
+        .unwrap();
+    let mut second = game
+        .submit(Command::Act {
+            turn: &current,
+            action: &action,
+            at,
+        })
+        .unwrap();
+    assert_ne!(first.identity.trace_id, second.identity.trace_id);
+    second.identity.trace_id = first.identity.trace_id.clone();
+    assert_eq!(first, second);
+}
+
+#[test]
+fn weights_outside_the_native_grid_are_rejected_at_start() {
+    let mut source = start_model();
+    let chance = node("draw");
+    let Node::Chance { edges } = source.game.nodes.get_mut(&chance).unwrap() else {
+        panic!("expected a chance node");
+    };
+    edges[0].probability = f64::from_bits((1023 - 121) << 52);
+    source.validate_for_profile(STATIC_GAME_PROFILE_V1).unwrap();
+    let mut world = World::new();
+    let entity = world.spawn();
+    let mut scheduler = Scheduler::new();
+    let stats = scheduler.stats();
+    assert!(matches!(
+        NativeGame::start(&source, &world, &mut scheduler, config(entity, 0)),
+        Err(ExecutionError::UnrepresentableChanceWeight { node, edge: 0 }) if node == chance
+    ));
+    assert_eq!(scheduler.stats(), stats);
 }
 
 #[test]

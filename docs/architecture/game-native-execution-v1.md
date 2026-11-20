@@ -26,8 +26,10 @@ Each supported transition requires exactly one tick after the scheduler's
 current time, with priority zero. The adapter uses `PGAC` for actions and `PGCH`
 for chance. It schedules one event, verifies the actual dispatched event and
 commits the new graph node and revision. The record includes the full dispatched
-event, exact run labels, old and new revisions and the action or original
-ordered chance-edge index. The reached terminal supplies realized payoffs.
+event, opaque in-process trace ID, exact run labels, old and new revisions,
+and the action or original ordered chance-edge index. Separate bindings receive
+distinct trace IDs even when their labels and native event payloads coincide.
+The reached terminal supplies realized payoffs.
 Solver traces remain diagnostics over hypothetical branches.
 
 Time, session, revision, legality, cancellation and budget checks precede
@@ -40,20 +42,21 @@ or revision.
 
 Kairos derives a ChaCha8 stream from the supplied seed, full generational entity
 ID and purpose `paignia/game-execution/chance/v1`. Sampling uses the locked
-`rand` 0.10.3 `WeightedIndex<f64>` through the native RNG. It interprets admitted
-chance probabilities as ordered weights, with the sampler's floating-point
-resolution. A positive weight that vanishes from the cumulative weights is
-rejected. Zero-weight edges are never selected.
+`rand` 0.10.3 `WeightedIndex<u128>` through the native RNG. All chance weights
+must be exact multiples of `2^-120`. Admission constructs each node's integer
+weights before any dispatch. The weighted sampler normalizes the exact relative
+weights, so zero-weight edges are never selected and every admitted positive
+edge has a nonempty interval in the integer sampler.
 
 The same admitted graph, selected actions, native lifetime and scheduler history
-reproduce the causal event records for a fixed seed and lock. Common random
+reproduce the causal event payloads for a fixed seed and lock. Common random
 numbers across reordered entity construction, isolation from policy exploration,
 and checkpoint/resume have separate T17.15 and T17.16 checks.
 
 ## Verify
 
 ```bash
-cargo test --manifest-path crates/paignia-kairos/Cargo.toml --locked --test native_replay
+cargo test --manifest-path crates/paignia-kairos/Cargo.toml --locked --all-targets
 ```
 
 This candidate implements the bounded T17.08 fixture using actual native

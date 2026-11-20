@@ -4,7 +4,7 @@
 //! action or chance outcome advances the scheduler by one tick and yields the
 //! event actually dispatched. The host owns model, policy and entity bindings.
 
-use std::{num::NonZeroU64, sync::Arc};
+use std::{collections::BTreeMap, num::NonZeroU64, sync::Arc};
 
 use kairo_ecs_core::Scheduler;
 use kairo_ecs_rng::{
@@ -17,10 +17,11 @@ use kairo_ecs_types::{
     StepOutcome,
 };
 use paignia_core::{
-    build_policy_observation, ActionId, GameInstanceId, GameSessionId, GameSpecification,
-    GameSpecificationId, Node, NodeId, ObservationRevision, PayoffVector, PolicyArtifactId,
-    PolicyObservation, PolicyObservationBinding, PolicyObservationError, PolicyObservationRequest,
-    ProfileValidationError, POLICY_OBSERVATION_SCHEMA_VERSION, STATIC_GAME_PROFILE_V1,
+    build_policy_observation, ActionId, ChanceEdge, GameInstanceId, GameSessionId,
+    GameSpecification, GameSpecificationId, Node, NodeId, ObservationRevision, PayoffVector,
+    PolicyArtifactId, PolicyObservation, PolicyObservationBinding, PolicyObservationError,
+    PolicyObservationRequest, ProfileValidationError, POLICY_OBSERVATION_SCHEMA_VERSION,
+    STATIC_GAME_PROFILE_V1,
 };
 use thiserror::Error;
 
@@ -28,6 +29,8 @@ pub const EXECUTION_SCHEMA_VERSION: &str = "1.0.0";
 pub const DECISION_EVENT: EventKind = EventKind::custom(u32::from_be_bytes(*b"PGAC"));
 pub const CHANCE_EVENT: EventKind = EventKind::custom(u32::from_be_bytes(*b"PGCH"));
 const CHANCE_PURPOSE: &str = "paignia/game-execution/chance/v1";
+// Binary64 encoding of 2^120, leaving room for the admitted total in u128.
+const CHANCE_WEIGHT_SCALE: f64 = f64::from_bits((1023 + 120) << 52);
 
 /// One host-supplied run binding. The entity is interpreted in the supplied world.
 #[derive(Clone, Debug)]
@@ -42,9 +45,22 @@ pub struct ExecutionConfig<'a> {
     pub transition_limit: NonZeroU64,
 }
 
-/// Public labels attached to a committed native transition.
+/// Opaque in-process identity of one causal execution, local to this binding.
+#[derive(Clone, Debug)]
+pub struct CausalTraceId(Arc<()>);
+
+impl PartialEq for CausalTraceId {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.0, &other.0)
+    }
+}
+
+impl Eq for CausalTraceId {}
+
+/// The live trace identity and host-supplied labels of a committed transition.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExecutionIdentity {
+    pub trace_id: CausalTraceId,
     pub specification_id: GameSpecificationId,
     pub game_instance_id: GameInstanceId,
     pub session_id: GameSessionId,
@@ -55,7 +71,7 @@ pub struct ExecutionIdentity {
 #[derive(Clone, Debug)]
 pub struct DecisionTurn {
     observation: PolicyObservation,
-    session: Arc<()>,
+    trace_id: CausalTraceId,
 }
 
 impl DecisionTurn {
@@ -139,8 +155,8 @@ pub enum ExecutionError {
     EventCounterExhausted,
     #[error("invalid native chance weights: {0}")]
     ChanceWeights(#[from] WeightError),
-    #[error("positive weight on chance edge {0} is lost in the native cumulative weights")]
-    ChanceWeightUnderflow(usize),
+    #[error("chance edge {edge} at {node:?} is outside the exact native weight grid")]
+    UnrepresentableChanceWeight { node: NodeId, edge: usize },
     #[error(
         "Kairos dispatch for {scheduled:?} did not match the submitted transition: {outcome:?}"
     )]
@@ -161,8 +177,8 @@ pub struct NativeGame<'a> {
     identity: ExecutionIdentity,
     entity: EntityId,
     chance: DeterministicStream,
+    chance_weights: BTreeMap<&'a NodeId, WeightedIndex<u128>>,
     current: &'a NodeId,
-    session: Arc<()>,
     revision: ObservationRevision,
     transition_limit: NonZeroU64,
     interrupted: bool,
@@ -173,7 +189,8 @@ impl<'a> NativeGame<'a> {
     ///
     /// # Errors
     /// Rejects unsupported schemas or game profiles, invalid graphs, blank run
-    /// identifiers, inactive entity handles and schedulers with pending work.
+    /// identifiers, inactive entity handles, schedulers with pending work and
+    /// chance weights outside the exact native grid.
     pub fn start(
         specification: &'a GameSpecification,
         world: &'a World,
@@ -201,11 +218,18 @@ impl<'a> NativeGame<'a> {
         if scheduler.pending_events() != 0 {
             return Err(ExecutionError::SchedulerBusy);
         }
+        let mut chance_weights = BTreeMap::new();
+        for (node, state) in &specification.game.nodes {
+            if let Node::Chance { edges } = state {
+                chance_weights.insert(node, native_chance_weights(node, edges)?);
+            }
+        }
         Ok(Self {
             specification,
             _world: world,
             scheduler,
             identity: ExecutionIdentity {
+                trace_id: CausalTraceId(Arc::new(())),
                 specification_id: GameSpecificationId(specification.id.clone()),
                 game_instance_id: config.game_instance_id,
                 session_id: config.session_id,
@@ -217,8 +241,8 @@ impl<'a> NativeGame<'a> {
                 config.entity,
                 CHANCE_PURPOSE,
             ),
+            chance_weights,
             current: &specification.game.root,
-            session: Arc::new(()),
             revision: ObservationRevision(0),
             transition_limit: config.transition_limit,
             interrupted: false,
@@ -275,7 +299,7 @@ impl<'a> NativeGame<'a> {
         };
         Ok(DecisionTurn {
             observation: build_policy_observation(self.specification, &request.binding, &request)?,
-            session: Arc::clone(&self.session),
+            trace_id: self.identity.trace_id.clone(),
         })
     }
 
@@ -289,7 +313,7 @@ impl<'a> NativeGame<'a> {
         let Command::Act { turn, action, at } = command else {
             return Err(ExecutionError::UnsupportedCancellation);
         };
-        if !Arc::ptr_eq(&self.session, &turn.session)
+        if self.identity.trace_id != turn.trace_id
             || turn.observation.binding.revision != self.revision
         {
             return Err(ExecutionError::StaleDecision);
@@ -313,20 +337,14 @@ impl<'a> NativeGame<'a> {
     /// Draw and commit one outcome from the ordered weights of a chance node.
     ///
     /// # Errors
-    /// Rejects a non-chance phase, unsupported timing, exhausted counters and
-    /// invalid native weights before drawing. A dispatch mismatch stops the run.
+    /// Rejects a non-chance phase, unsupported timing and exhausted counters
+    /// before drawing. A dispatch mismatch stops the run.
     pub fn realize_chance(&mut self, at: SimTime) -> Result<CausalTransition, ExecutionError> {
         let Node::Chance { edges } = self.current_node() else {
             return Err(ExecutionError::NotAtChance);
         };
         self.validate_transition(at)?;
-        let distribution = WeightedIndex::new(edges.iter().map(|edge| edge.probability))?;
-        for (index, edge) in edges.iter().enumerate() {
-            if edge.probability > 0.0 && distribution.weight(index) == Some(0.0) {
-                return Err(ExecutionError::ChanceWeightUnderflow(index));
-            }
-        }
-        let edge_index = self.chance.sample(distribution);
+        let edge_index = self.chance.sample(&self.chance_weights[self.current]);
         self.dispatch(
             at,
             &edges[edge_index].target,
@@ -406,5 +424,45 @@ impl<'a> NativeGame<'a> {
         self.current = target;
         self.revision = transition.after;
         Ok(transition)
+    }
+}
+
+fn native_chance_weights(
+    node: &NodeId,
+    edges: &[ChanceEdge],
+) -> Result<WeightedIndex<u128>, ExecutionError> {
+    let mut weights = Vec::with_capacity(edges.len());
+    for (index, edge) in edges.iter().enumerate() {
+        let scaled = edge.probability * CHANCE_WEIGHT_SCALE;
+        if scaled.fract() != 0.0 {
+            return Err(ExecutionError::UnrepresentableChanceWeight {
+                node: node.clone(),
+                edge: index,
+            });
+        }
+        // Profile admission bounds every weight to [0, 1 + mass tolerance].
+        // Power-of-two scaling and the integral check make this cast exact.
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        let units = scaled as u128;
+        weights.push(units);
+    }
+    Ok(WeightedIndex::new(weights)?)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rare_edge_has_exact_positive_weight_in_the_native_sampler() {
+        let target = NodeId("terminal".into());
+        let rare = f64::EPSILON / 2.0;
+        let edges = [1.0 - rare, rare].map(|probability| ChanceEdge {
+            probability,
+            target: target.clone(),
+        });
+        let distribution = native_chance_weights(&target, &edges).unwrap();
+        assert_eq!(distribution.total_weight(), 1 << 120);
+        assert_eq!(distribution.weight(1), Some(1 << 67));
     }
 }

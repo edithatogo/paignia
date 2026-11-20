@@ -190,7 +190,7 @@ jobs:
           cargo fetch --locked --manifest-path "$manifest"
           cargo fmt --all --manifest-path "$manifest" -- --check
           cargo clippy --locked --manifest-path "$manifest" --all-targets -- -D warnings
-          cargo test --locked --manifest-path "$manifest" --test native_replay
+          cargo test --locked --manifest-path "$manifest" --all-targets
 
   numerical-oracles:
     name: Synthetic numerical oracles (CPython 3.15.2)
