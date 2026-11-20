@@ -88,6 +88,13 @@ solved endpoints. It returns `DetectionRegimeChange` if their regimes differ.
 For a singleton with a unique witness, every coordinate projects to that
 witness's value. An error solving either endpoint propagates to the caller.
 
+`inspection_commitment_bound_with_detection` uses the same detection probability.
+The follower's indifference point is `g / (d (g + f))`. Perfect detection
+reproduces the original commitment bound. At detection `1/2` and a full budget,
+the optimistic value `-2/3` is attained at inspection probability `2/3`, while
+the pessimistic value `-2/3` is a supremum. A budget of `1/2` stays on the
+evasion side and attains `-7/2`.
+
 ## What this slice does not establish
 
 - Detection uses a single probability conditional on inspection in one binary
