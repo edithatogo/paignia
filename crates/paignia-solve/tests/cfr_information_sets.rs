@@ -613,8 +613,14 @@ fn leduc_tree_matches_the_independent_check_call_value_and_trains_toward_the_pub
         cfr_profile_values(&source, &graph, &calling).expect("call value")[&player("zero")];
     assert!((library_call - independent_leduc_check_value()).abs() < 1e-9);
 
-    let early = leduc_cfr_plus(&source, &declaration, &graph, 1_000);
-    let trained = leduc_cfr_plus(&source, &declaration, &graph, LEDUC_ITERATIONS);
+    let early = leduc_run(&source, &declaration, &graph, CfrVariant::CfrPlus, 1_000);
+    let trained = leduc_run(
+        &source,
+        &declaration,
+        &graph,
+        CfrVariant::CfrPlus,
+        LEDUC_ITERATIONS,
+    );
     assert!(
         trained.exploitability < early.exploitability,
         "leduc exploitability early {} late {}",
@@ -639,17 +645,41 @@ struct LeducRun {
     exploitability: f64,
 }
 
-fn leduc_cfr_plus(
+#[test]
+fn vanilla_leduc_exploitability_shrinks_between_the_same_budgets() {
+    let (source, declaration) = leduc();
+    let graph =
+        build_information_set_graph(&source, &declaration).expect("Leduc is perfect recall");
+    let early = leduc_run(&source, &declaration, &graph, CfrVariant::Cfr, 1_000);
+    let late = leduc_run(
+        &source,
+        &declaration,
+        &graph,
+        CfrVariant::Cfr,
+        LEDUC_ITERATIONS,
+    );
+    assert!(
+        late.exploitability < early.exploitability,
+        "vanilla leduc exploitability early {} late {} values {} {}",
+        early.exploitability,
+        late.exploitability,
+        early.value,
+        late.value
+    );
+}
+
+fn leduc_run(
     source: &GameSpecification,
     declaration: &InformationSetDeclaration,
     graph: &InformationSetGraph,
+    variant: CfrVariant,
     iterations: u32,
 ) -> LeducRun {
     let trained = train_counterfactual_regret(
         source,
         declaration,
         &CfrConfig {
-            variant: CfrVariant::CfrPlus,
+            variant,
             iterations,
         },
     )
