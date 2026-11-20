@@ -9,7 +9,7 @@
   actual immutable package handoff is ready, while two real application
   receipts are still absent. Full T17 archival remains ineligible.
 
-- [ ] **T18 Illicit-supply border-enforcement and retail-inspection game contracts for tobac**
+- [~] **T18 Illicit-supply border-enforcement and retail-inspection game contracts for tobac**
   [Specification, plan and handoff](tracks/t18_illicit_enforcement_inspection_games_20261110/index.md).
-  Neutral leader-follower inspection/interdiction primitives and interval/credal
-  equilibrium payoff bounds feeding `tobac` partial identification (`M2a`, `F03`).
+  The native exact 2x2 leader-follower family is under review. Interval/credal
+  bounds and the `tobac` partial-identification handoff (`M2a`, `F03`) remain open.

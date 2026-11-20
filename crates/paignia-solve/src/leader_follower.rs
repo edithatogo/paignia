@@ -1,0 +1,503 @@
+//! Exact leader-follower value for one binary inspection family.
+//!
+//! The leader commits to the probability of the first row. The follower observes
+//! that distribution, not the later private draw, and answers with a best
+//! response. Optimistic ties maximize the leader's payoff. Pessimistic ties
+//! minimize it. A bound that is only a supremum carries no strategy witness.
+//!
+//! The payoffs are `U_I(p,q) = -c*p - h*(1-p)*q` and
+//! `U_E(p,q) = q*(g - (g+f)*p)`, with strictly positive `c`, `h`, `g` and `f`.
+//! This is not a general Stackelberg solver, an interval model, or closure of
+//! `T18.01`.
+
+use std::cmp::Ordering;
+
+use thiserror::Error;
+
+/// Version of the exact family, tie rule and nonattainment policy.
+pub const VERSION: &str = "1.0.0";
+
+/// Reduced rational with a positive denominator.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Ratio {
+    numerator: i64,
+    denominator: i64,
+}
+
+impl Ratio {
+    /// Admit a finite ratio and reduce it. A zero denominator is rejected.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::ZeroDenominator`] when `denominator` is zero, and
+    /// [`Error::Overflow`] when reduction does not fit in `i64`.
+    pub fn new(numerator: i64, denominator: i64) -> Result<Self, Error> {
+        if denominator == 0 {
+            return Err(Error::ZeroDenominator);
+        }
+        from_i128(i128::from(numerator), i128::from(denominator))
+    }
+
+    #[must_use]
+    pub const fn numerator(self) -> i64 {
+        self.numerator
+    }
+
+    #[must_use]
+    pub const fn denominator(self) -> i64 {
+        self.denominator
+    }
+
+    fn zero() -> Self {
+        Self {
+            numerator: 0,
+            denominator: 1,
+        }
+    }
+
+    fn one() -> Self {
+        Self {
+            numerator: 1,
+            denominator: 1,
+        }
+    }
+
+    fn is_probability(self) -> bool {
+        self >= Self::zero() && self <= Self::one()
+    }
+
+    /// Add two reduced ratios.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Overflow`] when the sum does not fit in `i64`.
+    pub fn checked_add(self, other: Self) -> Result<Self, Error> {
+        self.add(other)
+    }
+
+    /// Subtract two reduced ratios.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Overflow`] when the reduced difference does not fit in `i64`.
+    pub fn checked_sub(self, other: Self) -> Result<Self, Error> {
+        self.sub(other)
+    }
+
+    /// Multiply two reduced ratios.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Overflow`] when the product does not fit in `i64`.
+    pub fn checked_mul(self, other: Self) -> Result<Self, Error> {
+        self.mul(other)
+    }
+
+    fn neg(self) -> Result<Self, Error> {
+        let numerator = self.numerator.checked_neg().ok_or(Error::Overflow)?;
+        Ok(Self {
+            numerator,
+            denominator: self.denominator,
+        })
+    }
+
+    fn add(self, other: Self) -> Result<Self, Error> {
+        from_i128(
+            i128::from(self.numerator) * i128::from(other.denominator)
+                + i128::from(other.numerator) * i128::from(self.denominator),
+            i128::from(self.denominator) * i128::from(other.denominator),
+        )
+    }
+
+    fn sub(self, other: Self) -> Result<Self, Error> {
+        from_i128(
+            i128::from(self.numerator) * i128::from(other.denominator)
+                - i128::from(other.numerator) * i128::from(self.denominator),
+            i128::from(self.denominator) * i128::from(other.denominator),
+        )
+    }
+
+    fn mul(self, other: Self) -> Result<Self, Error> {
+        from_i128(
+            i128::from(self.numerator) * i128::from(other.numerator),
+            i128::from(self.denominator) * i128::from(other.denominator),
+        )
+    }
+
+    fn div(self, other: Self) -> Result<Self, Error> {
+        if other.numerator == 0 {
+            return Err(Error::ZeroDenominator);
+        }
+        from_i128(
+            i128::from(self.numerator) * i128::from(other.denominator),
+            i128::from(self.denominator) * i128::from(other.numerator),
+        )
+    }
+}
+
+impl Ord for Ratio {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let left = i128::from(self.numerator) * i128::from(other.denominator);
+        let right = i128::from(other.numerator) * i128::from(self.denominator);
+        left.cmp(&right)
+    }
+}
+
+impl PartialOrd for Ratio {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+/// Strictly positive parameters of the declared inspection family.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Parameters {
+    inspection_cost: Ratio,
+    undetected_harm: Ratio,
+    evasion_gain: Ratio,
+    detected_loss: Ratio,
+}
+
+impl Parameters {
+    /// Admit `c`, `h`, `g` and `f` when each is strictly positive.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::NonPositiveParameter`] when any parameter is not
+    /// strictly positive.
+    pub fn try_new(
+        inspection_cost: Ratio,
+        undetected_harm: Ratio,
+        evasion_gain: Ratio,
+        detected_loss: Ratio,
+    ) -> Result<Self, Error> {
+        for value in [
+            inspection_cost,
+            undetected_harm,
+            evasion_gain,
+            detected_loss,
+        ] {
+            if value <= Ratio::zero() {
+                return Err(Error::NonPositiveParameter);
+            }
+        }
+        Ok(Self {
+            inspection_cost,
+            undetected_harm,
+            evasion_gain,
+            detected_loss,
+        })
+    }
+}
+
+/// How the follower breaks indifference.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum FollowerTie {
+    /// Choose the follower best response with the greater leader payoff.
+    Optimistic,
+    /// Choose the follower best response with the lesser leader payoff.
+    Pessimistic,
+}
+
+/// Expected payoffs of one feasible strategy pair.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Payoffs {
+    /// Leader payoff.
+    pub leader: Ratio,
+    /// Follower payoff.
+    pub follower: Ratio,
+}
+
+/// Unilateral pure-deviation gains of a supplied simultaneous strategy pair.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Gains {
+    /// Leader's gain from the better pure row.
+    pub leader: Ratio,
+    /// Follower's gain from the better pure column.
+    pub follower: Ratio,
+}
+
+/// Unique simultaneous Nash witness for this family.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct NashWitness {
+    /// Probability of the first row.
+    pub inspect: Ratio,
+    /// Probability of the second column.
+    pub evade: Ratio,
+    /// Expected payoffs at that witness.
+    pub payoffs: Payoffs,
+}
+
+/// Leader value under an expected-effort budget.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Commitment {
+    /// Maximum or supremum of the leader's commitment value.
+    pub value: Ratio,
+    /// `false` when `value` is a supremum with no feasible witness.
+    pub attained: bool,
+    /// Attaining row probability, absent when `attained` is false.
+    pub inspect: Option<Ratio>,
+    /// Attaining follower response, absent when `attained` is false.
+    pub evade: Option<Ratio>,
+}
+
+/// Rejection of an inspection-family request.
+#[derive(Clone, Copy, Debug, Error, Eq, PartialEq)]
+pub enum Error {
+    /// A parameter was zero or negative.
+    #[error("inspection parameters must be strictly positive")]
+    NonPositiveParameter,
+    /// A ratio used as a probability was outside the unit interval.
+    #[error("probability {numerator}/{denominator} is outside [0, 1]")]
+    ProbabilityOutOfRange {
+        /// Numerator of the rejected probability.
+        numerator: i64,
+        /// Denominator of the rejected probability.
+        denominator: i64,
+    },
+    /// The committed probability exceeds the expected-effort budget.
+    #[error("commitment exceeds the expected-effort budget")]
+    BudgetExceeded,
+    /// A ratio denominator was zero.
+    #[error("a ratio denominator must be nonzero")]
+    ZeroDenominator,
+    /// Equal cost and harm make a whole segment Nash, so no unique witness exists.
+    #[error("equal inspection cost and harm has no unique Nash witness")]
+    LeaderIndifferent,
+    /// An intermediate product did not fit in `i64`.
+    #[error("exact arithmetic overflowed")]
+    Overflow,
+    /// A constructed Nash witness had a positive deviation gain.
+    #[error("the constructed witness has a profitable deviation")]
+    InconsistentWitness,
+}
+
+/// Expected payoffs from the four declared cells.
+///
+/// # Errors
+///
+/// Returns [`Error::ProbabilityOutOfRange`] when either probability is outside
+/// `[0, 1]`, and [`Error::Overflow`] when the exact products do not fit.
+pub fn expected_payoffs(game: Parameters, inspect: Ratio, evade: Ratio) -> Result<Payoffs, Error> {
+    require_probability(inspect)?;
+    require_probability(evade)?;
+    let one = Ratio::one();
+    let skip = one.sub(inspect)?;
+    let comply = one.sub(evade)?;
+    let leader = inspect
+        .mul(comply)?
+        .mul(game.inspection_cost.neg()?)?
+        .add(inspect.mul(evade)?.mul(game.inspection_cost.neg()?)?)?
+        .add(skip.mul(evade)?.mul(game.undetected_harm.neg()?)?)?;
+    let follower = skip
+        .mul(evade)?
+        .mul(game.evasion_gain)?
+        .add(inspect.mul(evade)?.mul(game.detected_loss.neg()?)?)?;
+    Ok(Payoffs { leader, follower })
+}
+
+/// Pure-deviation gains of a supplied pair. This does not search for equilibria.
+///
+/// # Errors
+///
+/// Returns the same errors as [`expected_payoffs`].
+pub fn deviation_gains(game: Parameters, inspect: Ratio, evade: Ratio) -> Result<Gains, Error> {
+    let current = expected_payoffs(game, inspect, evade)?;
+    let leader = expected_payoffs(game, Ratio::zero(), evade)?
+        .leader
+        .max(expected_payoffs(game, Ratio::one(), evade)?.leader)
+        .sub(current.leader)?;
+    let follower = expected_payoffs(game, inspect, Ratio::zero())?
+        .follower
+        .max(expected_payoffs(game, inspect, Ratio::one())?.follower)
+        .sub(current.follower)?;
+    Ok(Gains { leader, follower })
+}
+
+/// Unique Nash witness when inspection is strictly dominated or strictly mixed.
+///
+/// # Errors
+///
+/// Returns [`Error::LeaderIndifferent`] when cost equals harm, because every
+/// inspection probability up to the follower's threshold is then a best response.
+/// Also returns [`Error::InconsistentWitness`] if the closed form has a positive gain.
+pub fn simultaneous_nash(game: Parameters) -> Result<NashWitness, Error> {
+    let (inspect, evade) = match game.inspection_cost.cmp(&game.undetected_harm) {
+        Ordering::Less => (
+            game.evasion_gain
+                .div(game.evasion_gain.add(game.detected_loss)?)?,
+            game.inspection_cost.div(game.undetected_harm)?,
+        ),
+        Ordering::Greater => (Ratio::zero(), Ratio::one()),
+        Ordering::Equal => return Err(Error::LeaderIndifferent),
+    };
+    let payoffs = expected_payoffs(game, inspect, evade)?;
+    let gains = deviation_gains(game, inspect, evade)?;
+    if gains.leader != Ratio::zero() || gains.follower != Ratio::zero() {
+        return Err(Error::InconsistentWitness);
+    }
+    Ok(NashWitness {
+        inspect,
+        evade,
+        payoffs,
+    })
+}
+
+/// Follower best response and both payoffs at one feasible commitment.
+///
+/// # Errors
+///
+/// Returns [`Error::ProbabilityOutOfRange`] for a probability outside `[0, 1]`
+/// and [`Error::BudgetExceeded`] when the commitment exceeds the budget.
+pub fn commitment_at(
+    game: Parameters,
+    inspect: Ratio,
+    budget: Ratio,
+    tie: FollowerTie,
+) -> Result<(Ratio, Payoffs), Error> {
+    require_probability(budget)?;
+    require_probability(inspect)?;
+    if inspect > budget {
+        return Err(Error::BudgetExceeded);
+    }
+    let comply = (
+        Ratio::zero(),
+        expected_payoffs(game, inspect, Ratio::zero())?,
+    );
+    let evade = (Ratio::one(), expected_payoffs(game, inspect, Ratio::one())?);
+    let mut options = Vec::with_capacity(2);
+    match comply.1.follower.cmp(&evade.1.follower) {
+        Ordering::Greater => options.push(comply),
+        Ordering::Less => options.push(evade),
+        Ordering::Equal => {
+            options.push(comply);
+            options.push(evade);
+        }
+    }
+    options
+        .first()
+        .copied()
+        .map(|_| select_tie(&options, tie))
+        .ok_or(Error::InconsistentWitness)
+}
+
+/// Exact commitment value on `[0, budget]`, including a one-sided supremum.
+///
+/// Leader payoff is affine on each side of `g / (g + f)`. The value is the
+/// best feasible endpoint, threshold, or one-sided threshold limit. It is
+/// attained only when a feasible commitment reaches it.
+///
+/// # Errors
+///
+/// Returns [`Error::ProbabilityOutOfRange`] when `budget` is outside `[0, 1]`.
+pub fn commitment_bound(
+    game: Parameters,
+    budget: Ratio,
+    tie: FollowerTie,
+) -> Result<Commitment, Error> {
+    require_probability(budget)?;
+    let threshold = threshold(game)?;
+    let mut points = vec![Ratio::zero(), budget];
+    if threshold <= budget {
+        points.push(threshold);
+    }
+    points.sort_unstable();
+    points.dedup();
+    let attained = points
+        .into_iter()
+        .map(|inspect| {
+            commitment_at(game, inspect, budget, tie)
+                .map(|(evade, payoffs)| (inspect, evade, payoffs))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let mut values: Vec<Ratio> = attained
+        .iter()
+        .map(|(_, _, payoffs)| payoffs.leader)
+        .collect();
+    if threshold <= budget {
+        values.push(expected_payoffs(game, threshold, Ratio::one())?.leader);
+    }
+    if threshold < budget {
+        values.push(expected_payoffs(game, threshold, Ratio::zero())?.leader);
+    }
+    let value = values.into_iter().max().ok_or(Error::InconsistentWitness)?;
+    let witness = attained
+        .into_iter()
+        .filter(|(_, _, payoffs)| payoffs.leader == value)
+        .min_by_key(|(inspect, _, _)| *inspect);
+    Ok(match witness {
+        Some((inspect, evade, _)) => Commitment {
+            value,
+            attained: true,
+            inspect: Some(inspect),
+            evade: Some(evade),
+        },
+        None => Commitment {
+            value,
+            attained: false,
+            inspect: None,
+            evade: None,
+        },
+    })
+}
+
+fn threshold(game: Parameters) -> Result<Ratio, Error> {
+    game.evasion_gain
+        .div(game.evasion_gain.add(game.detected_loss)?)
+}
+
+fn require_probability(value: Ratio) -> Result<(), Error> {
+    if value.is_probability() {
+        Ok(())
+    } else {
+        Err(Error::ProbabilityOutOfRange {
+            numerator: value.numerator,
+            denominator: value.denominator,
+        })
+    }
+}
+
+fn select_tie(options: &[(Ratio, Payoffs)], tie: FollowerTie) -> (Ratio, Payoffs) {
+    let mut best = options[0];
+    for candidate in options.iter().skip(1) {
+        let order = candidate.1.leader.cmp(&best.1.leader);
+        let replace = match tie {
+            FollowerTie::Optimistic => {
+                order == Ordering::Greater || (order == Ordering::Equal && candidate.0 < best.0)
+            }
+            FollowerTie::Pessimistic => {
+                order == Ordering::Less || (order == Ordering::Equal && candidate.0 > best.0)
+            }
+        };
+        if replace {
+            best = *candidate;
+        }
+    }
+    best
+}
+
+fn from_i128(mut numerator: i128, mut denominator: i128) -> Result<Ratio, Error> {
+    if denominator == 0 {
+        return Err(Error::ZeroDenominator);
+    }
+    if denominator < 0 {
+        numerator = numerator.checked_neg().ok_or(Error::Overflow)?;
+        denominator = denominator.checked_neg().ok_or(Error::Overflow)?;
+    }
+    let factor = gcd(numerator.checked_abs().ok_or(Error::Overflow)?, denominator);
+    let numerator = i64::try_from(numerator / factor).map_err(|_| Error::Overflow)?;
+    let denominator = i64::try_from(denominator / factor).map_err(|_| Error::Overflow)?;
+    Ok(Ratio {
+        numerator,
+        denominator,
+    })
+}
+
+fn gcd(mut left: i128, mut right: i128) -> i128 {
+    while right != 0 {
+        let next = left % right;
+        left = right;
+        right = next;
+    }
+    left
+}
