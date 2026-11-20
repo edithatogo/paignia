@@ -383,17 +383,26 @@ fn ensure_perfect_recall(
     sets: &AdmittedSets,
     assignments: &Assignments,
 ) -> Result<(), Error> {
-    let players = sets
-        .values()
-        .map(|set| set.player.clone())
-        .collect::<BTreeSet<_>>();
     let incoming = incoming_edges(source);
     let order = topological_order(source);
-    let mut histories = BTreeMap::new();
-    let mut interned = HistoryTable::new();
-
-    for node_id in &order {
-        for player in &players {
+    let mut spans = BTreeMap::new();
+    for (index, node_id) in order.iter().enumerate() {
+        if let Node::Decision { player, .. } = &source.game.nodes[node_id] {
+            let span = spans.entry(player).or_insert((index, index));
+            span.1 = index;
+        }
+    }
+    let mut own_history = BTreeMap::new();
+    for (player, (first, last)) in spans {
+        // Before this player's first decision all incoming paths have the
+        // same empty own history. Later nodes matter only until they act last.
+        if first == last {
+            own_history.insert(&order[first], Recall::Unique(0));
+            continue;
+        }
+        let mut histories = BTreeMap::new();
+        let mut interned = HistoryTable::new();
+        for node_id in &order[first..=last] {
             let state = recall_state(
                 source,
                 node_id,
@@ -403,13 +412,17 @@ fn ensure_perfect_recall(
                 &histories,
                 &mut interned,
             );
-            histories.insert((node_id.clone(), player.clone()), state);
+            histories.insert(node_id, state);
+            if matches!(&source.game.nodes[node_id], Node::Decision { player: owner, .. } if owner == player)
+            {
+                own_history.insert(node_id, state);
+            }
         }
     }
 
     for (node_id, node) in &source.game.nodes {
         if let Node::Decision { player, .. } = node {
-            if histories.get(&(node_id.clone(), player.clone())) == Some(&Recall::Ambiguous) {
+            if own_history[node_id] == Recall::Ambiguous {
                 return Err(Error::AmbiguousRecall {
                     node: node_id.clone(),
                     player: player.clone(),
@@ -420,13 +433,9 @@ fn ensure_perfect_recall(
 
     for (set_id, set) in sets {
         let reference = &set.members[0];
-        let expected = histories
-            .get(&(reference.clone(), set.player.clone()))
-            .copied();
+        let expected = own_history[reference];
         for member in &set.members[1..] {
-            let actual = histories
-                .get(&(member.clone(), set.player.clone()))
-                .copied();
+            let actual = own_history[member];
             if actual != expected {
                 return Err(Error::ImperfectRecall {
                     set: set_id.clone(),
@@ -446,7 +455,7 @@ fn recall_state(
     player: &PlayerId,
     incoming: &BTreeMap<NodeId, Vec<(NodeId, Option<ActionId>)>>,
     assignments: &Assignments,
-    histories: &BTreeMap<(NodeId, PlayerId), Recall>,
+    histories: &BTreeMap<&NodeId, Recall>,
     interned: &mut HistoryTable,
 ) -> Recall {
     let Some(parents) = incoming.get(node_id) else {
@@ -454,10 +463,8 @@ fn recall_state(
     };
     let mut state = Recall::Unset;
     for (parent, action) in parents {
-        let parent_state = histories
-            .get(&(parent.clone(), player.clone()))
-            .copied()
-            .expect("topological order processes parents first");
+        // An absent parent precedes the player's first decision in this order.
+        let parent_state = histories.get(parent).copied().unwrap_or(Recall::Unique(0));
         let contribution = match parent_state {
             Recall::Ambiguous => Recall::Ambiguous,
             Recall::Unique(history) => {
