@@ -257,9 +257,12 @@ pub enum Error {
     /// A ratio denominator was zero.
     #[error("a ratio denominator must be nonzero")]
     ZeroDenominator,
-    /// Equal cost and harm make a whole segment Nash, so no unique witness exists.
-    #[error("equal inspection cost and harm has no unique Nash witness")]
+    /// Inspection cost equals detection-weighted harm, so inspection shares form a Nash segment.
+    #[error("inspection cost equals detection-weighted harm, giving multiple Nash witnesses")]
     LeaderIndifferent,
+    /// At full inspection, follower indifference admits a segment of evasion shares.
+    #[error("follower indifference at full inspection gives multiple Nash witnesses")]
+    FollowerIndifferentAtFullInspection,
     /// An intermediate product did not fit in `i64`.
     #[error("exact arithmetic overflowed")]
     Overflow,
@@ -355,15 +358,16 @@ pub fn simultaneous_nash(game: Parameters) -> Result<NashWitness, Error> {
 
 /// Unique Nash witness when an inspection detects evasion with probability `detection`.
 ///
-/// Perfect detection is `1` and matches [`simultaneous_nash`]. A smaller probability
-/// scales the detected loss and the prevented harm. Equality of scaled cost and
-/// harm, or a detection probability that makes full inspection exactly the
-/// follower's threshold, has no unique witness.
+/// Perfect detection is `1` and matches [`simultaneous_nash`]. If inspection cost
+/// exceeds detection-weighted harm (`c > d h`), skipping is strictly dominant
+/// even when the follower would be indifferent at full inspection.
 ///
 /// # Errors
 ///
-/// Returns [`Error::DetectionOutOfRange`], [`Error::LeaderIndifferent`], or
-/// [`Error::InconsistentWitness`].
+/// Returns [`Error::LeaderIndifferent`] when `c = d h`, or
+/// [`Error::FollowerIndifferentAtFullInspection`] when `c < d h` and
+/// `d(g+f) = g`. Also returns [`Error::DetectionOutOfRange`],
+/// [`Error::Overflow`], or [`Error::InconsistentWitness`].
 pub fn simultaneous_nash_with_detection(
     game: Parameters,
     detection: Ratio,
@@ -390,8 +394,8 @@ pub fn simultaneous_nash_with_detection(
 /// # Errors
 ///
 /// Returns [`Error::DetectionRegimeChange`] when the endpoints are not both
-/// interior, both pure-skip, or both pure-inspect. Also returns the detection
-/// admission errors.
+/// interior, both pure-skip, or both pure-inspect. Endpoint errors from
+/// [`simultaneous_nash_with_detection`] propagate.
 pub fn detection_nash_projection(
     game: Parameters,
     lower: Ratio,
@@ -404,7 +408,9 @@ pub fn detection_nash_projection(
     }
     let low = simultaneous_nash_with_detection(game, lower)?;
     let high = simultaneous_nash_with_detection(game, upper)?;
-    if !same_detection_regime(game, lower, upper) {
+    let skip_changes = (low.inspect == Ratio::zero()) != (high.inspect == Ratio::zero());
+    let full_inspection_changes = (low.inspect == Ratio::one()) != (high.inspect == Ratio::one());
+    if skip_changes || full_inspection_changes {
         return Err(Error::DetectionRegimeChange);
     }
     Ok(NashProjection {
@@ -443,36 +449,19 @@ fn require_detection(detection: Ratio) -> Result<(), Error> {
 
 fn detection_actions(game: Parameters, detection: Ratio) -> Result<(Ratio, Ratio), Error> {
     let scaled_harm = detection.mul(game.undetected_harm)?;
+    match game.inspection_cost.cmp(&scaled_harm) {
+        Ordering::Greater => return Ok((Ratio::zero(), Ratio::one())),
+        Ordering::Equal => return Err(Error::LeaderIndifferent),
+        Ordering::Less => {}
+    }
     let follow = detection.mul(game.evasion_gain.add(game.detected_loss)?)?;
-    let cost_order = game.inspection_cost.cmp(&scaled_harm);
-    let follow_order = follow.cmp(&game.evasion_gain);
-    match (cost_order, follow_order) {
-        (Ordering::Less, Ordering::Greater) => Ok((
+    match follow.cmp(&game.evasion_gain) {
+        Ordering::Greater => Ok((
             game.evasion_gain.div(follow)?,
             game.inspection_cost.div(scaled_harm)?,
         )),
-        (Ordering::Greater, _) => Ok((Ratio::zero(), Ratio::one())),
-        (Ordering::Less, Ordering::Less) => Ok((Ratio::one(), Ratio::one())),
-        _ => Err(Error::LeaderIndifferent),
-    }
-}
-
-fn same_detection_regime(game: Parameters, lower: Ratio, upper: Ratio) -> bool {
-    let low = detection_actions(game, lower);
-    let high = detection_actions(game, upper);
-    match (low, high) {
-        (Ok((left_p, left_q)), Ok((right_p, right_q))) => {
-            let low_pure_skip = left_p == Ratio::zero();
-            let high_pure_skip = right_p == Ratio::zero();
-            let low_pure_inspect = left_p == Ratio::one() && left_q == Ratio::one();
-            let high_pure_inspect = right_p == Ratio::one() && right_q == Ratio::one();
-            let low_interior = !low_pure_skip && !low_pure_inspect;
-            let high_interior = !high_pure_skip && !high_pure_inspect;
-            (low_interior && high_interior)
-                || (low_pure_skip && high_pure_skip)
-                || (low_pure_inspect && high_pure_inspect)
-        }
-        _ => false,
+        Ordering::Less => Ok((Ratio::one(), Ratio::one())),
+        Ordering::Equal => Err(Error::FollowerIndifferentAtFullInspection),
     }
 }
 
