@@ -51,9 +51,11 @@ run were not added as unsupported extra prerequisites.
 
 T17.09 records the first application artifact receipt and T17.17 has the
 accepted executable profile. The merged Kairos `K01.port` receipt qualifies
-T17.08, T17.15 and T17.16. Four leaves remain open (.07, .10, .11 and .12).
-The bounded release check still requires a second matching application receipt.
-The remaining S01–S04 source migration and valuation handoffs stay open.
+T17.08, T17.15 and T17.16. T17.07 is complete after the independent Leduc
+comparison and the legacy Kairos CFR retirement. Three leaves remain open
+(.10, .11 and .12). The bounded release check still requires a second matching
+application receipt. Kairos S01–S03 source disposition and the valued-payoff
+handoff stay open.
 [Kairos port acceptance](https://github.com/edithatogo/kairos/blob/f7484751c4a058581f2425ca493faec8e85e5637/conductor/contracts/game-port-acceptance.md)
 
 Earlier dated paragraphs retain historical source, failure and review evidence,
@@ -461,7 +463,7 @@ oracle and result contract. Exclusion is not scientific completion.
   from a product distribution. Evaluate existing Clarabel capability before
   custom optimization; any dependency/lock change gets a separate bounded leaf.
 
-### [~] T17.07 — train CFR/CFR+ on a supported information-set graph (S04)
+### [x] T17.07 — train CFR/CFR+ on a supported information-set graph (S04)
 
 - Behavior: update a policy on general supported information sets using the
   declared CFR variant rather than a hard-coded Kuhn-game implementation.
@@ -491,16 +493,30 @@ oracle and result contract. Exclusion is not scientific completion.
   iterations than at 4,000. The published value is checked only for CFR+.
   On Kuhn, both variants are also checked at 100, 1,000, and 12,000
   iterations: exploitability shrinks at each step, and the independent value
-  stays within `5e-3` of `-1/18`. The value error is not monotone, and there is
-  still no published Leduc iteration curve. This does not close S04, T17.07, or
-  T17.17.
+  stays within `5e-3` of `-1/18`. Value error can fluctuate. The independent
+  Leduc training comparison and Kairos source disposition were pending at
+  this checkpoint.
 
 - Review and integration: PRs #39, #40 and #51–#53 implement and check the
   bounded provider. Independent references check both players' best responses
   and NashConv at the recorded Kuhn and Leduc budgets. The hosted Rust profiles
-  pass. The UOGTO profile now qualifies T17.17. Kairos’s S04 caller migration
-  and retirement remain open.
+  pass. The UOGTO profile now qualifies T17.17.
   [20 November review](../../../docs/validation/provider-review-20261120.md)
+- Acceptance on 21 November 2026. Paignia PR #62 added independently trained
+  OpenSpiel Leduc checkpoints at 1,000 and 4,000 iterations for both variants.
+  The specialist-reviewed fixture reproduces the four recorded numeric rows
+  and rejects substituted values under the same schedule label. Both hosted
+  Rust profiles passed, including isolated artifact consumption. Offline
+  security was queued at the merge under the maintainer's instruction.
+  Kairos PR #406 retired the production Kuhn CFR API after confirming the caller
+  disposition. Historical tests stay in Kairos, and supported game training
+  stays in Paignia. The Kairos source integrated at
+  `5209fe488d5844936d97f35d9f0e884214d7efbb` after native checks and the
+  zero-regression workspace coverage gate passed.
+  [Paignia #62](https://github.com/edithatogo/paignia/pull/62) ·
+  [Paignia CI](https://github.com/edithatogo/paignia/actions/runs/44793502947) ·
+  [Kairos #406](https://github.com/edithatogo/kairos/pull/406) ·
+  [Kairos CI](https://github.com/edithatogo/kairos/actions/runs/44792232351)
 
 ## Phase C — optional execution and representation gaps
 
