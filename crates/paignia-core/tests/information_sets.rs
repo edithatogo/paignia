@@ -397,12 +397,10 @@ fn accepts_a_game_without_decision_nodes() {
 #[test]
 fn member_and_set_order_do_not_change_the_result() {
     let (source, first) = simultaneous();
-    let mut second = declared(vec![
+    let second = declared(vec![
         set("bob-unobserved", "bob", &["after-a", "after-b"]),
         set("alice-first", "alice", &["root"]),
     ]);
-    second.sets.reverse();
-    second.sets[0].members.reverse();
 
     assert_eq!(accept(&source, &first), accept(&source, &second));
 }
@@ -511,7 +509,8 @@ fn rejects_invalid_source_before_declaration_checks() {
         "root",
         vec![("root", decision("alice", &[("again", "root")]))],
     );
-    let declaration = declared(vec![set(" ", "alice", &["root"])]);
+    let mut declaration = declared(vec![set("first", "alice", &["root"])]);
+    declaration.sets[0].id = InformationSetId(" ".into());
     let error = reject(&source, &declaration);
 
     assert!(matches!(
@@ -836,7 +835,8 @@ fn failure_precedence_is_schema_then_profile_then_source_then_declaration() {
         "root",
         vec![("root", decision("alice", &[("again", "root")]))],
     );
-    let mut declaration = declared(vec![set(" ", "alice", &["root"])]);
+    let mut declaration = declared(vec![set("first", "alice", &["root"])]);
+    declaration.sets[0].id = InformationSetId(" ".into());
     declaration.schema_version = "9.0.0".into();
     declaration.semantic_profile = "urn:unknown:profile".into();
     assert!(matches!(
@@ -873,6 +873,15 @@ fn failures_are_repeatable_and_do_not_mutate_inputs() {
 
 #[test]
 fn deep_games_are_validated_iteratively() {
+    check_deep_game(|_| player("alice"));
+}
+
+#[test]
+fn many_distinct_actors_have_no_prior_own_history() {
+    check_deep_game(|index| player(&format!("player-{index}")));
+}
+
+fn check_deep_game(owner: impl Fn(usize) -> PlayerId) {
     let depth = 5_000;
     let mut nodes = BTreeMap::new();
     let mut sets = Vec::with_capacity(depth);
@@ -882,7 +891,7 @@ fn deep_games_are_validated_iteratively() {
         nodes.insert(
             this.clone(),
             Node::Decision {
-                player: player("alice"),
+                player: owner(index),
                 edges: vec![ActionEdge {
                     action: action("next"),
                     target: next,
@@ -891,7 +900,7 @@ fn deep_games_are_validated_iteratively() {
         );
         sets.push(SetDeclaration {
             id: InformationSetId(format!("urn:paignia:test:set:n{index}")),
-            player: player("alice"),
+            player: owner(index),
             members: vec![this],
         });
     }
