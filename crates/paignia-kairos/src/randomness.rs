@@ -1,4 +1,7 @@
-use kairo_ecs_rng::{derive_stream_id, rand_distr::weighted::WeightedIndex, DeterministicStream};
+use kairo_ecs_rng::{
+    derive_stream_id, rand_distr::weighted::WeightedIndex, DeterministicStream, RngCheckpoint,
+    RngError,
+};
 use kairo_ecs_types::EntityId;
 use paignia_core::NodeId;
 
@@ -44,6 +47,12 @@ pub(super) enum Randomness {
     Comparison(ComparisonStreams),
 }
 
+pub(super) enum RandomnessCheckpoint {
+    Entity(RngCheckpoint),
+    Comparison(ComparisonStreams),
+}
+
+#[derive(Clone)]
 pub(super) struct ComparisonStreams {
     seed: u64,
     chance_key: String,
@@ -51,6 +60,22 @@ pub(super) struct ComparisonStreams {
 }
 
 impl Randomness {
+    pub(super) fn checkpoint(&self) -> RandomnessCheckpoint {
+        match self {
+            Self::Entity(stream) => RandomnessCheckpoint::Entity(stream.checkpoint()),
+            Self::Comparison(streams) => RandomnessCheckpoint::Comparison(streams.clone()),
+        }
+    }
+
+    pub(super) fn from_checkpoint(checkpoint: &RandomnessCheckpoint) -> Result<Self, RngError> {
+        Ok(match checkpoint {
+            RandomnessCheckpoint::Entity(stream) => {
+                Self::Entity(Box::new(DeterministicStream::restore(stream)?))
+            }
+            RandomnessCheckpoint::Comparison(streams) => Self::Comparison(streams.clone()),
+        })
+    }
+
     pub(super) fn entity(seed: u64, entity: EntityId) -> Self {
         Self::Entity(Box::new(DeterministicStream::from_entity_purpose(
             seed,

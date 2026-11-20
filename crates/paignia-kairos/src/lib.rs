@@ -4,8 +4,10 @@
 //! action or chance outcome advances the scheduler by one tick and yields the
 //! event actually dispatched. The host owns model, policy and entity bindings.
 
+mod checkpoint;
 mod randomness;
 
+pub use checkpoint::{PolicySnapshot, ReplayCheckpoint, ReplayError, REPLAY_CHECKPOINT_VERSION_V1};
 use randomness::Randomness;
 pub use randomness::{
     ChanceCoupling, ComparisonRandomness, ExplorationStream, COMPARISON_RANDOMNESS_VERSION,
@@ -179,7 +181,7 @@ pub enum ExecutionError {
 /// borrowed for the run so the admitted entity cannot retire between operations.
 pub struct NativeGame<'a> {
     specification: &'a GameSpecification,
-    _world: &'a World,
+    world: &'a World,
     scheduler: &'a mut Scheduler,
     identity: ExecutionIdentity,
     entity: EntityId,
@@ -260,7 +262,7 @@ impl<'a> NativeGame<'a> {
         }
         Ok(Self {
             specification,
-            _world: world,
+            world,
             scheduler,
             identity: ExecutionIdentity {
                 trace_id: CausalTraceId(Arc::new(())),
