@@ -15,6 +15,6 @@
     "citation": "Southey, F., Bowling, M., Larson, B., Piccione, C., Burch, N., Billings, D., and Rayner, C. (2005). Bayes' bluff: opponent modelling in poker. Proceedings of the 21st Conference on Uncertainty in Artificial Intelligence, pages 550-558. The extensive form follows the two-player OpenSpiel leduc_poker defaults: six distinguishable cards, ante 1, raise sizes 2 and 4, and a two-raise cap.",
     "information_states": 936,
     "player_one_value": -0.085606,
-    "notes": "First-player equilibrium value reproduced for this rule set. It is not a closed form and was not taken from the Paignia trainer. The check-check showdown value is checked by a separate 120-deal ranking loop."
+    "notes": "First-player equilibrium value reproduced for this rule set. It is not a closed form and was not taken from the Paignia trainer. The check-check showdown value is checked by a separate 120-deal ranking loop. Vanilla CFR and CFR+ are both compared at 1,000 and 4,000 iterations, and Nash conv is smaller at 4,000. The published value is checked only for CFR+ at 4,000 iterations. This is not an exact equilibrium and not a published iteration curve."
   }
 }

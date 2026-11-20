@@ -583,6 +583,15 @@ const LEDUC_VALUE: f64 = -0.085_606;
 const LEDUC_ITERATIONS: u32 = 4_000;
 
 #[test]
+fn leduc_fixture_records_the_two_budget_limit() {
+    let fixture = include_str!("../../../fixtures/conformance/cfr-reference-v1.json");
+    assert!(fixture.contains("\"player_one_value\": -0.085606"));
+    assert!(fixture.contains("compared at 1,000 and 4,000 iterations"));
+    assert!(fixture.contains("checked only for CFR+ at 4,000 iterations"));
+    assert!(fixture.contains("not a published iteration curve"));
+}
+
+#[test]
 fn leduc_tree_matches_the_independent_check_call_value_and_trains_toward_the_published_value() {
     let fixture = include_str!("../../../fixtures/conformance/cfr-reference-v1.json");
     assert!(fixture.contains("\"player_one_value\": -0.085606"));
