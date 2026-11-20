@@ -1,8 +1,9 @@
 //! Exact Nash projections for one moving inspection parameter.
 
 use paignia_solve::{
-    inspection_deviation_gains, inspection_nash_projection, inspection_simultaneous_nash,
-    InspectionError, InspectionParameter, InspectionParameters, InspectionRatio, ParameterInterval,
+    inspection_deviation_gains, inspection_nash_projection, inspection_nash_rectangle,
+    inspection_simultaneous_nash, InspectionError, InspectionParameter, InspectionParameters,
+    InspectionRatio, ParameterInterval,
 };
 
 fn ratio(numerator: i64, denominator: i64) -> InspectionRatio {
@@ -164,4 +165,60 @@ fn a_point_interval_matches_the_unique_witness() {
     assert_eq!(projection.evade.lower, witness.evade);
     assert_eq!(projection.leader.lower, witness.payoffs.leader);
     assert_eq!(projection.follower.lower, witness.payoffs.follower);
+}
+
+#[test]
+fn an_interior_rectangle_spans_the_corner_witnesses() {
+    let projection = inspection_nash_rectangle(
+        game(1, 4, 1, 2),
+        interval(InspectionParameter::InspectionCost, (1, 1), (2, 1)),
+        interval(InspectionParameter::UndetectedHarm, (4, 1), (5, 1)),
+    )
+    .expect("rectangle");
+    assert_eq!(projection.endpoint_gap, ratio(0, 1));
+    assert_eq!(projection.inspect.lower, ratio(1, 3));
+    assert_eq!(projection.inspect.upper, ratio(1, 3));
+    assert_eq!(projection.evade.lower, ratio(1, 5));
+    assert_eq!(projection.evade.upper, ratio(1, 2));
+    assert_eq!(projection.leader.lower, ratio(-2, 1));
+    assert_eq!(projection.leader.upper, ratio(-1, 1));
+    assert_eq!(projection.follower.lower, ratio(0, 1));
+    let low = inspection_simultaneous_nash(game(1, 5, 1, 2)).expect("low corner");
+    let high = inspection_simultaneous_nash(game(2, 4, 1, 2)).expect("high corner");
+    assert_eq!(low.evade, projection.evade.lower);
+    assert_eq!(high.evade, projection.evade.upper);
+    assert_eq!(low.payoffs.leader, projection.leader.upper);
+    assert_eq!(high.payoffs.leader, projection.leader.lower);
+}
+
+#[test]
+fn a_pure_rectangle_moves_harm_and_gain_at_the_corners() {
+    let projection = inspection_nash_rectangle(
+        game(5, 1, 1, 2),
+        interval(InspectionParameter::UndetectedHarm, (1, 1), (2, 1)),
+        interval(InspectionParameter::EvasionGain, (1, 1), (3, 1)),
+    )
+    .expect("pure rectangle");
+    assert_eq!(projection.inspect.lower, ratio(0, 1));
+    assert_eq!(projection.evade.lower, ratio(1, 1));
+    assert_eq!(projection.leader.lower, ratio(-2, 1));
+    assert_eq!(projection.leader.upper, ratio(-1, 1));
+    assert_eq!(projection.follower.lower, ratio(1, 1));
+    assert_eq!(projection.follower.upper, ratio(3, 1));
+}
+
+#[test]
+fn a_rectangle_that_mixes_regimes_or_repeats_a_parameter_is_rejected() {
+    let mixed = inspection_nash_rectangle(
+        game(1, 4, 1, 2),
+        interval(InspectionParameter::InspectionCost, (1, 1), (5, 1)),
+        interval(InspectionParameter::UndetectedHarm, (4, 1), (4, 1)),
+    );
+    assert_eq!(mixed, Err(InspectionError::RectangleRegimeChange));
+    let repeated = inspection_nash_rectangle(
+        game(1, 4, 1, 2),
+        interval(InspectionParameter::InspectionCost, (1, 1), (2, 1)),
+        interval(InspectionParameter::InspectionCost, (1, 1), (2, 1)),
+    );
+    assert_eq!(repeated, Err(InspectionError::RepeatedParameter));
 }

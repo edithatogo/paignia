@@ -280,6 +280,12 @@ pub enum Error {
     /// The detection interval contains more than one Nash regime.
     #[error("detection probability changes the Nash regime inside the interval")]
     DetectionRegimeChange,
+    /// A rectangle named the same parameter on both axes.
+    #[error("a Nash rectangle must vary two distinct parameters")]
+    RepeatedParameter,
+    /// The corners of a parameter rectangle are not in one strict Nash regime.
+    #[error("parameter rectangle changes the Nash regime")]
+    RectangleRegimeChange,
 }
 
 /// Expected payoffs from the four declared cells.
@@ -827,6 +833,80 @@ pub fn nash_projection(
         follower: image.follower.bounds(),
         endpoint_gap: Ratio::zero(),
     })
+}
+
+/// Exact Nash projection on a rectangle that stays inside one strict regime.
+///
+/// The four corners are solved. Inside the interior regime and inside the
+/// pure-skip regime, each coordinate is monotone, so the corner span is the
+/// image. A rectangle that reaches equal cost and harm, or that mixes the two
+/// regimes, is rejected. The result remains a projection.
+///
+/// # Errors
+///
+/// Returns [`Error::RepeatedParameter`], [`Error::RectangleRegimeChange`],
+/// [`Error::LeaderIndifferent`], or the interval admission errors.
+pub fn nash_rectangle(
+    baseline: Parameters,
+    first: ParameterInterval,
+    second: ParameterInterval,
+) -> Result<NashProjection, Error> {
+    admit_interval(first)?;
+    admit_interval(second)?;
+    if first.parameter == second.parameter {
+        return Err(Error::RepeatedParameter);
+    }
+    let mut image: Option<Image> = None;
+    let mut pure_skip: Option<bool> = None;
+    for (left, right) in [
+        (first.lower, second.lower),
+        (first.lower, second.upper),
+        (first.upper, second.lower),
+        (first.upper, second.upper),
+    ] {
+        let game = with_varied(
+            with_varied(baseline, first.parameter, left)?,
+            second.parameter,
+            right,
+        )?;
+        let witness = simultaneous_nash(game)?;
+        let corner_is_pure = witness.inspect == Ratio::zero();
+        match pure_skip {
+            None => pure_skip = Some(corner_is_pure),
+            Some(previous) if previous != corner_is_pure => {
+                return Err(Error::RectangleRegimeChange);
+            }
+            Some(_) => {}
+        }
+        push_image(&mut image, witness_image(witness));
+    }
+    let image = image.ok_or(Error::InconsistentWitness)?;
+    Ok(NashProjection {
+        inspect: image.inspect.bounds(),
+        evade: image.evade.bounds(),
+        leader: image.leader.bounds(),
+        follower: image.follower.bounds(),
+        endpoint_gap: Ratio::zero(),
+    })
+}
+
+fn admit_interval(interval: ParameterInterval) -> Result<(), Error> {
+    if interval.lower <= Ratio::zero() || interval.upper <= Ratio::zero() {
+        return Err(Error::NonPositiveParameter);
+    }
+    if interval.lower > interval.upper {
+        return Err(Error::UnorderedInterval);
+    }
+    Ok(())
+}
+
+fn witness_image(witness: NashWitness) -> Image {
+    Image {
+        inspect: Span::point(witness.inspect),
+        evade: Span::point(witness.evade),
+        leader: Span::point(witness.payoffs.leader),
+        follower: Span::point(witness.payoffs.follower),
+    }
 }
 
 #[derive(Clone, Copy)]

@@ -35,7 +35,7 @@ pub use leader_follower::{
     detection_nash_projection as inspection_detection_projection,
     deviation_gains as inspection_deviation_gains, expected_payoffs as inspection_expected_payoffs,
     expected_payoffs_with_detection as inspection_expected_payoffs_with_detection,
-    nash_projection as inspection_nash_projection,
+    nash_projection as inspection_nash_projection, nash_rectangle as inspection_nash_rectangle,
     simultaneous_nash as inspection_simultaneous_nash,
     simultaneous_nash_with_detection as inspection_nash_with_detection,
     Commitment as InspectionCommitment, Error as InspectionError,
