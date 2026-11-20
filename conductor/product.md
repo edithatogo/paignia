@@ -8,7 +8,11 @@ Separate bounded mathematical APIs supply pure Nash, mixed-Nash support
 enumeration, optional correlated equilibrium, classical RK4 and named Euler.
 Their input and numerical contracts have independent specialist controls;
 normal-form tables and ODE states are not admitted as extensive-game graphs.
-Information sets, CFR/CFR+ and native execution remain separate unfinished work.
+The bounded perfect-recall information-set profile supports native CFR and
+CFR+ with independent Kuhn and Leduc controls. The binary commitment solver and
+Nash payoff hull enclosure expose their parameter domains and diagnostics.
+Native execution and upstream semantic acceptance remain open.
+[Provider review](../docs/validation/provider-review-20261120.md)
 
 The optional pinned Clarabel backend stays in solver scope; core and default
 solver consumers do not acquire that backend or its serialization dependencies.

@@ -5,11 +5,11 @@
   Fourteen provider-owned leaves plus three external consumer/valuation handoffs
   retain all seventeen IDs. Eight bounded provider leaves (.01–.06, .13, .14)
   are complete after independent review and both compiler/artifact gates.
-  Nine leaves and inherited external source obligations remain open; the
-  actual immutable package handoff is ready, while two real application
-  receipts are still absent. Full T17 archival remains ineligible.
+  Nine leaves remain open. The bounded information-set and CFR/CFR+ code is
+  merged. Upstream semantic and source acceptance, the native adapter,
+  and real application receipts remain outstanding.
 
 - [~] **T18 Illicit-supply border-enforcement and retail-inspection game contracts for tobac**
   [Specification, plan and handoff](tracks/t18_illicit_enforcement_inspection_games_20261110/index.md).
-  The native exact 2x2 leader-follower family is under review. Interval/credal
-  bounds and the `tobac` partial-identification handoff (`M2a`, `F03`) remain open.
+  T18.01 and T18.02 complete the bounded provider scope. T18.03 is the
+  pending `tobac` application and paired-draw handoff.

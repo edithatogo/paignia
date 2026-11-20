@@ -7,8 +7,10 @@ observations have accepted independent review and integrated compiler/package
 checks. The [17 November receipt](../../../docs/validation/t17-review-20261117.md)
 records exact source, corrections, nonzero test counts and remaining limits.
 
-Nine leaves remain open for information-set/CFR, native adapter/streams/replay,
-real application receipts and valued-payoff work. The
+Nine leaves remain open. The reviewed perfect-recall information-set and CFR
+implementations are merged. UOGTO profile acceptance, Kairos native
+adapter/streams/replay and source disposition, real application receipts,
+and valued-payoff work remain outstanding. The
 [concrete package handoff](../../../docs/validation/receipts/t17-bd880dd-handoff.json)
 is ready for application owners. Full-track archival and real-consumer release
 eligibility remain incomplete; all seventeen original IDs stay visible.
@@ -17,6 +19,7 @@ eligibility remain incomplete; all seventeen original IDs stay visible.
 - [Provider implementation plan and external owner entries](plan.md)
 - [Identity and promotion record](paignia-identity-and-promotion.md)
 - [Metadata](metadata.json)
+- [20 November provider review](../../../docs/validation/provider-review-20261120.md)
 - [T18 inspection/interdiction game contracts for tobac](../t18_illicit_enforcement_inspection_games_20261110/index.md)
 - [Source transfer and retention map](../../../docs/architecture/paignia-transfer-map.md)
 

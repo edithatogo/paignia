@@ -492,6 +492,12 @@ oracle and result contract. Exclusion is not scientific completion.
   still no published Leduc iteration curve. This does not close S04, T17.07, or
   T17.17.
 
+- Review and integration: PRs #39, #40 and #51–#53 implement and check the
+  bounded provider. Independent references check both players' best responses
+  and NashConv at the recorded Kuhn and Leduc budgets. The hosted Rust profiles
+  pass. UOGTO profile acceptance and the Kairos S04 source disposition remain
+  pending. [20 November review](../../../docs/validation/provider-review-20261120.md)
+
 ## Phase C — optional execution and representation gaps
 
 ### [ ] T17.08 — execute a supported game trace through the Rust Kairos adapter
@@ -640,6 +646,12 @@ oracle and result contract. Exclusion is not scientific completion.
   unavailable on the macOS host because `bubblewrap` is absent. Independent
   specialist review and hosted Linux CI remain required before this leaf moves
   to `[x]`; no CFR/S04, native-lifecycle or ontology claim is made here.
+
+- Review and integration: PR #37 merged the perfect-recall graph after the
+  specialist review and both hosted Rust profiles passed. The review tightened
+  the space bound for decisions shared by many paths. The UOGTO executable
+  information-set profile remains pending.
+  [20 November review](../../../docs/validation/provider-review-20261120.md)
 
 ## Phase D — real application consumers
 
