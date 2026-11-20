@@ -252,3 +252,20 @@ optimum and a zero-budget nonconvergence case. A feature-disabled zero-test run
 is never CE qualification. Kairos Track 110 still owns the old product-of-Nash
 API, its callers, migration and retirement. Real application receipts remain
 application-owned and are not supplied by these mathematical controls.
+
+### Kairos oracle migration — 21 November 2026
+
+The [historical Kairos tests](https://github.com/edithatogo/kairos/blob/ae9ae116b733586d12b8c338e21d1659bb5649ac/crates/kairo-ecs-game-theory/tests/clarabel_solver_oracles.rs#L134)
+retain the original payoff tables and expected outcomes. Paignia now checks
+the traffic game's raw joint weights against `(0, 1/4, 1/4, 1/2)` and its
+welfare against `21/2`. It also checks the Prisoner's Dilemma: strict
+dominance rules out cooperative recommendations, so the unique joint puts
+all weight on mutual defection with payoff `1` per player and welfare `2`.
+Both cases require Paignia's independent primal and dual admission. The
+migrated assertions preserve the strict `1e-8` weighted incentive cutoff
+and check both reported payoff intervals for the Prisoner's Dilemma.
+The malformed-shape and non-finite weight checks assert typed errors.
+The negative-weight control preserves unit mass and has no positive
+weighted deviation, so it distinguishes a missing nonnegativity check.
+Both compiler profiles require all 28 tests in the feature-gated target
+to pass without skips or filters.

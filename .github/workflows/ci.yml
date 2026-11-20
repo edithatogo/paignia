@@ -66,9 +66,9 @@ jobs:
               r"Running[^\n]*tests/correlated_equilibrium\.rs[^\n]*\n(.*?test result:[^\n]+)",
               log, re.DOTALL,
           )
-          required_ce = "test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;"
+          required_ce = "test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;"
           if ce is None or required_ce not in ce.group(1):
-              raise SystemExit("Expected all 27 optional native CE controls without skips or failures")
+              raise SystemExit("Expected all 28 optional native CE controls without skips or failures")
           PY
       - name: Native role-separation doctests
         shell: bash

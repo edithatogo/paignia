@@ -5,9 +5,10 @@
 use paignia_solve::{
     evaluate_correlated_equilibrium_candidate as evaluate,
     evaluate_correlated_equilibrium_certificate as certificate,
-    solve_correlated_equilibrium as solve, CorrelatedEquilibriumConfig as Config,
-    CorrelatedEquilibriumDualVariables as Dual, CorrelatedEquilibriumError as Error,
-    CorrelatedEquilibriumInterval as Interval, CorrelatedEquilibriumPlayer as Player,
+    solve_correlated_equilibrium as solve, CorrelatedEquilibriumCandidate as Candidate,
+    CorrelatedEquilibriumConfig as Config, CorrelatedEquilibriumDualVariables as Dual,
+    CorrelatedEquilibriumError as Error, CorrelatedEquilibriumInterval as Interval,
+    CorrelatedEquilibriumPlayer as Player, CorrelatedEquilibriumResult as SolveResult,
     CorrelatedEquilibriumStatus as Status, CorrelatedEquilibriumTermination as Termination,
 };
 
@@ -34,7 +35,12 @@ fn encloses(interval: Interval, value: f64) {
     assert!(interval.upper >= value, "{interval:?} excludes {value}");
 }
 
-fn optimum(row: &[Vec<f64>], column: &[Vec<f64>], objective: &[Vec<f64>], value: f64) {
+fn optimum(
+    row: &[Vec<f64>],
+    column: &[Vec<f64>],
+    objective: &[Vec<f64>],
+    value: f64,
+) -> SolveResult {
     let config = Config::default();
     let record = solve(row, column, objective, config).unwrap();
     assert_eq!(record.status(), Status::ApproximateOptimum);
@@ -69,12 +75,43 @@ fn optimum(row: &[Vec<f64>], column: &[Vec<f64>], objective: &[Vec<f64>], value:
     )
     .unwrap();
     assert_eq!(checked, candidate.certificate);
+    record
+}
+
+fn assert_frozen_joint(candidate: &Candidate, expected: &[f64]) {
+    let weights = &candidate.raw_joint_weights;
+    assert_eq!(weights.len(), expected.len());
+    for (index, (&weight, &target)) in weights.iter().zip(expected).enumerate() {
+        assert!(
+            (weight - target).abs() < 1e-4,
+            "joint weight {index}: expected {target}, got {weight}"
+        );
+    }
+    for gain in candidate.primal.maximum_weighted_gain_upper {
+        assert!(gain < 1e-8, "historical incentive bound exceeded: {gain}");
+    }
 }
 
 #[test]
 fn correlated_optimum_exceeds_every_nash_product_in_the_frozen_example() {
     let (row, column, objective) = gap_game();
-    optimum(&row, &column, &objective, 10.5);
+    let result = optimum(&row, &column, &objective, 10.5);
+    assert_frozen_joint(result.accepted_candidate().unwrap(), &[0., 0.25, 0.25, 0.5]);
+}
+
+#[test]
+fn prisoners_dilemma_has_only_the_mutual_defection_joint() {
+    let row = [vec![3., 0.], vec![5., 1.]];
+    let column = [vec![3., 5.], vec![0., 1.]];
+    let welfare = [vec![6., 5.], vec![5., 2.]];
+    let result = optimum(&row, &column, &welfare, 2.);
+    let candidate = result.accepted_candidate().unwrap();
+    // Strict dominance forbids any recommendation to cooperate.
+    assert_frozen_joint(candidate, &[0., 0., 0., 1.]);
+    for payoff in candidate.primal.payoffs {
+        assert!((payoff.lower - 1.).abs() < 1e-4, "{payoff:?}");
+        assert!((payoff.upper - 1.).abs() < 1e-4, "{payoff:?}");
+    }
 }
 
 #[test]
@@ -257,9 +294,17 @@ fn raw_negative_approximation_is_reported_without_projection() {
 #[test]
 fn invalid_probability_mass_and_negative_weight_are_not_normalized() {
     let (row, column, objective) = gap_game();
-    for joint in [[-1., 0., 0., 2.], [1., 0., 0., 1.], [0.; 4]] {
+    let negative = [-0.5, 0.5, 0.5, 0.5];
+    let config = Config::default();
+    // This joint has unit mass and no profitable weighted deviation.
+    let primal = evaluate(&row, &column, &objective, &negative, config).unwrap();
+    assert!(primal.mass_error_upper <= config.probability_tolerance);
+    assert_eq!(primal.maximum_weighted_gain_upper, [0.; 2]);
+    assert_eq!(primal.maximum_negative_weight, 0.5);
+    assert!(!primal.within_tolerance);
+    for joint in [[1., 0., 0., 1.], [0.; 4]] {
         let original = joint;
-        let primal = evaluate(&row, &column, &objective, &joint, Config::default()).unwrap();
+        let primal = evaluate(&row, &column, &objective, &joint, config).unwrap();
         assert!(!primal.within_tolerance);
         assert_eq!(joint, original);
     }
@@ -448,6 +493,16 @@ fn empty_ragged_mismatched_and_excessive_games_are_rejected() {
     )
     .is_err());
     assert!(solve(&[vec![0.]], &[vec![0.], vec![1.]], &[vec![0.]], config).is_err());
+    let complete = [vec![1., 2.], vec![3., 4.]];
+    assert!(matches!(
+        solve(&complete, &[vec![1., 2.]], &complete, config),
+        Err(Error::Shape {
+            input: "column payoffs",
+            row: None,
+            expected: 2,
+            actual: 1,
+        })
+    ));
     assert!(solve(&[vec![0.]], &[vec![0.]], &[vec![0., 1.]], config).is_err());
     let oversized = vec![vec![0.; 9]; 1];
     assert!(solve(&oversized, &oversized, &oversized, config).is_err());
@@ -461,7 +516,10 @@ fn every_nonfinite_input_role_is_rejected() {
         assert!(solve(&bad, &finite, &finite, Config::default()).is_err());
         assert!(solve(&finite, &bad, &finite, Config::default()).is_err());
         assert!(solve(&finite, &finite, &bad, Config::default()).is_err());
-        assert!(evaluate(&finite, &finite, &finite, &[value], Config::default()).is_err());
+        assert!(matches!(
+            evaluate(&finite, &finite, &finite, &[value], Config::default()),
+            Err(Error::NonFinite { index: 0, .. })
+        ));
     }
 }
 
