@@ -64,10 +64,7 @@ fn weak_detection_inspects_for_sure_when_harm_still_justifies_it() {
 #[test]
 fn weak_detection_skips_when_scaled_harm_is_below_cost() {
     let witness = inspection_nash_with_detection(game(1, 4, 1, 2), ratio(1, 5)).expect("skip");
-    assert_eq!(
-        (witness.inspect, witness.evade),
-        (ratio(0, 1), ratio(1, 1))
-    );
+    assert_eq!((witness.inspect, witness.evade), (ratio(0, 1), ratio(1, 1)));
     assert_eq!(witness.payoffs.leader, ratio(-4, 1));
     assert_eq!(witness.payoffs.follower, ratio(1, 1));
 }
