@@ -8,45 +8,90 @@ use paignia_core::{
 
 use super::{finite, Error, Variant};
 
-/// Neumaier summation retains small contributions when large terms cancel.
-#[derive(Default)]
-struct Sum {
-    running: f64,
-    correction: f64,
+/// Two-component continuation values retain the rounding remainder when an
+/// expected payoff is subsequently compared with a different action.
+#[derive(Clone, Copy, Default)]
+struct Value {
+    high: f64,
+    low: f64,
 }
 
-impl Sum {
-    fn add(&mut self, term: f64) -> Result<(), Error> {
-        let next = finite(self.running + term)?;
-        let residual = if self.running.abs() >= term.abs() {
-            (self.running - next) + term
-        } else {
-            (term - next) + self.running
-        };
-        self.correction = finite(self.correction + residual)?;
-        self.running = next;
-        Ok(())
+impl Value {
+    fn scalar(high: f64) -> Self {
+        Self { high, low: 0.0 }
     }
 
-    fn finish(self) -> Result<f64, Error> {
-        finite(self.running + self.correction)
+    // Knuth's TwoSum: for finite intermediates, high + low represents a + b.
+    fn two_sum(a: f64, b: f64) -> Self {
+        let high = a + b;
+        let b_part = high - a;
+        let low = (a - (high - b_part)) + (b - b_part);
+        Self { high, low }
+    }
+
+    fn plus(self, other: Self) -> Self {
+        let h = Self::two_sum(self.high, other.high);
+        let l = Self::two_sum(self.low, other.low);
+        let v = Self::two_sum(h.high, h.low + l.high);
+        Self::two_sum(v.high, v.low + l.low)
+    }
+
+    fn minus(self, other: Self) -> Self {
+        self.plus(Self {
+            high: -other.high,
+            low: -other.low,
+        })
+    }
+
+    fn weighted(self, weight: f64) -> Result<Self, Error> {
+        if weight == 0.0 {
+            return Ok(Self::default());
+        }
+        if weight.to_bits() == 1.0_f64.to_bits() {
+            return Ok(self);
+        }
+        let high = product(self.high, weight)?;
+        let remainder = self.high.mul_add(weight, -high);
+        Ok(Self::two_sum(high, remainder).plus(Self::scalar(product(self.low, weight)?)))
+    }
+
+    fn rounded(self) -> Result<f64, Error> {
+        finite(self.high + self.low)
     }
 }
 
 fn product(left: f64, right: f64) -> Result<f64, Error> {
     let result = finite(left * right)?;
-    if result == 0.0 && left != 0.0 && right != 0.0 {
+    if left != 0.0
+        && right != 0.0
+        && (result == 0.0
+            || (result.is_subnormal()
+                && left.abs().to_bits() != 1.0_f64.to_bits()
+                && right.abs().to_bits() != 1.0_f64.to_bits()))
+    {
         return Err(Error::Underflow);
     }
     Ok(result)
 }
 
-fn weighted_sum(terms: impl Iterator<Item = (f64, f64)>) -> Result<f64, Error> {
-    let mut sum = Sum::default();
+fn weighted_sum(terms: impl Iterator<Item = (f64, Value)>) -> Result<Value, Error> {
+    let mut sum = Value::default();
     for (weight, value) in terms {
-        sum.add(product(weight, value)?)?;
+        sum = sum.plus(value.weighted(weight)?);
     }
-    sum.finish()
+    finite(sum.high)?;
+    finite(sum.low)?;
+    Ok(sum)
+}
+
+pub(super) fn power_of_two_scale(magnitude: f64) -> f64 {
+    f64::from_bits(magnitude.to_bits() & (0x7ff_u64 << 52)).max(1.0)
+}
+
+pub(super) fn probability_mass(row: &[f64]) -> Result<f64, Error> {
+    row.iter()
+        .fold(Value::default(), |sum, &p| sum.plus(Value::scalar(p)))
+        .rounded()
 }
 
 #[derive(Clone, Copy)]
@@ -77,13 +122,14 @@ impl Vertex<'_> {
 
     fn value(
         &self,
-        values: &[f64],
+        values: &[Value],
         player: &PlayerId,
         strategy: &[Vec<f64>],
         scale: f64,
-    ) -> Result<f64, Error> {
+    ) -> Result<Value, Error> {
         if let Kind::Terminal(payoffs) = self.kind {
-            return product(payoffs.get(player).copied().unwrap_or(0.0), scale.recip());
+            return product(payoffs.get(player).copied().unwrap_or(0.0), scale.recip())
+                .map(Value::scalar);
         }
         weighted_sum(
             self.children
@@ -158,7 +204,7 @@ impl<'a> IndexedGame<'a> {
         for node in &nodes {
             if let Kind::Terminal(payoffs) = node.kind {
                 for (player, payoff) in payoffs {
-                    let power = f64::from_bits(payoff.abs().to_bits() & (0x7ff_u64 << 52));
+                    let power = power_of_two_scale(payoff.abs());
                     let scale = payoff_scales.entry(player).or_insert(1.0);
                     *scale = scale.max(power);
                 }
@@ -215,12 +261,15 @@ impl<'a> IndexedGame<'a> {
 
     pub(super) fn profile_values(&self, strategy: &[Vec<f64>]) -> Result<PayoffVector, Error> {
         let mut payoffs = PayoffVector::new();
-        let mut values = vec![0.0; self.nodes.len()];
+        let mut values = vec![Value::default(); self.nodes.len()];
         for (&player, &scale) in &self.payoff_scales {
             for &i in self.order.iter().rev() {
                 values[i] = self.nodes[i].value(&values, player, strategy, scale)?;
             }
-            payoffs.insert(player.clone(), product(values[self.root], scale)?);
+            payoffs.insert(
+                player.clone(),
+                product(values[self.root].rounded()?, scale)?,
+            );
         }
         Ok(payoffs)
     }
@@ -235,7 +284,7 @@ impl<'a> IndexedGame<'a> {
     ) -> Result<(), Error> {
         let reach = self.reaches(strategy, player)?;
         let scale = self.payoff_scales.get(player).copied().unwrap_or(1.0);
-        let mut values = vec![0.0; self.nodes.len()];
+        let mut values = vec![Value::default(); self.nodes.len()];
         for &i in self.order.iter().rev() {
             values[i] = self.nodes[i].value(&values, player, strategy, scale)?;
         }
@@ -256,7 +305,7 @@ impl<'a> IndexedGame<'a> {
             .enumerate()
             .filter(|(_, set)| set.owner == player)
         {
-            let mut changes: Vec<_> = strategy[s].iter().map(|_| Sum::default()).collect();
+            let mut changes = vec![Value::default(); strategy[s].len()];
             for &i in &set.members {
                 if reach[i] == 0.0 {
                     continue;
@@ -267,15 +316,15 @@ impl<'a> IndexedGame<'a> {
                     strategy[s]
                         .iter()
                         .zip(children)
-                        .map(|(&p, &child)| (p, values[child] - baseline)),
+                        .map(|(&p, &child)| (p, values[child].minus(baseline))),
                 )?;
                 for (change, &child) in changes.iter_mut().zip(children) {
-                    let advantage = (values[child] - baseline) - expected_difference;
-                    change.add(product(reach[i], advantage)?)?;
+                    let advantage = values[child].minus(baseline).minus(expected_difference);
+                    *change = change.plus(advantage.weighted(reach[i])?);
                 }
             }
             for (a, change) in changes.into_iter().enumerate() {
-                let next = finite(regrets[s][a] + change.finish()?)?;
+                let next = finite(regrets[s][a] + change.rounded()?)?;
                 regrets[s][a] = if variant == Variant::CfrPlus {
                     next.max(0.0)
                 } else {
@@ -318,8 +367,8 @@ impl<'a> IndexedGame<'a> {
         let mut ready: VecDeque<_> = (0..self.nodes.len())
             .filter(|&i| group[i] == i && pending[i] == 0)
             .collect();
-        let mut values = vec![0.0; self.nodes.len()];
-        let mut gains = vec![0.0; self.nodes.len()];
+        let mut values = vec![Value::default(); self.nodes.len()];
+        let mut gains = vec![Value::default(); self.nodes.len()];
         while let Some(i) = ready.pop_front() {
             let node = &self.nodes[i];
             match node.kind {
@@ -333,10 +382,10 @@ impl<'a> IndexedGame<'a> {
                             let actions = &self.nodes[m].children;
                             (
                                 reach[m],
-                                values[actions[candidate]] - values[actions[selected]],
+                                values[actions[candidate]].minus(values[actions[selected]]),
                             )
                         }))?;
-                        if advantage > 0.0 {
+                        if advantage.rounded()? > 0.0 {
                             selected = candidate;
                         }
                     }
@@ -349,7 +398,9 @@ impl<'a> IndexedGame<'a> {
                             // + (V*(a) - Vσ(a))]. Common payoff offsets cancel
                             // here before rounding the root payoff.
                             gains[m] = weighted_sum(strategy[s].iter().zip(actions).map(
-                                |(&p, &child)| (p, (selected_value - values[child]) + gains[child]),
+                                |(&p, &child)| {
+                                    (p, selected_value.minus(values[child]).plus(gains[child]))
+                                },
                             ))?;
                         }
                     }
@@ -384,6 +435,6 @@ impl<'a> IndexedGame<'a> {
             ResponseMeasure::Payoff => values[self.root],
             ResponseMeasure::Gain => gains[self.root],
         };
-        product(result, scale)
+        product(result.rounded()?, scale)
     }
 }
