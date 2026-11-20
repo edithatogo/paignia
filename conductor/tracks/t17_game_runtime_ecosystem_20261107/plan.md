@@ -30,7 +30,7 @@ does not close T17.
 The [naming supplement](paignia-identity-and-promotion.md) records the bounded
 seed rename and source-level consumer slices without adding competing leaves.
 
-## Current acceptance — 17 November 2026
+## Static provider acceptance — 17 November 2026
 
 [Accepted source and Conductor review](../../../docs/validation/t17-review-20261117.md):
 `bd880dd756d2ba56cc5f479bc078cea31b53c1d1`, hosted native run
@@ -47,11 +47,14 @@ Kairos Track 110 separately retains source regression, migration and retirement.
 Native wire serialization, a general normal-form envelope and a mandatory Gambit
 run were not added as unsupported extra prerequisites.
 
-**Nine leaves remain open:** .07, .08, .09, .10, .11, .12, .15, .16 and .17.
-Their external contracts and real application evidence remain necessary. The
-package handoff now binds actual immutable source/profile/archive evidence;
-the eligibility guard's sole current error is the missing two application
-receipts. Registry publication stays disabled and full-track archival is ineligible.
+## Current acceptance — 21 November 2026
+
+T17.09 records the first application artifact receipt. Eight leaves remain
+open: .07, .08, .10, .11, .12, .15, .16 and .17. The optional adapter,
+separate random streams and replay are merged. Their upstream Kairos
+`K01.port` acceptance remains open. The bounded release check still requires
+the second application receipt before eligibility. Full-track archival also
+requires the outstanding scientific and native acceptance work.
 
 Earlier dated paragraphs retain historical source, failure and review evidence,
 including then-future paths and then-pending PR/merge wording. The current
@@ -669,7 +672,7 @@ oracle and result contract. Exclusion is not scientific completion.
 
 ## Phase D — real application consumers
 
-### [ ] T17.09 — external reimbursement consumer qualification
+### [x] T17.09 — external reimbursement consumer qualification
 
 - Owner: [new-drug-reimbursement-game T17](https://github.com/edithatogo/new-drug-reimbursement-game/tree/main/conductor/tracks/t17_game_runtime_ecosystem_20261107).
   This entry is an ownership/dependency link, not a second local implementation.
@@ -677,9 +680,16 @@ oracle and result contract. Exclusion is not scientific completion.
   Paignia artifacts against an independent expected result. Only capabilities
   used by the application add numerical or native prerequisites.
 - Depends on: T17.03. Static acceptance does not require the optional adapter.
-- Files: none in this provider leaf; application owner resolves its bounded file
-  list. Its `paignia_static_game` source test is a genuine starting call, not an
-  installed-artifact/real-model release receipt or a second application.
+- The application owns the finite Chapter 8 Game 1 and payoff valuation.
+  Its six native tests use the independently derived equation 8.2 benchmark
+  and the maintained example's synthetic inputs. The run on application
+  `63a3801d378e04f59fec4124e67281f7cbba0b94` resolved to the qualified
+  `bd880dd` archive pair with both optional feature sets empty. Cargo resolution,
+  compilation and tests ran under one macOS policy that denied network and
+  provider source reads, including the Cargo Git cache.
+  [Application #114](https://github.com/edithatogo/new-drug-reimbursement-game/pull/114)
+  [Receipt](../../../docs/validation/receipts/t17-reimbursement-chapter8.json)
+  [Execution log](../../../docs/validation/receipts/t17-reimbursement-chapter8.log)
 - Check: record the actual consumer Cargo target, nonzero tests, exact Git/package
   revision and artifact/profile hashes in that repository. Reimbursement-local
   valuation stays there. Paignia T17.12 reads the resulting receipt.
@@ -737,7 +747,8 @@ oracle and result contract. Exclusion is not scientific completion.
 - Current evidence: `docs/validation/receipts/t17-bd880dd-handoff.json` binds a
   clean immutable provider, exact profile and both qualified archive bytes,
   independently matched to the downloaded hosted artifact. The current guard
-  runs and returns exit 1 solely for the missing two real application receipts.
+  admits the first reimbursement receipt and still returns exit 1 because
+  eligibility requires a second distinct application receipt.
   Its selected release capability is backward induction through the graph
   profile; separate bimatrix/ODE claims retain their method/input requirements.
 

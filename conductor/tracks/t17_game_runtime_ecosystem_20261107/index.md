@@ -7,13 +7,12 @@ observations have accepted independent review and integrated compiler/package
 checks. The [17 November receipt](../../../docs/validation/t17-review-20261117.md)
 records exact source, corrections, nonzero test counts and remaining limits.
 
-Nine leaves remain open. The reviewed perfect-recall information-set and CFR
-implementations are merged. UOGTO profile acceptance, Kairos native
-adapter/streams/replay and source disposition, real application receipts,
-and valued-payoff work remain outstanding. The
-[concrete package handoff](../../../docs/validation/receipts/t17-bd880dd-handoff.json)
-is ready for application owners. Full-track archival and real-consumer release
-eligibility remain incomplete; all seventeen original IDs stay visible.
+T17.09 supplies the first application artifact receipt for the reimbursement
+Chapter 8 model. Eight leaves remain open. The perfect-recall information-set,
+CFR, native adapter, stream isolation and replay implementations are merged.
+UOGTO profile acceptance, Kairos port and legacy caller acceptance, the second
+application receipt and remaining valued-payoff work are open. All seventeen
+original IDs stay visible. [Consumer evidence](../../../docs/validation/game-consumers.json)
 
 - [Specification](spec.md)
 - [Provider implementation plan and external owner entries](plan.md)
