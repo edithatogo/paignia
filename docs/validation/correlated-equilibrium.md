@@ -262,5 +262,10 @@ welfare against `21/2`. It also checks the Prisoner's Dilemma: strict
 dominance rules out cooperative recommendations, so the unique joint puts
 all weight on mutual defection with payoff `1` per player and welfare `2`.
 Both cases require Paignia's independent primal and dual admission. The
-existing malformed-shape, non-finite weight, and negative weight controls
-remain in the same feature-gated test target.
+migrated assertions preserve the strict `1e-8` weighted incentive cutoff
+and check both reported payoff intervals for the Prisoner's Dilemma.
+The malformed-shape and non-finite weight checks assert typed errors.
+The negative-weight control preserves unit mass and has no positive
+weighted deviation, so it distinguishes a missing nonnegativity check.
+Both compiler profiles require all 28 tests in the feature-gated target
+to pass without skips or filters.
