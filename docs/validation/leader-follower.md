@@ -66,10 +66,33 @@ test uses inspection probability `1/6` and evasion probability `1/4`, which lies
 inside the projected box and has a profitable deviation at the low cost, the
 equal-cost boundary, and the high cost.
 
+## Imperfect detection
+
+`inspection_nash_with_detection` admits a detection probability in `(0, 1]`.
+Perfect detection reproduces the witness above. Otherwise the detected branch
+prevents harm and imposes the detected loss only with that probability, and the
+complement leaves the harm and the evasion gain in place. The unique witness is
+the interior profile `p = g/(d(g+f))`, `q = c/(d h)` when both coordinates lie
+in `(0, 1)`. Its leader value is `-c/d` and the follower value is zero.
+When `c > d h`, skipping is strictly dominant and `(0, 1)` is unique, including
+when the follower would tie at full inspection. When `c < d h` and
+`d(g+f) < g`, evasion is strictly dominant and `(1, 1)` is unique.
+
+When `c = d h`, all equilibria have `q = 1` and
+`0 ≤ p ≤ min(1, g/(d(g+f)))`. The solver returns `LeaderIndifferent`.
+When `c < d h` and `d(g+f) = g`, all equilibria have `p = 1` and
+`c/(d h) ≤ q ≤ 1`. The solver returns `FollowerIndifferentAtFullInspection`.
+
+`inspection_detection_projection` compares the inspection shares of the two
+solved endpoints. It returns `DetectionRegimeChange` if their regimes differ.
+For a singleton with a unique witness, every coordinate projects to that
+witness's value. An error solving either endpoint propagates to the caller.
+
 ## What this slice does not establish
 
-- This is not a general Stackelberg algorithm, a multi-channel model, or an
-  imperfect-detection model.
+- Detection uses a single probability conditional on inspection in one binary
+  channel. Multi-channel allocation and general Stackelberg games are outside
+  this family.
 - It does not encode the game in the perfect-information extensive-form profile.
   Revealing the realised inspection before the follower acts is a different game.
 - Parameter intervals, credal bounds, and solver-residual certificates belong
@@ -80,5 +103,5 @@ equal-cost boundary, and the high cost.
 - No operational, welfare, or empirical claim follows from the constants.
 
 ```bash
-cargo test --locked -p paignia-solve --test leader_follower --test inspection_interval
+cargo test --locked -p paignia-solve --test leader_follower --test inspection_interval --test inspection_detection
 ```

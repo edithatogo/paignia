@@ -261,9 +261,12 @@ pub enum Error {
     /// A ratio denominator was zero.
     #[error("a ratio denominator must be nonzero")]
     ZeroDenominator,
-    /// Equal cost and harm make a whole segment Nash, so no unique witness exists.
-    #[error("equal inspection cost and harm has no unique Nash witness")]
+    /// Inspection cost equals detection-weighted harm, so inspection shares form a Nash segment.
+    #[error("inspection cost equals detection-weighted harm, giving multiple Nash witnesses")]
     LeaderIndifferent,
+    /// At full inspection, follower indifference admits a segment of evasion shares.
+    #[error("follower indifference at full inspection gives multiple Nash witnesses")]
+    FollowerIndifferentAtFullInspection,
     /// An intermediate product did not fit in `i64`.
     #[error("exact arithmetic overflowed")]
     Overflow,
@@ -273,6 +276,17 @@ pub enum Error {
     /// An interval was ordered from its larger endpoint to its smaller one.
     #[error("the interval lower bound exceeds its upper bound")]
     UnorderedInterval,
+    /// Detection probability was outside `(0, 1]`.
+    #[error("detection probability {numerator}/{denominator} is outside (0, 1]")]
+    DetectionOutOfRange {
+        /// Numerator of the rejected probability.
+        numerator: i64,
+        /// Denominator of the rejected probability.
+        denominator: i64,
+    },
+    /// The detection interval contains more than one Nash regime.
+    #[error("detection probability changes the Nash regime inside the interval")]
+    DetectionRegimeChange,
 }
 
 /// Expected payoffs from the four declared cells.
@@ -344,6 +358,171 @@ pub fn simultaneous_nash(game: Parameters) -> Result<NashWitness, Error> {
         evade,
         payoffs,
     })
+}
+
+/// Unique Nash witness when an inspection detects evasion with probability `detection`.
+///
+/// Perfect detection is `1` and matches [`simultaneous_nash`]. If inspection cost
+/// exceeds detection-weighted harm (`c > d h`), skipping is strictly dominant
+/// even when the follower would be indifferent at full inspection.
+///
+/// # Errors
+///
+/// Returns [`Error::LeaderIndifferent`] when `c = d h`, or
+/// [`Error::FollowerIndifferentAtFullInspection`] when `c < d h` and
+/// `d(g+f) = g`. Also returns [`Error::DetectionOutOfRange`],
+/// [`Error::Overflow`], or [`Error::InconsistentWitness`].
+pub fn simultaneous_nash_with_detection(
+    game: Parameters,
+    detection: Ratio,
+) -> Result<NashWitness, Error> {
+    require_detection(detection)?;
+    if detection == Ratio::one() {
+        return simultaneous_nash(game);
+    }
+    let (inspect, evade) = detection_actions(game, detection)?;
+    let payoffs = expected_payoffs_with_detection(game, detection, inspect, evade)?;
+    let gains = detection_gains(game, detection, inspect, evade)?;
+    if gains.leader != Ratio::zero() || gains.follower != Ratio::zero() {
+        return Err(Error::InconsistentWitness);
+    }
+    Ok(NashWitness {
+        inspect,
+        evade,
+        payoffs,
+    })
+}
+
+/// Project the unique Nash witness while detection stays inside one strict regime.
+///
+/// # Errors
+///
+/// Returns [`Error::DetectionRegimeChange`] when the endpoints are not both
+/// interior, both pure-skip, or both pure-inspect. Endpoint errors from
+/// [`simultaneous_nash_with_detection`] propagate.
+pub fn detection_nash_projection(
+    game: Parameters,
+    lower: Ratio,
+    upper: Ratio,
+) -> Result<NashProjection, Error> {
+    require_detection(lower)?;
+    require_detection(upper)?;
+    if lower > upper {
+        return Err(Error::UnorderedInterval);
+    }
+    let low = simultaneous_nash_with_detection(game, lower)?;
+    let high = simultaneous_nash_with_detection(game, upper)?;
+    let skip_changes = (low.inspect == Ratio::zero()) != (high.inspect == Ratio::zero());
+    let full_inspection_changes = (low.inspect == Ratio::one()) != (high.inspect == Ratio::one());
+    if skip_changes || full_inspection_changes {
+        return Err(Error::DetectionRegimeChange);
+    }
+    Ok(NashProjection {
+        inspect: span_bounds(low.inspect, high.inspect),
+        evade: span_bounds(low.evade, high.evade),
+        leader: span_bounds(low.payoffs.leader, high.payoffs.leader),
+        follower: span_bounds(low.payoffs.follower, high.payoffs.follower),
+        endpoint_gap: Ratio::zero(),
+    })
+}
+
+fn span_bounds(left: Ratio, right: Ratio) -> RatioBounds {
+    if left <= right {
+        RatioBounds {
+            lower: left,
+            upper: right,
+        }
+    } else {
+        RatioBounds {
+            lower: right,
+            upper: left,
+        }
+    }
+}
+
+fn require_detection(detection: Ratio) -> Result<(), Error> {
+    if detection > Ratio::zero() && detection <= Ratio::one() {
+        Ok(())
+    } else {
+        Err(Error::DetectionOutOfRange {
+            numerator: detection.numerator(),
+            denominator: detection.denominator(),
+        })
+    }
+}
+
+fn detection_actions(game: Parameters, detection: Ratio) -> Result<(Ratio, Ratio), Error> {
+    let scaled_harm = detection.mul(game.undetected_harm)?;
+    match game.inspection_cost.cmp(&scaled_harm) {
+        Ordering::Greater => return Ok((Ratio::zero(), Ratio::one())),
+        Ordering::Equal => return Err(Error::LeaderIndifferent),
+        Ordering::Less => {}
+    }
+    let follow = detection.mul(game.evasion_gain.add(game.detected_loss)?)?;
+    match follow.cmp(&game.evasion_gain) {
+        Ordering::Greater => Ok((
+            game.evasion_gain.div(follow)?,
+            game.inspection_cost.div(scaled_harm)?,
+        )),
+        Ordering::Less => Ok((Ratio::one(), Ratio::one())),
+        Ordering::Equal => Err(Error::FollowerIndifferentAtFullInspection),
+    }
+}
+
+/// Four-cell expectation when detection is imperfect.
+///
+/// # Errors
+///
+/// Returns [`Error::DetectionOutOfRange`], [`Error::ProbabilityOutOfRange`], or
+/// [`Error::Overflow`].
+pub fn expected_payoffs_with_detection(
+    game: Parameters,
+    detection: Ratio,
+    inspect: Ratio,
+    evade: Ratio,
+) -> Result<Payoffs, Error> {
+    require_detection(detection)?;
+    require_probability(inspect)?;
+    require_probability(evade)?;
+    let one = Ratio::one();
+    let miss = one.sub(detection)?;
+    let skip = one.sub(inspect)?;
+    let comply = one.sub(evade)?;
+    let inspect_evade_leader = game
+        .inspection_cost
+        .neg()?
+        .sub(miss.mul(game.undetected_harm)?)?;
+    let inspect_evade_follower = miss
+        .mul(game.evasion_gain)?
+        .sub(detection.mul(game.detected_loss)?)?;
+    let leader = inspect
+        .mul(comply)?
+        .mul(game.inspection_cost.neg()?)?
+        .add(inspect.mul(evade)?.mul(inspect_evade_leader)?)?
+        .add(skip.mul(evade)?.mul(game.undetected_harm.neg()?)?)?;
+    let follower = inspect
+        .mul(evade)?
+        .mul(inspect_evade_follower)?
+        .add(skip.mul(evade)?.mul(game.evasion_gain)?)?;
+    Ok(Payoffs { leader, follower })
+}
+
+fn detection_gains(
+    game: Parameters,
+    detection: Ratio,
+    inspect: Ratio,
+    evade: Ratio,
+) -> Result<Gains, Error> {
+    let current = expected_payoffs_with_detection(game, detection, inspect, evade)?;
+    let leader = expected_payoffs_with_detection(game, detection, Ratio::zero(), evade)?
+        .leader
+        .max(expected_payoffs_with_detection(game, detection, Ratio::one(), evade)?.leader)
+        .sub(current.leader)?;
+    let follower = expected_payoffs_with_detection(game, detection, inspect, Ratio::zero())?
+        .follower
+        .max(expected_payoffs_with_detection(game, detection, inspect, Ratio::one())?.follower)
+        .sub(current.follower)?;
+    Ok(Gains { leader, follower })
 }
 
 /// Follower best response and both payoffs at one feasible commitment.
