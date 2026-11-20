@@ -1,10 +1,18 @@
 //! Backward induction for finite, acyclic, perfect-information games.
 
+mod cfr;
 #[cfg(feature = "correlated-equilibrium")]
 mod correlated_equilibrium;
 mod mixed_nash;
 mod replicator;
 mod result;
+
+pub use cfr::{
+    best_response_value as cfr_best_response_value, nash_conv as cfr_nash_conv,
+    profile_values as cfr_profile_values, train as train_counterfactual_regret,
+    Config as CfrConfig, Error as CfrError, Strategy as CfrStrategy, Training as CfrTraining,
+    Variant as CfrVariant, MAX_ITERATIONS as MAX_CFR_ITERATIONS, VERSION as CFR_VERSION,
+};
 
 #[cfg(feature = "correlated-equilibrium")]
 pub use correlated_equilibrium::{
