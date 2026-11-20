@@ -9,8 +9,8 @@ use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
 use paignia_solve::{
-    cfr_nash_conv, cfr_profile_values, train_counterfactual_regret, CfrConfig, CfrError,
-    CfrStrategy, CfrVariant,
+    cfr_best_response_value, cfr_nash_conv, cfr_profile_values, train_counterfactual_regret,
+    CfrConfig, CfrError, CfrStrategy, CfrVariant,
 };
 
 const KUHN_VALUE: f64 = -1.0 / 18.0;
@@ -115,7 +115,7 @@ fn preserves_declared_action_order() {
 }
 
 #[test]
-fn kuhn_average_value_and_exploitability_match_the_independent_reference() {
+fn kuhn_average_value_and_nash_conv_match_the_independent_reference() {
     let fixture = include_str!("../../../fixtures/conformance/cfr-reference-v1.json");
     assert!(fixture.contains("\"player_one_value\": \"-1/18\""));
 
@@ -134,8 +134,8 @@ fn kuhn_average_value_and_exploitability_match_the_independent_reference() {
         let probabilities = kuhn_probabilities(&trained.average_strategy);
         let independent_value = kuhn_value(&probabilities);
         let library_value = trained.root_values[&player("one")];
-        let independent_exploitability = kuhn_exploitability(&probabilities);
-        let library_exploitability =
+        let independent_nash_conv = kuhn_best_responses(&probabilities).iter().sum::<f64>();
+        let library_nash_conv =
             cfr_nash_conv(&source, &graph, &trained.average_strategy).expect("nash conv");
 
         assert!(
@@ -147,18 +147,18 @@ fn kuhn_average_value_and_exploitability_match_the_independent_reference() {
             "{variant:?} value {independent_value} target {KUHN_VALUE}"
         );
         assert!(
-            independent_exploitability < 2e-2,
-            "{variant:?} exploitability {independent_exploitability}"
+            independent_nash_conv < 2e-2,
+            "{variant:?} NashConv {independent_nash_conv}"
         );
         assert!(
-            (library_exploitability - independent_exploitability).abs() < 1e-8,
-            "{variant:?} library {library_exploitability} independent {independent_exploitability}"
+            (library_nash_conv - independent_nash_conv).abs() < 1e-8,
+            "{variant:?} library {library_nash_conv} independent {independent_nash_conv}"
         );
     }
 }
 
 #[test]
-fn kuhn_error_and_exploitability_shrink_across_iteration_counts() {
+fn kuhn_nash_conv_shrinks_and_value_stays_within_tolerance_at_three_budgets() {
     let fixture = include_str!("../../../fixtures/conformance/cfr-reference-v1.json");
     assert!(fixture.contains("\"iteration_counts\": [100, 1000, 12000]"));
 
@@ -179,27 +179,37 @@ fn kuhn_error_and_exploitability_shrink_across_iteration_counts() {
             let probabilities = kuhn_probabilities(&trained.average_strategy);
             let independent_value = kuhn_value(&probabilities);
             let library_value = trained.root_values[&player("one")];
-            let independent_exploitability = kuhn_exploitability(&probabilities);
-            let library_exploitability =
+            let responses = kuhn_best_responses(&probabilities);
+            for (seat, expected) in [player("one"), player("two")].iter().zip(responses) {
+                let actual =
+                    cfr_best_response_value(&source, &graph, &trained.average_strategy, seat)
+                        .expect("Kuhn best response");
+                assert!(
+                    (actual - expected).abs() < 1e-9,
+                    "{variant:?} {iterations} {seat:?}: {actual} vs {expected}"
+                );
+            }
+            let independent_nash_conv = responses.iter().sum::<f64>();
+            let library_nash_conv =
                 cfr_nash_conv(&source, &graph, &trained.average_strategy).expect("nash conv");
             assert!(
                 (library_value - independent_value).abs() < 1e-9,
                 "{variant:?} {iterations} library {library_value} independent {independent_value}"
             );
             assert!(
-                (library_exploitability - independent_exploitability).abs() < 1e-8,
-                "{variant:?} {iterations} library {library_exploitability} independent {independent_exploitability}"
+                (library_nash_conv - independent_nash_conv).abs() < 1e-8,
+                "{variant:?} {iterations} library {library_nash_conv} independent {independent_nash_conv}"
             );
             let value_error = (independent_value - KUHN_VALUE).abs();
             assert!(
                 value_error < 5e-3,
                 "{variant:?} {iterations} value error {value_error}"
             );
-            observed.push(independent_exploitability);
+            observed.push(independent_nash_conv);
         }
         assert!(
             observed[1] < observed[0] && observed[2] < observed[1],
-            "{variant:?} exploitability {observed:?} does not shrink across 100, 1000, and 12000"
+            "{variant:?} NashConv {observed:?} does not shrink across 100, 1000, and 12000"
         );
     }
 }
@@ -557,8 +567,7 @@ fn kuhn_value(probabilities: &KuhnProbabilities) -> f64 {
     total / 6.0
 }
 
-fn kuhn_exploitability(probabilities: &KuhnProbabilities) -> f64 {
-    let current = kuhn_value(probabilities);
+fn kuhn_best_responses(probabilities: &KuhnProbabilities) -> [f64; 2] {
     let mut best_for_one = f64::NEG_INFINITY;
     let mut worst_for_one = f64::INFINITY;
     for mask in 0..64_u32 {
@@ -575,22 +584,16 @@ fn kuhn_exploitability(probabilities: &KuhnProbabilities) -> f64 {
         }
         worst_for_one = worst_for_one.min(kuhn_value(&deviating));
     }
-    (best_for_one - current) + (current - worst_for_one)
+    [best_for_one, -worst_for_one]
 }
 
 const LEDUC_VALUE: f64 = -0.085_606;
 const LEDUC_ITERATIONS: u32 = 4_000;
 
 #[test]
-fn leduc_tree_matches_the_independent_check_call_value_and_trains_toward_the_published_value() {
-    let fixture = include_str!("../../../fixtures/conformance/cfr-reference-v1.json");
-    assert!(fixture.contains("\"player_one_value\": -0.085606"));
-    assert!(fixture.contains("\"information_states\": 936"));
-
+fn leduc_all_call_matches_both_seat_best_responses_and_nash_conv() {
     let (source, declaration) = leduc();
-    assert_eq!(declaration.sets.len(), 936);
-    let graph =
-        build_information_set_graph(&source, &declaration).expect("Leduc is perfect recall");
+    let graph = build_information_set_graph(&source, &declaration).expect("Leduc is admissible");
     let mut calling = CfrStrategy {
         action_order: BTreeMap::new(),
         probabilities: BTreeMap::new(),
@@ -608,10 +611,33 @@ fn leduc_tree_matches_the_independent_check_call_value_and_trains_toward_the_pub
             .insert(set_id.clone(), set.legal_actions.clone());
         calling.probabilities.insert(set_id.clone(), probabilities);
     }
-    let library_call =
-        cfr_profile_values(&source, &graph, &calling).expect("call value")[&player("zero")];
-    assert!((library_call - independent_leduc_check_value()).abs() < 1e-9);
+    let (showdown_sum, best_response_sum, deals) = all_call_deal_totals();
+    assert_eq!((showdown_sum, best_response_sum, deals), (0, 176, 120));
+    let expected_response = f64::from(best_response_sum) / f64::from(deals);
+    let values = cfr_profile_values(&source, &graph, &calling).expect("all-call values");
+    for seat in [player("zero"), player("one")] {
+        assert!(values[&seat].abs() < 1e-12);
+        let response = cfr_best_response_value(&source, &graph, &calling, &seat)
+            .expect("all-call best response");
+        assert!(
+            (response - expected_response).abs() < 1e-12,
+            "{seat:?}: {response}"
+        );
+    }
+    let nash_conv = cfr_nash_conv(&source, &graph, &calling).expect("all-call NashConv");
+    assert!((nash_conv - 44.0 / 15.0).abs() < 1e-12, "{nash_conv}");
+}
 
+#[test]
+fn leduc_cfr_plus_checks_published_value_and_nash_conv() {
+    let fixture = include_str!("../../../fixtures/conformance/cfr-reference-v1.json");
+    assert!(fixture.contains("\"player_one_value\": -0.085606"));
+    assert!(fixture.contains("\"information_states\": 936"));
+
+    let (source, declaration) = leduc();
+    assert_eq!(declaration.sets.len(), 936);
+    let graph =
+        build_information_set_graph(&source, &declaration).expect("Leduc is perfect recall");
     let trained = train_counterfactual_regret(
         &source,
         &declaration,
@@ -622,42 +648,51 @@ fn leduc_tree_matches_the_independent_check_call_value_and_trains_toward_the_pub
     )
     .expect("Leduc trains");
     let value = trained.root_values[&player("zero")];
-    let exploitability =
-        cfr_nash_conv(&source, &graph, &trained.average_strategy).expect("leduc nash");
+    let nash_conv = cfr_nash_conv(&source, &graph, &trained.average_strategy).expect("leduc nash");
     assert!(
         (value - LEDUC_VALUE).abs() < 2e-2,
-        "leduc value {value} target {LEDUC_VALUE} exploitability {exploitability}"
+        "leduc value {value} target {LEDUC_VALUE} NashConv {nash_conv}"
     );
-    assert!(
-        exploitability < 0.05,
-        "leduc exploitability {exploitability}"
-    );
+    assert!(nash_conv < 0.05, "leduc NashConv {nash_conv}");
 }
 
-fn independent_leduc_check_value() -> f64 {
-    let mut total = 0.0;
-    let mut deals = 0.0;
-    for first in 0..6 {
-        for second in 0..6 {
-            if second == first {
+// Against an opponent who always calls, a raise is matched exactly once per
+// round. Maximize the extra 2 or 4 chips using only cards visible at that turn.
+fn all_call_deal_totals() -> (i32, i32, i32) {
+    let mut first_round = [0_i32; 6];
+    let mut second_round = [[0_i32; 6]; 6];
+    let mut deals = 0;
+    for (private, boards) in second_round.iter_mut().enumerate() {
+        for (board, board_total) in boards.iter_mut().enumerate() {
+            if board == private {
                 continue;
             }
-            for board in 0..6 {
-                if board == first || board == second {
-                    continue;
-                }
-                let left = leduc_hand_rank(first, board);
-                let right = leduc_hand_rank(second, board);
-                total += match left.cmp(&right) {
-                    Ordering::Greater => 1.0,
-                    Ordering::Less => -1.0,
-                    Ordering::Equal => 0.0,
+            for other in (0..6).filter(|&card| card != private && card != board) {
+                let rank = |card: usize| (card / 2 == board / 2, card / 2);
+                let result = match rank(private).cmp(&rank(other)) {
+                    Ordering::Greater => 1,
+                    Ordering::Equal => 0,
+                    Ordering::Less => -1,
                 };
-                deals += 1.0;
+                deals += 1;
+                first_round[private] += result;
+                *board_total += result;
             }
         }
     }
-    total / deals
+    let showdown = first_round.iter().sum::<i32>();
+    let first_raise = first_round.iter().copied().map(|v| v.max(0)).sum::<i32>();
+    let second_raise = second_round
+        .iter()
+        .flatten()
+        .copied()
+        .map(|v| v.max(0))
+        .sum::<i32>();
+    (
+        showdown,
+        showdown + 2 * first_raise + 4 * second_raise,
+        deals,
+    )
 }
 
 fn leduc_hand_rank(private_card: i32, public_card: i32) -> i32 {
