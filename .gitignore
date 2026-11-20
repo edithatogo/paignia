@@ -1,4 +1,5 @@
 /target/
+/crates/paignia-kairos/target/
 /verification/*/target/
 __pycache__/
 *.py[cod]
