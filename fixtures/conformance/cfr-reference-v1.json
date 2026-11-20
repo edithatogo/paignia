@@ -11,9 +11,13 @@
     "notes": "Net chip value for the first player at equilibrium. Showdown pays the current stake to the higher card. A fold loses one chip. This constant is not derived from the Paignia trainer."
   },
   "leduc": {
-    "citation": "Southey, F., Bowling, M., Larson, B., Piccione, C., Burch, N., Billings, D., and Rayner, C. (2005). Bayes' bluff: opponent modelling in poker. Proceedings of the 21st Conference on Uncertainty in Artificial Intelligence, pages 550-558. The extensive form follows the two-player OpenSpiel leduc_poker defaults: six distinguishable cards, ante 1, raise sizes 2 and 4, and a two-raise cap.",
     "information_states": 936,
     "player_one_value": -0.085606,
-    "notes": "First-player equilibrium value reproduced for this rule set. It is not a closed form and was not taken from the Paignia trainer. The check-check showdown value is checked by a separate 120-deal ranking loop."
+    "notes": "First-player equilibrium value reproduced for this rule set. It is not a closed form and was not taken from the Paignia trainer. A separate 120-deal calculation checks the all-call profile value and both seats' best responses.",
+    "rules_citation": "Southey, F., Bowling, M., Larson, B., Piccione, C., Burch, N., Billings, D., and Rayner, C. (2005). Bayes' bluff: opponent modelling in poker. Proceedings of the 21st Conference on Uncertainty in Artificial Intelligence, pages 550-558. The extensive form follows the two-player OpenSpiel leduc_poker defaults: six distinguishable cards, ante 1, raise sizes 2 and 4, and a two-raise cap.",
+    "citation": "Schauenberg, Terence Conrad (2006). Opponent Modelling and Search in Poker. MSc thesis, University of Alberta. Section 5.1.3, p. 62 and Figure 5.1, p. 63 (best response to CallPlayer, both seats). Section 5.1.5 and Figure 5.3, p. 65 (first-to-act equilibrium value).",
+    "source_url": "https://poker.cs.ualberta.ca/publications/schauenberg.msc.pdf",
+    "all_call_best_response_per_seat": "22/15",
+    "all_call_nash_conv": "44/15"
   }
 }
