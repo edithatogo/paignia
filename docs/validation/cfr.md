@@ -86,12 +86,20 @@ Schauenberg reports 1.466667 against CallPlayer in §5.1.3 (p. 62, Fig. 5.1 on
 p. 63) and the first-to-act equilibrium value of −0.085606 in §5.1.5 (Fig. 5.3,
 p. 65). [Schauenberg, *Opponent Modelling and Search in Poker*, MSc thesis, University of Alberta, 2006](https://poker.cs.ualberta.ca/publications/schauenberg.msc.pdf)
 
+For each trained Leduc policy, a separate Rust reference walks public betting
+histories and keeps a distribution over the opponent's private card. It splits
+by board when that card becomes visible. At the responder's turn it maximizes
+after summing across compatible hidden cards. It reads only the exported action
+labels and probabilities. Both seat values, both best responses and NashConv
+must agree with Paignia within `1e-9` at each tested budget.
+
 ## What this slice does not establish
 
 - The Leduc comparison uses the two-player OpenSpiel rule set and the published
   first-player value `-0.085606`. Four thousand CFR+ iterations must land within
-  `0.02`, with NashConv below `0.05`. That is not an exact equilibrium, a
-  vanilla-CFR curve, or a claim that S04 is closed.
+  `0.02`, with NashConv below `0.05`. CFR+ NashConv also decreases between
+  1,000 and 4,000 iterations. S04 and comparison with an independently trained
+  iteration curve remain open.
 - No iteration curve is claimed to match OpenSpiel, Gambit, or any other
   implementation. Those programs use their own averaging and update schedules.
   The Kuhn budgets above only show this trainer's NashConv shrinking

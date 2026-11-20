@@ -1,9 +1,13 @@
 //! CFR/CFR+ on admitted information-set graphs, checked against Kuhn's value.
 
+#[path = "support/leduc_reference.rs"]
+mod leduc_reference;
+
 use paignia_core::{
     build_information_set_graph, ActionEdge, ActionId, ChanceEdge, Game, GameSpecification,
-    InformationSetDeclaration, InformationSetDefinition, InformationSetError, InformationSetId,
-    Node, NodeId, PlayerId, INFORMATION_SET_PROFILE_V1, INFORMATION_SET_SCHEMA_VERSION,
+    InformationSetDeclaration, InformationSetDefinition, InformationSetError, InformationSetGraph,
+    InformationSetId, Node, NodeId, PlayerId, INFORMATION_SET_PROFILE_V1,
+    INFORMATION_SET_SCHEMA_VERSION,
 };
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
@@ -615,7 +619,10 @@ fn leduc_all_call_matches_both_seat_best_responses_and_nash_conv() {
     assert_eq!((showdown_sum, best_response_sum, deals), (0, 176, 120));
     let expected_response = f64::from(best_response_sum) / f64::from(deals);
     let values = cfr_profile_values(&source, &graph, &calling).expect("all-call values");
-    for seat in [player("zero"), player("one")] {
+    for (index, seat) in [player("zero"), player("one")].into_iter().enumerate() {
+        let reference = leduc_reference::returns(&calling, index);
+        assert!(reference.on_policy.abs() < 1e-12);
+        assert!((reference.best_response - expected_response).abs() < 1e-12);
         assert!(values[&seat].abs() < 1e-12);
         let response = cfr_best_response_value(&source, &graph, &calling, &seat)
             .expect("all-call best response");
@@ -638,22 +645,72 @@ fn leduc_cfr_plus_checks_published_value_and_nash_conv() {
     assert_eq!(declaration.sets.len(), 936);
     let graph =
         build_information_set_graph(&source, &declaration).expect("Leduc is perfect recall");
-    let trained = train_counterfactual_regret(
+    let early = checked_leduc_run(&source, &declaration, &graph, CfrVariant::CfrPlus, 1_000);
+    let late = checked_leduc_run(
         &source,
         &declaration,
+        &graph,
+        CfrVariant::CfrPlus,
+        LEDUC_ITERATIONS,
+    );
+    assert!(
+        late.nash_conv < early.nash_conv,
+        "CFR+ NashConv: {early:?} to {late:?}"
+    );
+    assert!((late.value - LEDUC_VALUE).abs() < 2e-2, "value: {late:?}");
+    assert!(late.nash_conv < 0.05, "CFR+ NashConv: {late:?}");
+}
+
+#[derive(Debug)]
+struct LeducRun {
+    value: f64,
+    nash_conv: f64,
+}
+
+fn checked_leduc_run(
+    source: &GameSpecification,
+    declaration: &InformationSetDeclaration,
+    graph: &InformationSetGraph,
+    variant: CfrVariant,
+    iterations: u32,
+) -> LeducRun {
+    let trained = train_counterfactual_regret(
+        source,
+        declaration,
         &CfrConfig {
-            variant: CfrVariant::CfrPlus,
-            iterations: LEDUC_ITERATIONS,
+            variant,
+            iterations,
         },
     )
-    .expect("Leduc trains");
-    let value = trained.root_values[&player("zero")];
-    let nash_conv = cfr_nash_conv(&source, &graph, &trained.average_strategy).expect("leduc nash");
+    .expect("Leduc trains at this budget");
+    let strategy = &trained.average_strategy;
+    let reference = [0, 1].map(|seat| leduc_reference::returns(strategy, seat));
+    for (seat, expected) in [player("zero"), player("one")].iter().zip(reference) {
+        let br =
+            cfr_best_response_value(source, graph, strategy, seat).expect("Leduc best response");
+        assert!(
+            (trained.root_values[seat] - expected.on_policy).abs() < 1e-9,
+            "{variant:?} {iterations} {seat:?} profile vs {expected:?}"
+        );
+        assert!(
+            (br - expected.best_response).abs() < 1e-9,
+            "{variant:?} {iterations} {seat:?} best response {br} vs {expected:?}"
+        );
+    }
+    let nash_conv = reference
+        .iter()
+        .map(|s| s.best_response - s.on_policy)
+        .sum::<f64>();
+    let actual = cfr_nash_conv(source, graph, strategy).expect("Leduc NashConv");
     assert!(
-        (value - LEDUC_VALUE).abs() < 2e-2,
-        "leduc value {value} target {LEDUC_VALUE} NashConv {nash_conv}"
+        (actual - nash_conv).abs() < 1e-9,
+        "{variant:?} {iterations}: {actual} vs {nash_conv}"
     );
-    assert!(nash_conv < 0.05, "leduc NashConv {nash_conv}");
+    eprintln!("{variant:?} {iterations}: {reference:?}, NashConv {nash_conv}");
+    LeducRun {
+        value: reference[0].on_policy,
+        nash_conv,
+    }
 }
 
 // Against an opponent who always calls, a raise is matched exactly once per
