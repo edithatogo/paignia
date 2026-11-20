@@ -155,7 +155,7 @@ require their own explicit contract and evidence.
 ## Controls and execution receipt
 
 The focused native suite is `crates/paignia-core/tests/information_sets.rs`. Its
-36 tests cover:
+37 tests cover:
 
 - accepted perfect-information singletons, one shared information set, distinct
   remembered information sets, chance merges, consistent DAG merges, merges
@@ -169,13 +169,13 @@ The focused native suite is `crates/paignia-core/tests/information_sets.rs`. Its
   members, player mismatch, unassigned decisions, action identity/order
   mismatches, imperfect recall and ambiguous shared histories;
 - deterministic error precedence and repeatability without input mutation;
-- a 5,000-decision iterative-chain case.
+- two 5,000-decision chains, one with a single player and one with a different
+  player at every decision. The admission pass keeps one player's intermediate
+  histories at a time and retains only the acting player's state at each decision.
 
 The tests-first commit `535b1ca` executes 33 tests with zero passes and 33
-failures from an explicit unimplemented builder. The retained suite now has 36
-tests: the opponent-history merge control plus an accepted opponent-only merge
-and a rejected later own decision beneath that merge. Hosted CI and independent
-specialist review remain required before this leaf is recorded as accepted.
+failures from an explicit unimplemented builder. Later controls cover opponent
+merges, a subsequent own decision, and memory use with many players.
 
 ```bash
 cargo test --locked -p paignia-core --test information_sets
