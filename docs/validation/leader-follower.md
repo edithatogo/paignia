@@ -25,7 +25,13 @@ rather than clipped. When `c = h`, every inspection probability up to the
 follower's threshold can be a best response, so the method returns
 `LeaderIndifferent` instead of an arbitrary witness.
 
-Arithmetic is exact and reduced. A zero denominator, a nonpositive parameter,
+Each exact arithmetic operation stores its reduced result as a signed `i64`
+numerator and a positive `i64` denominator. Subtraction forms the difference
+of cross-products in `i128` before reduction. This allows a payoff with
+numerator `i64::MIN` to produce a representable deviation gain. A reduced
+result outside the storage range returns `Overflow`.
+
+A zero denominator, a nonpositive parameter,
 a probability outside `[0, 1]`, and a commitment above the budget are rejected.
 No payoff is replaced by zero.
 
