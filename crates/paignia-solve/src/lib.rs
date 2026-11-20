@@ -3,6 +3,7 @@
 mod cfr;
 #[cfg(feature = "correlated-equilibrium")]
 mod correlated_equilibrium;
+mod credal_nash;
 mod leader_follower;
 mod mixed_nash;
 mod replicator;
@@ -33,6 +34,11 @@ pub use correlated_equilibrium::{
     MAX_ACTIONS as MAX_CORRELATED_EQUILIBRIUM_ACTIONS,
     MAX_ITERATIONS as MAX_CORRELATED_EQUILIBRIUM_ITERATIONS,
     VERSION as CORRELATED_EQUILIBRIUM_VERSION,
+};
+
+pub use credal_nash::{
+    enclose as enclose_credal_nash, Enclosure as CredalNashEnclosure, Error as CredalNashError,
+    MAX_GRID_DIVISIONS as MAX_CREDAL_NASH_GRID_DIVISIONS,
 };
 
 pub use leader_follower::{
