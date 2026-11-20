@@ -584,18 +584,18 @@ oracle and result contract. Exclusion is not scientific completion.
   Offline solvers may inspect the mathematical game without granting that access
   to an acting policy. A static solver with no live policy API need not wait here.
 
-### [ ] T17.15 — isolate solver exploration from simulation random streams
+### [~] T17.15 — isolate solver exploration from simulation random streams
 
 - Behavior: keep exogenous simulation draws invariant when solver exploration
   or its iteration budget changes under the declared coupling policy.
 - Depends on: T17.08 and T17.13 for stable runtime identity mapping.
 - Execution: specialist, RNG and comparison semantics.
 - Files (4): `crates/paignia-kairos/src/lib.rs`,
-  `crates/paignia-kairos/src/randomness.rs` (future),
-  `crates/paignia-kairos/tests/rng_isolation.rs` (future),
-  `docs/validation/game-rng-isolation.md` (future).
-- Check: `cargo test --locked -p paignia-kairos --test rng_isolation`
-  (future target). Use native purpose/identity streams and record algorithm,
+  `crates/paignia-kairos/src/randomness.rs`,
+  `crates/paignia-kairos/tests/rng_isolation.rs`,
+  `docs/validation/game-rng-isolation.md`.
+- Check: `cargo test --locked --manifest-path crates/paignia-kairos/Cargo.toml
+  --test rng_isolation`. Use native purpose/identity streams and record algorithm,
   stream/distribution versions and the intended strategy/draw coupling. Changed
   solver budgets, reordered construction and policy branches preserve declared
   exogenous draws; intentionally independent streams remain distinct. The
@@ -605,6 +605,11 @@ oracle and result contract. Exclusion is not scientific completion.
   expectation-based solving draws nothing. A future stochastic static solver
   receives an explicit RNG/configuration without a Kairos dependency; it must
   not borrow a simulation-global stream. A shared seed alone is not this oracle.
+- Candidate evidence: comparison execution keys separate native policy and
+  chance streams by canonical model, scenario and draw. Real policy exploration
+  changes the realized path while the shared chance-node result stays paired.
+  Independent policy and draw configurations exercise distinct outcomes.
+  [Comparison randomness](../../../docs/validation/game-rng-isolation.md)
 
 ### [ ] T17.16 — restore qualified policy and native state for causal replay
 

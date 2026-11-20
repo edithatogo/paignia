@@ -4,13 +4,17 @@
 //! action or chance outcome advances the scheduler by one tick and yields the
 //! event actually dispatched. The host owns model, policy and entity bindings.
 
+mod randomness;
+
+use randomness::Randomness;
+pub use randomness::{
+    ChanceCoupling, ComparisonRandomness, ExplorationStream, COMPARISON_RANDOMNESS_VERSION,
+};
+
 use std::{collections::BTreeMap, num::NonZeroU64, sync::Arc};
 
 use kairo_ecs_core::Scheduler;
-use kairo_ecs_rng::{
-    rand_distr::weighted::{Error as WeightError, WeightedIndex},
-    DeterministicStream,
-};
+use kairo_ecs_rng::rand_distr::weighted::{Error as WeightError, WeightedIndex};
 use kairo_ecs_state::World;
 use kairo_ecs_types::{
     DispatchedEvent, EntityId, EventId, EventKind, ScheduleRequest, SimDuration, SimTime,
@@ -28,7 +32,6 @@ use thiserror::Error;
 pub const EXECUTION_SCHEMA_VERSION: &str = "1.0.0";
 pub const DECISION_EVENT: EventKind = EventKind::custom(u32::from_be_bytes(*b"PGAC"));
 pub const CHANCE_EVENT: EventKind = EventKind::custom(u32::from_be_bytes(*b"PGCH"));
-const CHANCE_PURPOSE: &str = "paignia/game-execution/chance/v1";
 // Binary64 encoding of 2^120, leaving room for the admitted total in u128.
 const CHANCE_WEIGHT_SCALE: f64 = f64::from_bits((1023 + 120) << 52);
 
@@ -119,6 +122,8 @@ pub struct CausalTransition {
     pub before: ObservationRevision,
     pub after: ObservationRevision,
     pub outcome: TransitionOutcome,
+    /// Host-side identity of the native stream that sampled a chance outcome.
+    pub chance_stream_id: Option<u64>,
 }
 
 #[derive(Clone, Debug, Eq, Error, PartialEq)]
@@ -141,6 +146,8 @@ pub enum ExecutionError {
     Observation(#[from] PolicyObservationError),
     #[error("the issued turn belongs to another live session or revision")]
     StaleDecision,
+    #[error("policy exploration requires a comparison randomness binding")]
+    ComparisonRandomnessRequired,
     #[error("action {0:?} is outside the current decision's legal actions")]
     UnknownAction(ActionId),
     #[error("the execution profile rejects cancellation")]
@@ -176,7 +183,7 @@ pub struct NativeGame<'a> {
     scheduler: &'a mut Scheduler,
     identity: ExecutionIdentity,
     entity: EntityId,
-    chance: DeterministicStream,
+    randomness: Randomness,
     chance_weights: BTreeMap<&'a NodeId, WeightedIndex<u128>>,
     current: &'a NodeId,
     revision: ObservationRevision,
@@ -196,6 +203,33 @@ impl<'a> NativeGame<'a> {
         world: &'a World,
         scheduler: &'a mut Scheduler,
         config: ExecutionConfig<'_>,
+    ) -> Result<Self, ExecutionError> {
+        let randomness = Randomness::entity(config.seed, config.entity);
+        Self::start_with_randomness(specification, world, scheduler, config, randomness)
+    }
+
+    /// Bind a run to an application-declared scenario and paired draw.
+    ///
+    /// # Errors
+    /// Returns the same admission failures as [`Self::start`] and rejects blank
+    /// scenario or paired-draw identities.
+    pub fn start_comparison(
+        specification: &'a GameSpecification,
+        world: &'a World,
+        scheduler: &'a mut Scheduler,
+        config: ExecutionConfig<'_>,
+        comparison: ComparisonRandomness<'_>,
+    ) -> Result<Self, ExecutionError> {
+        let randomness = Randomness::comparison(&specification.id, &config, comparison)?;
+        Self::start_with_randomness(specification, world, scheduler, config, randomness)
+    }
+
+    fn start_with_randomness(
+        specification: &'a GameSpecification,
+        world: &'a World,
+        scheduler: &'a mut Scheduler,
+        config: ExecutionConfig<'_>,
+        randomness: Randomness,
     ) -> Result<Self, ExecutionError> {
         if config.schema_version != EXECUTION_SCHEMA_VERSION {
             return Err(ExecutionError::UnsupportedSchemaVersion(
@@ -236,17 +270,27 @@ impl<'a> NativeGame<'a> {
                 policy_artifact_id: config.policy_artifact_id,
             },
             entity: config.entity,
-            chance: DeterministicStream::from_entity_purpose(
-                config.seed,
-                config.entity,
-                CHANCE_PURPOSE,
-            ),
+            randomness,
             chance_weights,
             current: &specification.game.root,
             revision: ObservationRevision(0),
             transition_limit: config.transition_limit,
             interrupted: false,
         })
+    }
+
+    /// Issue the policy's owned exploration stream for a live decision turn.
+    /// Reissuing it at the same turn starts from the same initial position.
+    ///
+    /// # Errors
+    /// Rejects foreign or stale turns, interrupted runs and runs without a
+    /// comparison randomness binding.
+    pub fn exploration_stream(
+        &self,
+        turn: &DecisionTurn,
+    ) -> Result<ExplorationStream, ExecutionError> {
+        self.validate_turn(turn)?;
+        self.randomness.exploration(self.current)
     }
 
     #[must_use]
@@ -313,11 +357,7 @@ impl<'a> NativeGame<'a> {
         let Command::Act { turn, action, at } = command else {
             return Err(ExecutionError::UnsupportedCancellation);
         };
-        if self.identity.trace_id != turn.trace_id
-            || turn.observation.binding.revision != self.revision
-        {
-            return Err(ExecutionError::StaleDecision);
-        }
+        self.validate_turn(turn)?;
         let Node::Decision { edges, .. } = self.current_node() else {
             return Err(ExecutionError::NotAtDecision);
         };
@@ -331,6 +371,7 @@ impl<'a> NativeGame<'a> {
             &edge.target,
             TransitionOutcome::Action(action.clone()),
             DECISION_EVENT,
+            None,
         )
     }
 
@@ -344,12 +385,15 @@ impl<'a> NativeGame<'a> {
             return Err(ExecutionError::NotAtChance);
         };
         self.validate_transition(at)?;
-        let edge_index = self.chance.sample(&self.chance_weights[self.current]);
+        let (edge_index, stream_id) = self
+            .randomness
+            .sample_chance(self.current, &self.chance_weights[self.current]);
         self.dispatch(
             at,
             &edges[edge_index].target,
             TransitionOutcome::Chance { edge_index },
             CHANCE_EVENT,
+            Some(stream_id),
         )
     }
 
@@ -364,6 +408,18 @@ impl<'a> NativeGame<'a> {
 
     fn current_node(&self) -> &'a Node {
         &self.specification.game.nodes[self.current]
+    }
+
+    fn validate_turn(&self, turn: &DecisionTurn) -> Result<(), ExecutionError> {
+        if self.interrupted {
+            return Err(ExecutionError::DispatchInterrupted);
+        }
+        if self.identity.trace_id != turn.trace_id
+            || turn.observation.binding.revision != self.revision
+        {
+            return Err(ExecutionError::StaleDecision);
+        }
+        Ok(())
     }
 
     fn validate_transition(&self, at: SimTime) -> Result<(), ExecutionError> {
@@ -386,6 +442,7 @@ impl<'a> NativeGame<'a> {
         target: &'a NodeId,
         outcome: TransitionOutcome,
         kind: EventKind,
+        chance_stream_id: Option<u64>,
     ) -> Result<CausalTransition, ExecutionError> {
         let entity = Some(self.entity);
         let scheduled = self.scheduler.schedule(ScheduleRequest {
@@ -420,6 +477,7 @@ impl<'a> NativeGame<'a> {
             before: self.revision,
             after: ObservationRevision(self.revision.0 + 1),
             outcome,
+            chance_stream_id,
         };
         self.current = target;
         self.revision = transition.after;
