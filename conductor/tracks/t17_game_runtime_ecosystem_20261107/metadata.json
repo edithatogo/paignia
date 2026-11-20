@@ -4,7 +4,7 @@
   "type": "refactor",
   "status": "in_progress",
   "created_at": "2026-11-07T00:00:00Z",
-  "updated_at": "2026-11-20T14:50:48Z",
+  "updated_at": "2026-11-20T18:40:15Z",
   "description": "Paignia native provider, scientific completion and explicit external consumer handoffs",
   "bootstrap_revision": "0e28f1bf33ed8c7be5fa1d63b8cc40517b61d22c",
   "incubator_main_revision": "f6c1c87b6b00875b33c1e19401c1de09481913ce",
@@ -66,7 +66,7 @@
     "S01": "T17.04 bounded Paignia RK4/Euler implementation complete with independent acceptance; Kairos Track 110 source/API/caller retirement remains open.",
     "S02": "T17.05 bounded Paignia mixed-Nash implementation complete after reviewed cancellation fixes; finite-witness scope explicit; Kairos Track 110 source disposition remains open.",
     "S03": "T17.06 bounded optional Paignia CE implementation complete with qualified Clarabel and independent primal/dual numerical acceptance; Kairos Track 110 source disposition remains open.",
-    "S04": "Bounded CFR/CFR+ and perfect-recall graph admission merged after specialist review and hosted native checks. The UOGTO executable information-set profile is accepted. Kairos Track 110 source disposition remains open."
+    "S04": "Bounded CFR/CFR+ and the UOGTO executable information-set profile are accepted. Independent Kuhn diagnostics and independently trained Leduc checkpoints are qualified. Kairos retired the legacy production Kuhn CFR API and retained its historical controls."
   },
   "max_files_per_leaf": 5,
   "review_policy": "Focused checks and coherent specialist review; no repeated human approval loop",
@@ -190,7 +190,7 @@
     "T17.04": "completed_for_declared_bounded_provider_capability",
     "T17.05": "completed_for_declared_bounded_provider_capability",
     "T17.06": "completed_for_declared_bounded_provider_capability",
-    "T17.07": "bounded_CFR_and_CFR_plus_merged; UOGTO_profile_accepted; Kairos_S04_disposition_pending",
+    "T17.07": "accepted_bounded_CFR_and_CFR_plus_with_independent_checkpoints_and_Kairos_source_retirement",
     "T17.08": "accepted_bounded_native_game_execution",
     "T17.09": "accepted_reimbursement_Chapter_8_application_artifact_receipt",
     "T17.10": "external_second_application_receipt_pending",
@@ -226,11 +226,26 @@
     "static_rust_profile": "1.75.0",
     "kairos_native_api_tests": 130
   },
+  "cfr_acceptance_20261121": {
+    "paignia_evidence_commit": "48baf2f9110d83f32b7bd52dbce18c49764a5040",
+    "paignia_pull_request": "https://github.com/edithatogo/paignia/pull/62",
+    "paignia_native_ci": "https://github.com/edithatogo/paignia/actions/runs/44793502947",
+    "paignia_offline_security": "queued at merge under maintainer instruction; pending",
+    "local_focused_rust_profile": "1.75.0",
+    "local_focused_cfr_tests": 25,
+    "open_spiel_commit": "4956843d7375e29a4c986425c66f897d7ac15340",
+    "open_spiel_csv_sha256": "84435a0069019b8bff3aba4d1d66da6a7089bd150083d0cd32642a2f7b66a6c4",
+    "kuhn_iteration_budgets": [100, 1000, 12000],
+    "leduc_iteration_budgets": [1000, 4000],
+    "kairos_source_commit": "5209fe488d5844936d97f35d9f0e884214d7efbb",
+    "kairos_pull_request": "https://github.com/edithatogo/kairos/pull/406",
+    "kairos_native_ci": "https://github.com/edithatogo/kairos/actions/runs/44792232351"
+  },
   "archive_eligible": false,
   "archive_blockers": [
     "T17.10 needs a second matching-artifact receipt before T17.12 can report eligibility.",
     "T17.11 valued-payoff contract remains reimbursement-owned and unfinished.",
-    "Kairos Track 110 retains S01-S04 source API/caller migration and retirement."
+    "Kairos Track 110 retains S01-S03 source API/caller migration and retirement."
   ],
   "historical_accepted_checkpoint_20261117": {
     "status": "bounded_native_contract_and_local_artifact_qualification_accepted",
@@ -252,6 +267,6 @@
     "offline_security": "queued for central self-hosted runner; unexecuted, not passed",
     "limits": "No registry publication or two real application receipts; subsequent capability increments require their own integrated acceptance."
   },
-  "completed_leaf_count": 13,
-  "remaining_leaf_count": 4
+  "completed_leaf_count": 14,
+  "remaining_leaf_count": 3
 }
