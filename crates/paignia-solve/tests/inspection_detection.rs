@@ -2,9 +2,10 @@
 
 use paignia_solve::{
     inspection_commitment_bound, inspection_commitment_bound_with_detection,
-    inspection_detection_projection, inspection_expected_payoffs_with_detection,
-    inspection_nash_with_detection, inspection_simultaneous_nash, InspectionError,
-    InspectionFollowerTie, InspectionParameters, InspectionRatio,
+    inspection_detection_projection, inspection_detection_rectangle,
+    inspection_expected_payoffs_with_detection, inspection_nash_with_detection,
+    inspection_simultaneous_nash, InspectionError, InspectionFollowerTie, InspectionParameter,
+    InspectionParameters, InspectionRatio, ParameterInterval,
 };
 
 fn ratio(numerator: i64, denominator: i64) -> InspectionRatio {
@@ -226,4 +227,54 @@ fn a_detection_interval_that_changes_regime_is_rejected() {
     assert_eq!(error, Err(InspectionError::DetectionRegimeChange));
     let error = inspection_detection_projection(game(1, 8, 1, 2), ratio(1, 4), ratio(1, 2));
     assert_eq!(error, Err(InspectionError::DetectionRegimeChange));
+}
+
+fn cost_interval(lower: i64, upper: i64) -> ParameterInterval {
+    ParameterInterval {
+        parameter: InspectionParameter::InspectionCost,
+        lower: ratio(lower, 1),
+        upper: ratio(upper, 1),
+    }
+}
+
+#[test]
+fn detection_and_cost_span_the_interior_corners() {
+    let projection = inspection_detection_rectangle(
+        game(1, 4, 1, 2),
+        ParameterInterval {
+            parameter: InspectionParameter::InspectionCost,
+            lower: ratio(1, 1),
+            upper: ratio(3, 2),
+        },
+        ratio(1, 2),
+        ratio(1, 1),
+    )
+    .expect("rectangle");
+    assert_eq!(projection.endpoint_gap, ratio(0, 1));
+    assert_eq!(projection.inspect.lower, ratio(1, 3));
+    assert_eq!(projection.inspect.upper, ratio(2, 3));
+    assert_eq!(projection.evade.lower, ratio(1, 4));
+    assert_eq!(projection.evade.upper, ratio(3, 4));
+    assert_eq!(projection.leader.lower, ratio(-3, 1));
+    assert_eq!(projection.leader.upper, ratio(-1, 1));
+    assert_eq!(projection.follower.lower, ratio(0, 1));
+    let weak = inspection_nash_with_detection(
+        InspectionParameters::try_new(ratio(3, 2), ratio(4, 1), ratio(1, 1), ratio(2, 1))
+            .expect("corner parameters"),
+        ratio(1, 2),
+    )
+    .expect("weak corner");
+    assert_eq!(weak.evade, ratio(3, 4));
+    assert_eq!(weak.payoffs.leader, ratio(-3, 1));
+}
+
+#[test]
+fn a_detection_rectangle_that_changes_regime_is_rejected() {
+    let error = inspection_detection_rectangle(
+        game(1, 4, 1, 2),
+        cost_interval(1, 1),
+        ratio(1, 5),
+        ratio(1, 1),
+    );
+    assert_eq!(error, Err(InspectionError::RectangleRegimeChange));
 }

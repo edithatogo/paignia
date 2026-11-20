@@ -75,6 +75,11 @@ span of the corners is the image and the endpoint gap is zero. A rectangle that
 mixes those regimes, or that repeats one parameter, is rejected. Equal cost and
 harm at a corner still has no unique witness.
 
+`inspection_detection_rectangle` varies detection together with one other
+parameter. Every corner must stay in one strict regime. With cost in `[1, 3/2]`
+and detection in `[1/2, 1]`, inspection runs from `1/3` to `2/3`, evasion from
+`1/4` to `3/4`, and the leader value from `-3` to `-1`.
+
 ## Imperfect detection
 
 `inspection_nash_with_detection` admits a detection probability in `(0, 1]`.

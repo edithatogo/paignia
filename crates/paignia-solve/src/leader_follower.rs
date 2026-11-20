@@ -883,6 +883,74 @@ pub fn nash_rectangle(
     })
 }
 
+/// Nash projection while detection and one other parameter vary together.
+///
+/// Every corner must stay in one strict regime: interior, pure skip, or pure
+/// inspect. Those regimes are monotone in the two coordinates, so the corner
+/// span is the image. A corner with no unique witness is returned as that
+/// error instead of being clipped.
+///
+/// # Errors
+///
+/// Returns [`Error::RectangleRegimeChange`], [`Error::LeaderIndifferent`],
+/// [`Error::DetectionOutOfRange`], or the interval admission errors.
+pub fn detection_nash_rectangle(
+    baseline: Parameters,
+    parameter: ParameterInterval,
+    detection_lower: Ratio,
+    detection_upper: Ratio,
+) -> Result<NashProjection, Error> {
+    admit_interval(parameter)?;
+    require_detection(detection_lower)?;
+    require_detection(detection_upper)?;
+    if detection_lower > detection_upper {
+        return Err(Error::UnorderedInterval);
+    }
+    let mut image: Option<Image> = None;
+    let mut regime: Option<DetectionRegime> = None;
+    for (parameter_value, detection) in [
+        (parameter.lower, detection_lower),
+        (parameter.lower, detection_upper),
+        (parameter.upper, detection_lower),
+        (parameter.upper, detection_upper),
+    ] {
+        let game = with_varied(baseline, parameter.parameter, parameter_value)?;
+        let witness = simultaneous_nash_with_detection(game, detection)?;
+        let corner = detection_regime(witness);
+        match regime {
+            None => regime = Some(corner),
+            Some(previous) if previous != corner => return Err(Error::RectangleRegimeChange),
+            Some(_) => {}
+        }
+        push_image(&mut image, witness_image(witness));
+    }
+    let image = image.ok_or(Error::InconsistentWitness)?;
+    Ok(NashProjection {
+        inspect: image.inspect.bounds(),
+        evade: image.evade.bounds(),
+        leader: image.leader.bounds(),
+        follower: image.follower.bounds(),
+        endpoint_gap: Ratio::zero(),
+    })
+}
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+enum DetectionRegime {
+    Interior,
+    PureSkip,
+    PureInspect,
+}
+
+fn detection_regime(witness: NashWitness) -> DetectionRegime {
+    if witness.inspect == Ratio::zero() {
+        DetectionRegime::PureSkip
+    } else if witness.inspect == Ratio::one() {
+        DetectionRegime::PureInspect
+    } else {
+        DetectionRegime::Interior
+    }
+}
+
 fn admit_interval(interval: ParameterInterval) -> Result<(), Error> {
     if interval.lower <= Ratio::zero() || interval.upper <= Ratio::zero() {
         return Err(Error::NonPositiveParameter);
