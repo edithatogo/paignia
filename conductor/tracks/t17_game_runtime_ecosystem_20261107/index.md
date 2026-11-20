@@ -1,17 +1,18 @@
 # T17 Paignia native library and ecosystem handoff
 
-T17 is active. Nine provider leaves are complete, including T17.01–.06,
-.13, .14 and .17. The native static contract, package boundary/artifacts, RK4/Euler,
+T17 is active. Twelve provider leaves are complete (T17.01–.06, .08 and
+.13–.17). The native static contract, package boundary/artifacts, RK4/Euler,
 mixed Nash, optional correlated equilibrium, static conversion and owned
 observations have accepted independent review and integrated compiler/package
 checks. The [17 November receipt](../../../docs/validation/t17-review-20261117.md)
 records exact source, corrections, nonzero test counts and remaining limits.
 
 T17.09 supplies the first application artifact receipt for the reimbursement
-Chapter 8 model. T17.17 is complete after qualification of the UOGTO
-information-set profile. Seven leaves remain open, including Kairos port and
-legacy caller acceptance, the second application receipt and the remaining
-valued-payoff work. All seventeen original IDs stay visible.
+Chapter 8 model. UOGTO accepted the executable information-set profile.
+Kairos accepted the bounded adapter, random-stream isolation and checkpoint
+replay. Four leaves remain open for legacy caller migration, the second
+application receipt and the remaining valued-payoff work.
+[Kairos port acceptance](https://github.com/edithatogo/kairos/blob/f7484751c4a058581f2425ca493faec8e85e5637/conductor/contracts/game-port-acceptance.md) ·
 [UOGTO information-set profile](https://github.com/edithatogo/UOGTO/blob/3000c231b2c102e18bf7c3294bec498f00f1976c/docs/contracts/executable-information-set-profile-v1.md) ·
 [Consumer evidence](../../../docs/validation/game-consumers.json)
 
