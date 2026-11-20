@@ -14,7 +14,7 @@ support enumeration, optional correlated equilibrium, static identity conversion
 and owned policy observations. The [static package review](docs/validation/t17-review-20261117.md)
 and [native provider review](docs/validation/provider-review-20261120.md) record
 exact sources, checks and limits. Registry publication remains disabled.
-Two real application receipts and the native adapter remain open.
+Two real application receipts and full native execution qualification remain open.
 
 The initial source transfer is merged in [PR #2](https://github.com/edithatogo/paignia/pull/2)
 at `12b22ce7571b9c590405bf53c2c1c5862b49cd64`.
@@ -30,6 +30,7 @@ subsequent contract, package and numerical work without relabelling the old run.
 |---|---|---|
 | `paignia-core` | Finite acyclic graphs, static-profile admission, perfect-recall information-set admission, typed identities and result envelopes, static identity conversion, owned policy observations, and paired two-by-two payoff tables. | `thiserror`. |
 | `paignia-solve` | Backward induction and chance expectations, bounded pure/mixed Nash, CFR/CFR+, exact binary commitment, two-by-two Nash payoff hull bounds, RK4/Euler, and optional correlated equilibrium. | `paignia-core`, `thiserror`. The explicit `correlated-equilibrium` feature adds Clarabel 0.11.1 and its qualified closure. |
+| `paignia-kairos` | Optional T17.08 candidate for one finite perfect-information path through a Kairos scheduler. | `paignia-core`, pinned Kairos APIs and `thiserror` in a separate workspace requiring Rust 1.99. |
 
 The [information-set profile](docs/architecture/game-information-contract-v1.md)
 and [CFR contract](docs/validation/cfr.md) define the admitted finite graphs and
@@ -54,6 +55,10 @@ the declared graph semantics and decision selection order. The
 [observation DTO](docs/architecture/policy-observation-v1.md) exposes owned
 declared context and ordered legal actions. Matching caller-supplied context
 establishes consistency; the host owns actual session authority and freshness.
+
+The [native execution contract](docs/architecture/game-native-execution-v1.md)
+describes the bounded adapter, its independent build and the remaining provider
+acceptance.
 
 Known seed behavior remains explicit: chance edges may have probability zero;
 extensive-form missing player payoffs currently act as zero; ties use the

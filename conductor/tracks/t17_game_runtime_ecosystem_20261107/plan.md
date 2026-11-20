@@ -500,7 +500,7 @@ oracle and result contract. Exclusion is not scientific completion.
 
 ## Phase C — optional execution and representation gaps
 
-### [ ] T17.08 — execute a supported game trace through the Rust Kairos adapter
+### [~] T17.08 — execute a supported game trace through the Rust Kairos adapter
 
 - Behavior: translate the supported game execution plan into actual native
   Kairos events for one selected policy/chance path.
@@ -511,12 +511,10 @@ oracle and result contract. Exclusion is not scientific completion.
   leaf; .13 static completion does not wait for them. This is not a static
   package prerequisite.
 - Execution: specialist, public execution contract.
-- Files (5): `Cargo.toml`, `Cargo.lock`,
-  `crates/paignia-kairos/Cargo.toml` (future),
-  `crates/paignia-kairos/src/lib.rs` (future),
-  `crates/paignia-kairos/tests/native_replay.rs` (future).
-- Check: `cargo test --locked -p paignia-kairos --test native_replay`
-  (future package/target). A tiny two-action/one-chance case dispatches only the
+- Files (5): `Cargo.toml` and the separate `crates/paignia-kairos` workspace's
+  `Cargo.toml`, `Cargo.lock`, `src/lib.rs` and `tests/native_replay.rs`.
+- Check: `cargo test --locked --manifest-path crates/paignia-kairos/Cargo.toml
+  --all-targets`. A tiny two-action/one-chance case dispatches only the
   chosen causal path. `Solution.trace` includes postorder hypothetical branches:
   preserving it for diagnostics must never schedule those alternatives or treat
   expected payoffs as sampled outcomes. Repeated execution with declared inputs
@@ -526,6 +524,12 @@ oracle and result contract. Exclusion is not scientific completion.
   zero-time loops explicitly. This leaf does not qualify all lifecycle features,
   stochastic stream isolation or checkpoint resume. The adapter depends on game
   core and Kairos; static solving stays independent and still passes T17.02.
+- Candidate evidence: the adapter binds a live entity generation and empty
+  scheduler at Kairos `bac331fc`. It schedules one native event per chosen
+  action or chance outcome and records the dispatched ID, tick, sequence and
+  revision. The separate Rust 1.99 and stable CI matrix exercises the bounded
+  adapter. `K01.port` provider acceptance remains with Kairos Track 114.
+  [Execution contract](../../../docs/architecture/game-native-execution-v1.md)
 
 ### [x] T17.13 — reject semantically lossy game-profile conversions
 
