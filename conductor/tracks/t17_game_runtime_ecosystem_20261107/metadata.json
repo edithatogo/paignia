@@ -66,7 +66,7 @@
     "S01": "T17.04 bounded Paignia RK4/Euler implementation complete with independent acceptance; Kairos Track 110 source/API/caller retirement remains open.",
     "S02": "T17.05 bounded Paignia mixed-Nash implementation complete after reviewed cancellation fixes; finite-witness scope explicit; Kairos Track 110 source disposition remains open.",
     "S03": "T17.06 bounded optional Paignia CE implementation complete with qualified Clarabel and independent primal/dual numerical acceptance; Kairos Track 110 source disposition remains open.",
-    "S04": "Bounded CFR/CFR+ and perfect-recall graph admission merged after specialist review and hosted native checks. UOGTO executable information-set acceptance and Kairos Track 110 source disposition remain open."
+    "S04": "Bounded CFR/CFR+ and perfect-recall graph admission merged after specialist review and hosted native checks. The UOGTO executable information-set profile is accepted. Kairos Track 110 source disposition remains open."
   },
   "max_files_per_leaf": 5,
   "review_policy": "Focused checks and coherent specialist review; no repeated human approval loop",
@@ -190,7 +190,7 @@
     "T17.04": "completed_for_declared_bounded_provider_capability",
     "T17.05": "completed_for_declared_bounded_provider_capability",
     "T17.06": "completed_for_declared_bounded_provider_capability",
-    "T17.07": "bounded_CFR_and_CFR_plus_merged; UOGTO_profile_and_Kairos_S04_disposition_pending",
+    "T17.07": "bounded_CFR_and_CFR_plus_merged; UOGTO_profile_accepted; Kairos_S04_disposition_pending",
     "T17.08": "bounded_adapter_merged; Kairos_K01_port_acceptance_pending",
     "T17.09": "accepted_reimbursement_Chapter_8_application_artifact_receipt",
     "T17.10": "external_second_application_receipt_pending",
@@ -200,11 +200,21 @@
     "T17.14": "completed_for_declared_bounded_provider_capability",
     "T17.15": "bounded_stream_isolation_merged; Kairos_K01_port_acceptance_pending",
     "T17.16": "bounded_checkpoint_replay_merged; Kairos_K01_port_acceptance_pending",
-    "T17.17": "bounded_perfect_recall_graph_merged; UOGTO_executable_information_set_profile_pending"
+    "T17.17": "accepted_bounded_perfect_recall_graph_and_UOGTO_executable_information_set_profile"
+  },
+  "information_set_acceptance_20261121": {
+    "uogto_commit": "3000c231b2c102e18bf7c3294bec498f00f1976c",
+    "uogto_pull_request": "https://github.com/edithatogo/UOGTO/pull/139",
+    "uogto_required_gate": "https://github.com/edithatogo/UOGTO/actions/runs/44776528908",
+    "provider_revision": "d4047c0648a89f2aee4461ff70bbc9641e5320cd",
+    "provider_native_ci": "https://github.com/edithatogo/paignia/actions/runs/44758809445",
+    "source_profile_tests": 39,
+    "rust_profile": "1.75.0",
+    "native_admissions": 1,
+    "native_rejections": 4
   },
   "archive_eligible": false,
   "archive_blockers": [
-    "T17.17 and T17.07 require accepted UOGTO executable information-set semantics for the merged bounded provider.",
     "T17.08/.15/.16 retain upstream Kairos K01.port acceptance for the merged bounded adapter, stream isolation and replay.",
     "T17.10 needs a second matching-artifact receipt before T17.12 can report eligibility.",
     "T17.11 valued-payoff contract remains reimbursement-owned and unfinished.",
@@ -230,6 +240,6 @@
     "offline_security": "queued for central self-hosted runner; unexecuted, not passed",
     "limits": "No registry publication or two real application receipts; subsequent capability increments require their own integrated acceptance."
   },
-  "completed_leaf_count": 9,
-  "remaining_leaf_count": 8
+  "completed_leaf_count": 10,
+  "remaining_leaf_count": 7
 }

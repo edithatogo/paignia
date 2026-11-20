@@ -49,10 +49,11 @@ run were not added as unsupported extra prerequisites.
 
 ## Current acceptance — 21 November 2026
 
-T17.09 records the first application artifact receipt. Eight leaves remain
-open: .07, .08, .10, .11, .12, .15, .16 and .17. The optional adapter,
-separate random streams and replay are merged. Their upstream Kairos
-`K01.port` acceptance remains open. The bounded release check still requires
+T17.09 records the first application artifact receipt. T17.17 is complete
+after UOGTO's executable information-set profile passed the paired Rust
+admission check. Seven leaves remain open (.07, .08, .10, .11, .12, .15 and
+.16). The optional adapter, separate random streams and replay are merged.
+Upstream Kairos `K01.port` acceptance remains open. The bounded release check still requires
 the second application receipt before eligibility. Full-track archival also
 requires the outstanding scientific and native acceptance work.
 
@@ -498,8 +499,9 @@ oracle and result contract. Exclusion is not scientific completion.
 - Review and integration: PRs #39, #40 and #51–#53 implement and check the
   bounded provider. Independent references check both players' best responses
   and NashConv at the recorded Kuhn and Leduc budgets. The hosted Rust profiles
-  pass. UOGTO profile acceptance and the Kairos S04 source disposition remain
-  pending. [20 November review](../../../docs/validation/provider-review-20261120.md)
+  pass. The UOGTO profile now qualifies T17.17. Kairos’s S04 caller migration
+  and retirement remain open.
+  [20 November review](../../../docs/validation/provider-review-20261120.md)
 
 ## Phase C — optional execution and representation gaps
 
@@ -636,7 +638,7 @@ oracle and result contract. Exclusion is not scientific completion.
   before committing the resume. Both native stream modes exercise deterministic
   replay and sibling isolation. [Replay contract](../../../docs/validation/game-policy-resume.md)
 
-### [~] T17.17 — validate an ECS-independent information-set representation
+### [x] T17.17 — validate an ECS-independent information-set representation
 
 - Behavior: validate the declared finite information-set graph without importing
   Kairos storage or treating ontology labels as implemented semantics.
@@ -666,9 +668,21 @@ oracle and result contract. Exclusion is not scientific completion.
 
 - Review and integration: PR #37 merged the perfect-recall graph after the
   specialist review and both hosted Rust profiles passed. The review tightened
-  the space bound for decisions shared by many paths. The UOGTO executable
-  information-set profile remains pending.
+  the space bound for decisions shared by many paths.
   [20 November review](../../../docs/validation/provider-review-20261120.md)
+
+- Semantic acceptance on 21 November. UOGTO merged the scoped RDF profile
+  and the wheel check in PR #139. The profile preserves the specification,
+  representation, root, typed states and complete decision membership.
+  Its Linux gate invokes the Rust 1.75.0 witness pinned to Paignia
+  `d4047c0`. The witness verifies full identifiers and preserved legal-action
+  order. Four native rejection controls cover ownership, missing coverage,
+  changed order and imperfect recall. The 39 source-profile tests exercise
+  the selected graph, roles, representation and membership boundaries.
+  Paignia's exact provider revision passed both Linux compiler and isolated
+  package profiles.
+  [UOGTO contract](https://github.com/edithatogo/UOGTO/blob/3000c231b2c102e18bf7c3294bec498f00f1976c/docs/contracts/executable-information-set-profile-v1.md), [Native witness](https://github.com/edithatogo/UOGTO/actions/runs/44776528908),
+  [Provider CI](https://github.com/edithatogo/paignia/actions/runs/44758809445)
 
 ## Phase D — real application consumers
 
