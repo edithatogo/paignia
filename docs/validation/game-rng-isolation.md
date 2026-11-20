@@ -30,8 +30,8 @@ receive separate addresses.
 
 The host can issue an owned exploration stream from a fresh decision turn and
 give it to its policy along with the lawful observation. The policy controls
-draw count and action selection. The interface exposes raw draws, the stream ID
-and count while keeping the native generator state private. A second issue at
+draw count and action selection. The interface exposes raw draws and their count.
+The committed chance record carries the host-side stream ID. A second issue at
 that turn starts at the same stream position. The simulator draws through the
 native integer categorical sampler at the fixed arithmetic grid in the
 [execution contract](../architecture/game-native-execution-v1.md).
@@ -54,5 +54,6 @@ detour containing an extra chance event. Over 64 seeds it changes exploration
 budget, policy artifact and entity construction order. Both paths reach an
 eight-outcome common chance node. The paired outcome stays equal, the changed
 budget changes at least one realized path, and both streams consume draws. The
-independent comparison checks changed policy and paired-draw identities against
-the same eight-outcome node.
+independent comparison holds the direct path fixed while changing policy and
+paired-draw identities. The fixture checks that the detour and common chance
+nodes use distinct native streams.

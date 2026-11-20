@@ -34,11 +34,6 @@ impl ExplorationStream {
     }
 
     #[must_use]
-    pub fn stream_id(&self) -> u64 {
-        self.0.stream_id()
-    }
-
-    #[must_use]
     pub fn draw_count(&self) -> u128 {
         self.0.word_pos() / 2
     }
@@ -100,13 +95,20 @@ impl Randomness {
         }))
     }
 
-    pub(super) fn sample_chance(&mut self, node: &NodeId, weights: &WeightedIndex<u128>) -> usize {
-        match self {
-            Self::Entity(stream) => stream.sample(weights),
-            Self::Comparison(streams) => streams
-                .stream(&streams.chance_key, node, "categorical-u128-120/v1")
-                .sample(weights),
-        }
+    pub(super) fn sample_chance(
+        &mut self,
+        node: &NodeId,
+        weights: &WeightedIndex<u128>,
+    ) -> (usize, u64) {
+        let mut derived;
+        let stream = match self {
+            Self::Entity(stream) => stream.as_mut(),
+            Self::Comparison(streams) => {
+                derived = streams.stream(&streams.chance_key, node, "categorical-u128-120/v1");
+                &mut derived
+            }
+        };
+        (stream.sample(weights), stream.stream_id())
     }
 
     pub(super) fn exploration(&self, node: &NodeId) -> Result<ExplorationStream, ExecutionError> {

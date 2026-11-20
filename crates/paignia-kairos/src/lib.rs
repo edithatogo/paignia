@@ -122,6 +122,8 @@ pub struct CausalTransition {
     pub before: ObservationRevision,
     pub after: ObservationRevision,
     pub outcome: TransitionOutcome,
+    /// Host-side identity of the native stream that sampled a chance outcome.
+    pub chance_stream_id: Option<u64>,
 }
 
 #[derive(Clone, Debug, Eq, Error, PartialEq)]
@@ -369,6 +371,7 @@ impl<'a> NativeGame<'a> {
             &edge.target,
             TransitionOutcome::Action(action.clone()),
             DECISION_EVENT,
+            None,
         )
     }
 
@@ -382,7 +385,7 @@ impl<'a> NativeGame<'a> {
             return Err(ExecutionError::NotAtChance);
         };
         self.validate_transition(at)?;
-        let edge_index = self
+        let (edge_index, stream_id) = self
             .randomness
             .sample_chance(self.current, &self.chance_weights[self.current]);
         self.dispatch(
@@ -390,6 +393,7 @@ impl<'a> NativeGame<'a> {
             &edges[edge_index].target,
             TransitionOutcome::Chance { edge_index },
             CHANCE_EVENT,
+            Some(stream_id),
         )
     }
 
@@ -438,6 +442,7 @@ impl<'a> NativeGame<'a> {
         target: &'a NodeId,
         outcome: TransitionOutcome,
         kind: EventKind,
+        chance_stream_id: Option<u64>,
     ) -> Result<CausalTransition, ExecutionError> {
         let entity = Some(self.entity);
         let scheduled = self.scheduler.schedule(ScheduleRequest {
@@ -472,6 +477,7 @@ impl<'a> NativeGame<'a> {
             before: self.revision,
             after: ObservationRevision(self.revision.0 + 1),
             outcome,
+            chance_stream_id,
         };
         self.current = target;
         self.revision = transition.after;

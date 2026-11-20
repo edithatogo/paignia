@@ -68,9 +68,10 @@ fn model() -> GameSpecification {
 
 struct Outcome {
     native_entity_index: u64,
-    exploration_stream: u64,
+    first_exploration_draw: u64,
     exploration_draws: u128,
-    chance_events: usize,
+    detour_stream: Option<u64>,
+    shared_stream: u64,
     shared_draw: usize,
 }
 
@@ -81,6 +82,7 @@ fn run(
     budget: u64,
     unrelated_first: bool,
     comparison: ComparisonRandomness<'_>,
+    fixed_action: Option<usize>,
 ) -> Outcome {
     let mut world = World::new();
     if unrelated_first {
@@ -108,8 +110,12 @@ fn run(
 
     let turn = run.observe().unwrap();
     let mut exploration = run.exploration_stream(&turn).unwrap();
-    let score = (0..budget).map(|_| exploration.next_u64()).max().unwrap();
-    let action = &turn.observation().legal_actions[usize::from(score & 1 != 0)];
+    let first_exploration_draw = exploration.next_u64();
+    let score = (1..budget).fold(first_exploration_draw, |best, _| {
+        best.max(exploration.next_u64())
+    });
+    let chosen = fixed_action.unwrap_or(usize::from(score & 1 != 0));
+    let action = &turn.observation().legal_actions[chosen];
     let at = run.next_transition_time().unwrap();
     run.submit(Command::Act {
         turn: &turn,
@@ -118,26 +124,32 @@ fn run(
     })
     .unwrap();
 
-    let mut chance_events = 0;
+    let mut detour_stream = None;
     let mut shared_draw = None;
     while run.phase() == Phase::Chance {
         let at = run.next_transition_time().unwrap();
         let event = run.realize_chance(at).unwrap();
-        chance_events += 1;
+        let stream = event.chance_stream_id.unwrap();
         if event.from == node("shared lottery") {
             let TransitionOutcome::Chance { edge_index } = event.outcome else {
                 panic!("expected a native chance event");
             };
-            shared_draw = Some(edge_index);
+            shared_draw = Some((edge_index, stream));
+        } else {
+            assert_eq!(event.from, node("extra draw"));
+            assert!(detour_stream.replace(stream).is_none());
         }
     }
     assert!(run.terminal_payoffs().is_some());
+    let (shared_draw, shared_stream) = shared_draw.unwrap();
+    assert_ne!(detour_stream, Some(shared_stream));
     Outcome {
         native_entity_index: entity.index,
-        exploration_stream: exploration.stream_id(),
+        first_exploration_draw,
         exploration_draws: exploration.draw_count(),
-        chance_events,
-        shared_draw: shared_draw.unwrap(),
+        detour_stream,
+        shared_stream,
+        shared_draw,
     }
 }
 
@@ -152,17 +164,26 @@ fn exploration_budget_policy_path_and_entity_order_preserve_the_paired_chance_dr
     let mut changed_paths = 0;
     let mut sampled = BTreeSet::new();
     for seed in 0..64 {
-        let first = run(&source, seed, "policy A", 1, false, comparison);
-        let varied_budget = run(&source, seed, "policy A", 9, true, comparison);
-        let other_policy = run(&source, seed, "policy B", 9, true, comparison);
+        let first = run(&source, seed, "policy A", 1, false, comparison, None);
+        let varied_budget = run(&source, seed, "policy A", 9, true, comparison, None);
+        let other_policy = run(&source, seed, "policy B", 9, true, comparison, None);
         assert_ne!(first.native_entity_index, varied_budget.native_entity_index);
-        assert_eq!(first.exploration_stream, varied_budget.exploration_stream);
-        assert_ne!(first.exploration_stream, other_policy.exploration_stream);
+        assert_eq!(
+            first.first_exploration_draw,
+            varied_budget.first_exploration_draw
+        );
+        assert_ne!(
+            first.first_exploration_draw,
+            other_policy.first_exploration_draw
+        );
         assert_eq!(first.exploration_draws, 1);
         assert_eq!(varied_budget.exploration_draws, 9);
         assert_eq!(first.shared_draw, varied_budget.shared_draw);
         assert_eq!(first.shared_draw, other_policy.shared_draw);
-        changed_paths += usize::from(first.chance_events != varied_budget.chance_events);
+        assert_eq!(first.shared_stream, varied_budget.shared_stream);
+        assert_eq!(first.shared_stream, other_policy.shared_stream);
+        changed_paths +=
+            usize::from(first.detour_stream.is_some() != varied_budget.detour_stream.is_some());
         sampled.insert(first.shared_draw);
     }
     assert!(changed_paths > 0);
@@ -180,8 +201,8 @@ fn independent_policies_and_distinct_draws_produce_distinct_native_sequences() {
     let mut policy_differences = 0;
     let mut draw_differences = 0;
     for seed in 0..32 {
-        let baseline = run(&source, seed, "policy A", 7, false, comparison);
-        let independent = run(&source, seed, "policy B", 7, false, comparison);
+        let baseline = run(&source, seed, "policy A", 7, false, comparison, Some(0));
+        let independent = run(&source, seed, "policy B", 7, false, comparison, Some(0));
         let other_draw = run(
             &source,
             seed,
@@ -192,7 +213,13 @@ fn independent_policies_and_distinct_draws_produce_distinct_native_sequences() {
                 paired_draw_id: "draw:43",
                 ..comparison
             },
+            Some(0),
         );
+        assert_eq!(baseline.detour_stream, None);
+        assert_eq!(independent.detour_stream, None);
+        assert_eq!(other_draw.detour_stream, None);
+        assert_ne!(baseline.shared_stream, independent.shared_stream);
+        assert_ne!(baseline.shared_stream, other_draw.shared_stream);
         policy_differences += usize::from(baseline.shared_draw != independent.shared_draw);
         draw_differences += usize::from(baseline.shared_draw != other_draw.shared_draw);
     }
