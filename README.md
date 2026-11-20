@@ -57,7 +57,12 @@ exhaustive catalogue. UOGTO names alone do not establish implementation support.
 
 ## Build and verify
 
+Use the CPython patch release recorded in `.python-version` for verification.
+Create the repository-local environment once and use it for subsequent checks.
+
 ```bash
+uv venv --python "$(cat .python-version)" target/dev-python
+target/dev-python/bin/python --version
 cargo fetch --locked
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
@@ -66,10 +71,10 @@ cargo test --workspace --all-targets --locked
 cargo test --workspace --all-targets --all-features --locked
 cargo test --locked -p paignia-core --doc
 cargo test --locked -p paignia-solve --doc --all-features
-python3 -B -m unittest discover -s tests
+target/dev-python/bin/python -B -m unittest discover -s tests
 cargo doc --workspace --no-deps --all-features --locked
-python3 scripts/validate_extraction.py
-python3 scripts/validate_game_packages.py
+target/dev-python/bin/python scripts/validate_extraction.py
+target/dev-python/bin/python scripts/validate_game_packages.py
 ```
 
 The package guard creates actual `.crate` archives, verifies normalized metadata,
@@ -78,7 +83,7 @@ separate consumers. Linux `bubblewrap` makes the provider checkout unavailable
 throughout offline resolution, compilation and execution. The receipt records
 artifact hashes, compiler versions, the provider lock and each consumer's
 resolved dependency graph/lock. Minimal, default, individual advertised features
-and all-feature profiles execute separately. Python 3.11+ orchestrates these
+and all-feature profiles execute separately. The pinned CPython interpreter orchestrates these
 checks; all game execution is Rust. `cargo fetch --locked` caches the full
 metadata closure, including platform-specific packages that a native build
 does not download. Boundary inspection and artifact consumers then run offline.

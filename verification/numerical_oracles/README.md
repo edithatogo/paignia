@@ -66,17 +66,16 @@ package installation, optimizer dependency or native build is required.
 
 ## Run the reference checks
 
-From the repository root, using Python 3.12 (executed here on 3.12.14):
+Run the current suite from the repository root with the pinned CPython environment.
 
 ```bash
-python3 -B verification/numerical_oracles/test_oracles.py
-python3 -B verification/numerical_oracles/test_oracles.py ReplicatorOracleTests
-python3 -B verification/numerical_oracles/test_oracles.py NashOracleTests
-python3 -B verification/numerical_oracles/test_oracles.py CorrelatedOracleTests
+target/dev-python/bin/python -B verification/numerical_oracles/test_oracles.py
+target/dev-python/bin/python -B verification/numerical_oracles/test_oracles.py ReplicatorOracleTests
+target/dev-python/bin/python -B verification/numerical_oracles/test_oracles.py NashOracleTests
+target/dev-python/bin/python -B verification/numerical_oracles/test_oracles.py CorrelatedOracleTests
 ```
 
-These are development/reference commands. The existing root CI does not run this
-new harness; adding an explicit invocation is a coordinator integration request.
+Native CI runs the complete reference suite and retains the test count and log.
 The repository's native stable/MSRV checks remain separate required merge gates.
 
 ## T17.04.oracle: replicator references
@@ -284,7 +283,7 @@ For coordinator `6af93fe8-b14c-83ec-8de0-728c856bcbb3`:
 
 1. Record this scoped receipt in the existing ownership map/Conductor integration
    only when accepted. Do not close the parent T17.04–06 tasks from fixture work.
-2. Add the full `python3 -B verification/numerical_oracles/test_oracles.py`
+2. Add the full `target/dev-python/bin/python -B verification/numerical_oracles/test_oracles.py`
    invocation to coordinator-owned CI, with an explicitly selected Python
    interpreter. It currently executes 39 tests. No Cargo dependency/lock/export
    change is required to run these independent checks.
