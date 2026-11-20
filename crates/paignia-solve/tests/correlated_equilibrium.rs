@@ -8,7 +8,8 @@ use paignia_solve::{
     solve_correlated_equilibrium as solve, CorrelatedEquilibriumConfig as Config,
     CorrelatedEquilibriumDualVariables as Dual, CorrelatedEquilibriumError as Error,
     CorrelatedEquilibriumInterval as Interval, CorrelatedEquilibriumPlayer as Player,
-    CorrelatedEquilibriumStatus as Status, CorrelatedEquilibriumTermination as Termination,
+    CorrelatedEquilibriumResult as SolveResult, CorrelatedEquilibriumStatus as Status,
+    CorrelatedEquilibriumTermination as Termination,
 };
 
 type Matrix = Vec<Vec<f64>>;
@@ -34,7 +35,12 @@ fn encloses(interval: Interval, value: f64) {
     assert!(interval.upper >= value, "{interval:?} excludes {value}");
 }
 
-fn optimum(row: &[Vec<f64>], column: &[Vec<f64>], objective: &[Vec<f64>], value: f64) {
+fn optimum(
+    row: &[Vec<f64>],
+    column: &[Vec<f64>],
+    objective: &[Vec<f64>],
+    value: f64,
+) -> SolveResult {
     let config = Config::default();
     let record = solve(row, column, objective, config).unwrap();
     assert_eq!(record.status(), Status::ApproximateOptimum);
@@ -69,12 +75,47 @@ fn optimum(row: &[Vec<f64>], column: &[Vec<f64>], objective: &[Vec<f64>], value:
     )
     .unwrap();
     assert_eq!(checked, candidate.certificate);
+    record
+}
+
+fn assert_joint_weights(weights: &[f64], expected: &[f64]) {
+    assert_eq!(weights.len(), expected.len());
+    for (index, (&weight, &target)) in weights.iter().zip(expected).enumerate() {
+        assert!(
+            (weight - target).abs() < 1e-4,
+            "joint weight {index}: expected {target}, got {weight}"
+        );
+    }
 }
 
 #[test]
 fn correlated_optimum_exceeds_every_nash_product_in_the_frozen_example() {
     let (row, column, objective) = gap_game();
-    optimum(&row, &column, &objective, 10.5);
+    let result = optimum(&row, &column, &objective, 10.5);
+    assert_joint_weights(
+        &result.accepted_candidate().unwrap().raw_joint_weights,
+        &[0., 0.25, 0.25, 0.5],
+    );
+}
+
+#[test]
+fn prisoners_dilemma_has_only_the_mutual_defection_joint() {
+    let row = [vec![3., 0.], vec![5., 1.]];
+    let column = [vec![3., 5.], vec![0., 1.]];
+    let welfare = [vec![6., 5.], vec![5., 2.]];
+    let result = optimum(&row, &column, &welfare, 2.);
+    let weights = &result.accepted_candidate().unwrap().raw_joint_weights;
+    // Strict dominance forbids any recommendation to cooperate.
+    assert_joint_weights(weights, &[0., 0., 0., 1.]);
+    for payoffs in [&row, &column] {
+        let expected_payoff: f64 = payoffs
+            .iter()
+            .flatten()
+            .zip(weights)
+            .map(|(payoff, weight)| payoff * weight)
+            .sum();
+        assert!((expected_payoff - 1.).abs() < 1e-4);
+    }
 }
 
 #[test]
