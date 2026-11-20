@@ -134,7 +134,7 @@ fn kuhn_average_value_and_nash_conv_match_the_independent_reference() {
         let probabilities = kuhn_probabilities(&trained.average_strategy);
         let independent_value = kuhn_value(&probabilities);
         let library_value = trained.root_values[&player("one")];
-        let independent_nash_conv = kuhn_nash_conv(&probabilities);
+        let independent_nash_conv = kuhn_best_responses(&probabilities).iter().sum::<f64>();
         let library_nash_conv =
             cfr_nash_conv(&source, &graph, &trained.average_strategy).expect("nash conv");
 
@@ -153,6 +153,63 @@ fn kuhn_average_value_and_nash_conv_match_the_independent_reference() {
         assert!(
             (library_nash_conv - independent_nash_conv).abs() < 1e-8,
             "{variant:?} library {library_nash_conv} independent {independent_nash_conv}"
+        );
+    }
+}
+
+#[test]
+fn kuhn_nash_conv_shrinks_and_value_stays_within_tolerance_at_three_budgets() {
+    let fixture = include_str!("../../../fixtures/conformance/cfr-reference-v1.json");
+    assert!(fixture.contains("\"iteration_counts\": [100, 1000, 12000]"));
+
+    let (source, declaration) = kuhn();
+    let graph = build_information_set_graph(&source, &declaration).expect("Kuhn is admissible");
+    for variant in [CfrVariant::Cfr, CfrVariant::CfrPlus] {
+        let mut observed = Vec::new();
+        for iterations in [100_u32, 1_000, 12_000] {
+            let trained = train_counterfactual_regret(
+                &source,
+                &declaration,
+                &CfrConfig {
+                    variant,
+                    iterations,
+                },
+            )
+            .expect("Kuhn trains at this budget");
+            let probabilities = kuhn_probabilities(&trained.average_strategy);
+            let independent_value = kuhn_value(&probabilities);
+            let library_value = trained.root_values[&player("one")];
+            let responses = kuhn_best_responses(&probabilities);
+            for (seat, expected) in [player("one"), player("two")].iter().zip(responses) {
+                let actual =
+                    cfr_best_response_value(&source, &graph, &trained.average_strategy, seat)
+                        .expect("Kuhn best response");
+                assert!(
+                    (actual - expected).abs() < 1e-9,
+                    "{variant:?} {iterations} {seat:?}: {actual} vs {expected}"
+                );
+            }
+            let independent_nash_conv = responses.iter().sum::<f64>();
+            let library_nash_conv =
+                cfr_nash_conv(&source, &graph, &trained.average_strategy).expect("nash conv");
+            assert!(
+                (library_value - independent_value).abs() < 1e-9,
+                "{variant:?} {iterations} library {library_value} independent {independent_value}"
+            );
+            assert!(
+                (library_nash_conv - independent_nash_conv).abs() < 1e-8,
+                "{variant:?} {iterations} library {library_nash_conv} independent {independent_nash_conv}"
+            );
+            let value_error = (independent_value - KUHN_VALUE).abs();
+            assert!(
+                value_error < 5e-3,
+                "{variant:?} {iterations} value error {value_error}"
+            );
+            observed.push(independent_nash_conv);
+        }
+        assert!(
+            observed[1] < observed[0] && observed[2] < observed[1],
+            "{variant:?} NashConv {observed:?} does not shrink across 100, 1000, and 12000"
         );
     }
 }
@@ -510,8 +567,7 @@ fn kuhn_value(probabilities: &KuhnProbabilities) -> f64 {
     total / 6.0
 }
 
-fn kuhn_nash_conv(probabilities: &KuhnProbabilities) -> f64 {
-    let current = kuhn_value(probabilities);
+fn kuhn_best_responses(probabilities: &KuhnProbabilities) -> [f64; 2] {
     let mut best_for_one = f64::NEG_INFINITY;
     let mut worst_for_one = f64::INFINITY;
     for mask in 0..64_u32 {
@@ -528,7 +584,7 @@ fn kuhn_nash_conv(probabilities: &KuhnProbabilities) -> f64 {
         }
         worst_for_one = worst_for_one.min(kuhn_value(&deviating));
     }
-    (best_for_one - current) + (current - worst_for_one)
+    [best_for_one, -worst_for_one]
 }
 
 const LEDUC_VALUE: f64 = -0.085_606;

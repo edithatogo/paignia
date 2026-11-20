@@ -8,7 +8,8 @@
     "player_one_value": "-1/18",
     "player_one_value_decimal": -0.05555555555555555,
     "deals": 6,
-    "notes": "Net chip value for the first player at equilibrium. Showdown pays the current stake to the higher card. A fold loses one chip. This constant is not derived from the Paignia trainer."
+    "iteration_counts": [100, 1000, 12000],
+    "notes": "Net chip value for the first player at equilibrium. Showdown pays the current stake to the higher card. A fold loses one chip. This constant is not derived from the Paignia trainer. At the listed budgets an independent deal enumerator checks that both variants stay within 5e-3 of this value and that NashConv shrinks. The value error itself is not monotone, and these budgets are not a published training curve."
   },
   "leduc": {
     "information_states": 936,
