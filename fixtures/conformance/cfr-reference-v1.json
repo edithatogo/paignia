@@ -8,17 +8,38 @@
     "player_one_value": "-1/18",
     "player_one_value_decimal": -0.05555555555555555,
     "deals": 6,
-    "iteration_counts": [100, 1000, 12000],
-    "notes": "Net chip value for the first player at equilibrium. Showdown pays the current stake to the higher card. A fold loses one chip. This constant is not derived from the Paignia trainer. At the listed budgets an independent deal enumerator checks that both variants stay within 5e-3 of this value and that NashConv shrinks. The value error itself is not monotone, and these budgets are not a published training curve."
+    "iteration_counts": [
+      100,
+      1000,
+      12000
+    ],
+    "notes": "Net chip value for the first player at equilibrium. Showdown pays the current stake to the higher card. A fold loses one chip. This constant is not derived from the Paignia trainer. At the listed budgets an independent deal enumerator checks that both variants stay within 5e-3 of this value and that NashConv shrinks. The value error itself is not monotone, and these budgets are not a published training curve.",
+    "value_absolute_tolerance": 0.005,
+    "final_nash_conv_upper_bound": 0.02
   },
   "leduc": {
     "information_states": 936,
     "player_one_value": -0.085606,
-    "notes": "First-player equilibrium value reproduced for this rule set. It is not a closed form and was not taken from the Paignia trainer. A separate 120-deal calculation checks the all-call profile value and both seats' best responses.",
+    "notes": "Vanilla CFR and CFR+ are compared at both listed budgets. Both seat values, both best responses and NashConv are independently evaluated from each trained policy. The published equilibrium value is checked only for CFR+ at 4,000 iterations. A published iteration curve and external trainer parity remain open.",
     "rules_citation": "Southey, F., Bowling, M., Larson, B., Piccione, C., Burch, N., Billings, D., and Rayner, C. (2005). Bayes' bluff: opponent modelling in poker. Proceedings of the 21st Conference on Uncertainty in Artificial Intelligence, pages 550-558. The extensive form follows the two-player OpenSpiel leduc_poker defaults: six distinguishable cards, ante 1, raise sizes 2 and 4, and a two-raise cap.",
     "citation": "Schauenberg, Terence Conrad (2006). Opponent Modelling and Search in Poker. MSc thesis, University of Alberta. Section 5.1.3, p. 62 and Figure 5.1, p. 63 (best response to CallPlayer, both seats). Section 5.1.5 and Figure 5.3, p. 65 (first-to-act equilibrium value).",
     "source_url": "https://poker.cs.ualberta.ca/publications/schauenberg.msc.pdf",
     "all_call_best_response_per_seat": "22/15",
-    "all_call_nash_conv": "44/15"
-  }
+    "all_call_nash_conv": "44/15",
+    "iteration_counts": [
+      1000,
+      4000
+    ],
+    "published_value_check": {
+      "method": "paignia/cfr-plus",
+      "iterations": 4000,
+      "absolute_tolerance": 0.02,
+      "nash_conv_upper_bound": 0.05
+    }
+  },
+  "methods": [
+    "paignia/vanilla-cfr",
+    "paignia/cfr-plus"
+  ],
+  "diagnostic": "nash_conv"
 }

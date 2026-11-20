@@ -44,7 +44,7 @@ information set of the named player, after the information sets below it, and
 `cfr_nash_conv` sums the two unilateral gains in a two-player game. All
 thresholds in these tests use that sum. OpenSpiel reports two-player
 constant-sum exploitability as NashConv divided by two.
-[OpenSpiel's diagnostic definitions](https://github.com/google-deepmind/open_spiel/blob/master/open_spiel/python/algorithms/exploitability.py#L109-L143)
+[OpenSpiel's diagnostic definitions](https://github.com/google-deepmind/open_spiel/blob/4956843d7375e29a4c986425c66f897d7ac15340/open_spiel/python/algorithms/exploitability.py#L121-L157)
 
 The public diagnostics re-admit the supplied graph against its source and check
 the exact information-set and action domains. Each strategy row must have finite
@@ -85,6 +85,14 @@ test checks each public best-response value and the all-call NashConv of 44/15.
 Schauenberg reports 1.466667 against CallPlayer in §5.1.3 (p. 62, Fig. 5.1 on
 p. 63) and the first-to-act equilibrium value of −0.085606 in §5.1.5 (Fig. 5.3,
 p. 65). [Schauenberg, *Opponent Modelling and Search in Poker*, MSc thesis, University of Alberta, 2006](https://poker.cs.ualberta.ca/publications/schauenberg.msc.pdf)
+
+The Rust tests read the numeric targets, method identifiers, budgets and
+tolerances from the conformance fixture. Serde deserializes the original JSON
+into test-only structs and rejects duplicate fields. The tests qualify the method version,
+the NashConv unit, both budget lists and the single published-value check
+against the cited protocol. Replacing the Leduc target with `-0.085606e3`
+changes it to −85.606 and fails qualification. The equivalent spelling
+`-8.5606e-2` passes.
 
 For each trained Leduc policy, a separate Rust reference walks public betting
 histories and keeps a distribution over the opponent's private card. It splits

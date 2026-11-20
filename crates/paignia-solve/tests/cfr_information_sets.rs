@@ -1,5 +1,7 @@
 //! CFR/CFR+ on admitted information-set graphs, checked against Kuhn's value.
 
+#[path = "support/cfr_fixture.rs"]
+mod cfr_fixture;
 #[path = "support/leduc_reference.rs"]
 mod leduc_reference;
 
@@ -16,9 +18,6 @@ use paignia_solve::{
     cfr_best_response_value, cfr_nash_conv, cfr_profile_values, train_counterfactual_regret,
     CfrConfig, CfrError, CfrStrategy, CfrVariant,
 };
-
-const KUHN_VALUE: f64 = -1.0 / 18.0;
-const KUHN_ITERATIONS: u32 = 12_000;
 
 #[test]
 fn rejects_an_empty_iteration_budget_before_training() {
@@ -120,18 +119,17 @@ fn preserves_declared_action_order() {
 
 #[test]
 fn kuhn_average_value_and_nash_conv_match_the_independent_reference() {
-    let fixture = include_str!("../../../fixtures/conformance/cfr-reference-v1.json");
-    assert!(fixture.contains("\"player_one_value\": \"-1/18\""));
+    let fixture = cfr_fixture::fixture();
 
     let (source, declaration) = kuhn();
     let graph = build_information_set_graph(&source, &declaration).expect("Kuhn is admissible");
-    for variant in [CfrVariant::Cfr, CfrVariant::CfrPlus] {
+    for variant in fixture.methods.map(|method| method.0) {
         let trained = train_counterfactual_regret(
             &source,
             &declaration,
             &CfrConfig {
                 variant,
-                iterations: KUHN_ITERATIONS,
+                iterations: fixture.kuhn.iteration_counts[2],
             },
         )
         .expect("Kuhn trains");
@@ -147,11 +145,13 @@ fn kuhn_average_value_and_nash_conv_match_the_independent_reference() {
             "{variant:?} library {library_value} independent {independent_value}"
         );
         assert!(
-            (independent_value - KUHN_VALUE).abs() < 5e-3,
-            "{variant:?} value {independent_value} target {KUHN_VALUE}"
+            (independent_value - fixture.kuhn.player_one_value_decimal).abs()
+                < fixture.kuhn.value_absolute_tolerance,
+            "{variant:?} value {independent_value} target {}",
+            fixture.kuhn.player_one_value_decimal
         );
         assert!(
-            independent_nash_conv < 2e-2,
+            independent_nash_conv < fixture.kuhn.final_nash_conv_upper_bound,
             "{variant:?} NashConv {independent_nash_conv}"
         );
         assert!(
@@ -163,14 +163,13 @@ fn kuhn_average_value_and_nash_conv_match_the_independent_reference() {
 
 #[test]
 fn kuhn_nash_conv_shrinks_and_value_stays_within_tolerance_at_three_budgets() {
-    let fixture = include_str!("../../../fixtures/conformance/cfr-reference-v1.json");
-    assert!(fixture.contains("\"iteration_counts\": [100, 1000, 12000]"));
+    let fixture = cfr_fixture::fixture();
 
     let (source, declaration) = kuhn();
     let graph = build_information_set_graph(&source, &declaration).expect("Kuhn is admissible");
-    for variant in [CfrVariant::Cfr, CfrVariant::CfrPlus] {
+    for variant in fixture.methods.map(|method| method.0) {
         let mut observed = Vec::new();
-        for iterations in [100_u32, 1_000, 12_000] {
+        for iterations in fixture.kuhn.iteration_counts {
             let trained = train_counterfactual_regret(
                 &source,
                 &declaration,
@@ -204,9 +203,9 @@ fn kuhn_nash_conv_shrinks_and_value_stays_within_tolerance_at_three_budgets() {
                 (library_nash_conv - independent_nash_conv).abs() < 1e-8,
                 "{variant:?} {iterations} library {library_nash_conv} independent {independent_nash_conv}"
             );
-            let value_error = (independent_value - KUHN_VALUE).abs();
+            let value_error = (independent_value - fixture.kuhn.player_one_value_decimal).abs();
             assert!(
-                value_error < 5e-3,
+                value_error < fixture.kuhn.value_absolute_tolerance,
                 "{variant:?} {iterations} value error {value_error}"
             );
             observed.push(independent_nash_conv);
@@ -591,11 +590,9 @@ fn kuhn_best_responses(probabilities: &KuhnProbabilities) -> [f64; 2] {
     [best_for_one, -worst_for_one]
 }
 
-const LEDUC_VALUE: f64 = -0.085_606;
-const LEDUC_ITERATIONS: u32 = 4_000;
-
 #[test]
 fn leduc_all_call_matches_both_seat_best_responses_and_nash_conv() {
+    let fixture = cfr_fixture::fixture();
     let (source, declaration) = leduc();
     let graph = build_information_set_graph(&source, &declaration).expect("Leduc is admissible");
     let mut calling = CfrStrategy {
@@ -618,6 +615,7 @@ fn leduc_all_call_matches_both_seat_best_responses_and_nash_conv() {
     let (showdown_sum, best_response_sum, deals) = all_call_deal_totals();
     assert_eq!((showdown_sum, best_response_sum, deals), (0, 176, 120));
     let expected_response = f64::from(best_response_sum) / f64::from(deals);
+    assert!((expected_response - fixture.leduc.all_call_best_response_per_seat).abs() < 1e-12);
     let values = cfr_profile_values(&source, &graph, &calling).expect("all-call values");
     for (index, seat) in [player("zero"), player("one")].into_iter().enumerate() {
         let reference = leduc_reference::returns(&calling, index);
@@ -632,46 +630,73 @@ fn leduc_all_call_matches_both_seat_best_responses_and_nash_conv() {
         );
     }
     let nash_conv = cfr_nash_conv(&source, &graph, &calling).expect("all-call NashConv");
-    assert!((nash_conv - 44.0 / 15.0).abs() < 1e-12, "{nash_conv}");
+    assert!(
+        (nash_conv - fixture.leduc.all_call_nash_conv).abs() < 1e-12,
+        "{nash_conv}"
+    );
 }
 
 #[test]
 fn leduc_cfr_plus_checks_published_value_and_nash_conv() {
-    let fixture = include_str!("../../../fixtures/conformance/cfr-reference-v1.json");
-    assert!(fixture.contains("\"player_one_value\": -0.085606"));
-    assert!(fixture.contains("\"information_states\": 936"));
+    let fixture = cfr_fixture::fixture();
 
     let (source, declaration) = leduc();
-    assert_eq!(declaration.sets.len(), 936);
+    assert_eq!(declaration.sets.len(), fixture.leduc.information_states);
     let graph =
         build_information_set_graph(&source, &declaration).expect("Leduc is perfect recall");
-    let early = checked_leduc_run(&source, &declaration, &graph, CfrVariant::CfrPlus, 1_000);
+    let early = checked_leduc_run(
+        &source,
+        &declaration,
+        &graph,
+        fixture.leduc.published_value_check.method.0,
+        fixture.leduc.iteration_counts[0],
+    );
     let late = checked_leduc_run(
         &source,
         &declaration,
         &graph,
-        CfrVariant::CfrPlus,
-        LEDUC_ITERATIONS,
+        fixture.leduc.published_value_check.method.0,
+        fixture.leduc.published_value_check.iterations,
     );
     assert!(
         late.nash_conv < early.nash_conv,
         "CFR+ NashConv: {early:?} to {late:?}"
     );
-    assert!((late.value - LEDUC_VALUE).abs() < 2e-2, "value: {late:?}");
-    assert!(late.nash_conv < 0.05, "CFR+ NashConv: {late:?}");
+    assert!(
+        (late.value - fixture.leduc.player_one_value).abs()
+            < fixture.leduc.published_value_check.absolute_tolerance,
+        "value: {late:?}"
+    );
+    assert!(
+        late.nash_conv < fixture.leduc.published_value_check.nash_conv_upper_bound,
+        "CFR+ NashConv: {late:?}"
+    );
 }
 
 #[test]
 fn vanilla_leduc_nash_conv_shrinks_between_independently_checked_budgets() {
+    let fixture = cfr_fixture::fixture();
+    let variant = fixture
+        .methods
+        .into_iter()
+        .map(|method| method.0)
+        .find(|&method| method != fixture.leduc.published_value_check.method.0)
+        .expect("the other qualified Leduc method");
     let (source, declaration) = leduc();
     let graph = build_information_set_graph(&source, &declaration).expect("Leduc is admissible");
-    let early = checked_leduc_run(&source, &declaration, &graph, CfrVariant::Cfr, 1_000);
+    let early = checked_leduc_run(
+        &source,
+        &declaration,
+        &graph,
+        variant,
+        fixture.leduc.iteration_counts[0],
+    );
     let late = checked_leduc_run(
         &source,
         &declaration,
         &graph,
-        CfrVariant::Cfr,
-        LEDUC_ITERATIONS,
+        variant,
+        fixture.leduc.iteration_counts[1],
     );
     assert!(
         late.nash_conv < early.nash_conv,
