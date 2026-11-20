@@ -49,6 +49,12 @@ fn weighted_sum(terms: impl Iterator<Item = (f64, f64)>) -> Result<f64, Error> {
     sum.finish()
 }
 
+#[derive(Clone, Copy)]
+pub(super) enum ResponseMeasure {
+    Payoff,
+    Gain,
+}
+
 enum Kind<'a> {
     Terminal(&'a PayoffVector),
     Chance(Vec<f64>),
@@ -285,6 +291,7 @@ impl<'a> IndexedGame<'a> {
         &self,
         strategy: &[Vec<f64>],
         player: &PlayerId,
+        measure: ResponseMeasure,
     ) -> Result<f64, Error> {
         let reach = self.reaches(strategy, player)?;
         let scale = self.payoff_scales.get(player).copied().unwrap_or(1.0);
@@ -312,6 +319,7 @@ impl<'a> IndexedGame<'a> {
             .filter(|&i| group[i] == i && pending[i] == 0)
             .collect();
         let mut values = vec![0.0; self.nodes.len()];
+        let mut gains = vec![0.0; self.nodes.len()];
         while let Some(i) = ready.pop_front() {
             let node = &self.nodes[i];
             match node.kind {
@@ -333,10 +341,30 @@ impl<'a> IndexedGame<'a> {
                         }
                     }
                     for &m in &set.members {
-                        values[m] = values[self.nodes[m].children[selected]];
+                        let actions = &self.nodes[m].children;
+                        let selected_value = values[actions[selected]];
+                        values[m] = selected_value;
+                        if matches!(measure, ResponseMeasure::Gain) {
+                            // V*(m) - Vσ(m) = Σ_a σ(a) [V*(chosen) - V*(a)
+                            // + (V*(a) - Vσ(a))]. Common payoff offsets cancel
+                            // here before rounding the root payoff.
+                            gains[m] = weighted_sum(strategy[s].iter().zip(actions).map(
+                                |(&p, &child)| (p, (selected_value - values[child]) + gains[child]),
+                            ))?;
+                        }
                     }
                 }
-                _ => values[i] = node.value(&values, player, strategy, scale)?,
+                _ => {
+                    values[i] = node.value(&values, player, strategy, scale)?;
+                    if matches!(measure, ResponseMeasure::Gain) {
+                        gains[i] = weighted_sum(
+                            node.probabilities(strategy)
+                                .iter()
+                                .zip(&node.children)
+                                .map(|(&p, &child)| (p, gains[child])),
+                        )?;
+                    }
+                }
             }
             for &parent in &parents[i] {
                 pending[parent] -= 1;
@@ -352,6 +380,10 @@ impl<'a> IndexedGame<'a> {
         {
             return Err(Error::RecallCycle(set.id.clone()));
         }
-        product(values[self.root], scale)
+        let result = match measure {
+            ResponseMeasure::Payoff => values[self.root],
+            ResponseMeasure::Gain => gains[self.root],
+        };
+        product(result, scale)
     }
 }
