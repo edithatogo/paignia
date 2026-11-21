@@ -23,8 +23,15 @@ Status: in progress (`[~]`). All tasks preserve `T17` provider ownership and the
 
 ## Provider acceptance and application handoff
 
-[The 20 November review](../../../docs/validation/provider-review-20261120.md) records the reviewed heads, checks, and owner
-boundaries. T18.03 remains open for the application owner.
+[The 20 November review](../../../docs/validation/provider-review-20261120.md)
+records the reviewed provider revisions, checks and owner boundaries.
+
+The Tobac draft exercised both inspection channels with synthetic Dapane costs
+and preserved the paired-draw identity through the installed Voiage comparison.
+Hosted verification requires a fresh signed native-lineage capsule covering the
+expanded source inventory, including `src/tobac/strategic_inspection.py`. The
+application's empirical acceptance is pending.
+[Tobac consumer draft](https://github.com/edithatogo/tobac/pull/178)
 
 ## Implementation history
 
