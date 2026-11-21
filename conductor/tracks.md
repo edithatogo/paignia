@@ -6,9 +6,9 @@
   retain all seventeen IDs. Thirteen provider leaves are complete after
   review and qualification, including the independent CFR/CFR+ checks and
   Kairos S01–S04 source retirement. T17.09 supplies the first application
-  artifact receipt. Three leaves remain open (.10, .11 and .12) for the
-  second matching application receipt, the valued-payoff handoff and
-  bounded release eligibility.
+  artifact receipt. T17.11 has an accepted valued-payoff and synthetic
+  comparison handoff. T17.10 and T17.12 remain open for the second matching
+  application receipt and bounded release eligibility.
 
 - [~] **T18 Illicit-supply border-enforcement and retail-inspection game contracts for tobac**
   [Specification, plan and handoff](tracks/t18_illicit_enforcement_inspection_games_20261110/index.md).
