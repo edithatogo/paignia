@@ -4,7 +4,7 @@
   "type": "refactor",
   "status": "in_progress",
   "created_at": "2026-11-07T00:00:00Z",
-  "updated_at": "2026-11-20T18:40:15Z",
+  "updated_at": "2026-11-21T14:32:04Z",
   "description": "Paignia native provider, scientific completion and explicit external consumer handoffs",
   "bootstrap_revision": "0e28f1bf33ed8c7be5fa1d63b8cc40517b61d22c",
   "incubator_main_revision": "f6c1c87b6b00875b33c1e19401c1de09481913ce",
@@ -194,7 +194,7 @@
     "T17.08": "accepted_bounded_native_game_execution",
     "T17.09": "accepted_reimbursement_Chapter_8_application_artifact_receipt",
     "T17.10": "external_second_application_receipt_pending",
-    "T17.11": "external_valued_payoff_port_pending",
+    "T17.11": "accepted_reimbursement_valued_payoff_port_and_synthetic_comparison",
     "T17.12": "guard_admits_first_consumer; second_distinct_consumer_receipt_missing",
     "T17.13": "completed_for_declared_bounded_provider_capability",
     "T17.14": "completed_for_declared_bounded_provider_capability",
@@ -243,8 +243,7 @@
   },
   "archive_eligible": false,
   "archive_blockers": [
-    "T17.10 needs a second matching-artifact receipt before T17.12 can report eligibility.",
-    "T17.11 valued-payoff contract remains reimbursement-owned and unfinished."
+    "T17.10 needs a second matching-artifact receipt before T17.12 can report eligibility."
   ],
   "historical_accepted_checkpoint_20261117": {
     "status": "bounded_native_contract_and_local_artifact_qualification_accepted",
@@ -266,6 +265,15 @@
     "offline_security": "queued for central self-hosted runner; unexecuted, not passed",
     "limits": "No registry publication or two real application receipts; subsequent capability increments require their own integrated acceptance."
   },
-  "completed_leaf_count": 14,
-  "remaining_leaf_count": 3
+  "completed_leaf_count": 15,
+  "remaining_leaf_count": 2,
+  "valued_payoff_acceptance_20261122": {
+    "application_pull_request": "https://github.com/edithatogo/new-drug-reimbursement-game/pull/118",
+    "application_merge": "f23ece4f1409b71496b60912023c5a800452e18b",
+    "voiage_provider_admission_merge": "7d44e3d9b5ff86506d5a2edb4ba99a6a5b2836af",
+    "provider_revision": "bd880dd756d2ba56cc5f479bc078cea31b53c1d1",
+    "native_policy_report_sha256": "380efb2eed3d8ca5849aa32884efee485409cce69a757ac7a1172757708a7696",
+    "installed_pilot_report_sha256": "d6a15a9ff4b922d0021b79da26630737115b4f2cd39984363be0efe9e20b82ab",
+    "scope": "synthetic precommitted reimbursement offer, matched disclosure regimes"
+  }
 }
