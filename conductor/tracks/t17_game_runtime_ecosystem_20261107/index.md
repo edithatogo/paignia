@@ -11,8 +11,10 @@ T17.09 supplies the first application artifact receipt for the reimbursement
 Chapter 8 model. UOGTO accepted the executable information-set profile.
 Kairos accepted the bounded adapter, random-stream isolation and checkpoint
 replay. The independent Leduc comparison and Kairos's legacy CFR retirement
-complete T17.07. Three leaves remain open for the second application receipt,
-the remaining valued-payoff work and bounded release eligibility.
+complete T17.07. T17.11 has an accepted valued-payoff port and synthetic
+application comparison. T17.10 and T17.12 remain open for the second application
+receipt and bounded release eligibility.
+[Reimbursement T17.11 acceptance](https://github.com/edithatogo/new-drug-reimbursement-game/pull/118) ·
 [CFR validation](../../../docs/validation/cfr.md) ·
 [Kairos S04 retirement](https://github.com/edithatogo/kairos/pull/406) ·
 [Kairos port acceptance](https://github.com/edithatogo/kairos/blob/f7484751c4a058581f2425ca493faec8e85e5637/conductor/contracts/game-port-acceptance.md) ·

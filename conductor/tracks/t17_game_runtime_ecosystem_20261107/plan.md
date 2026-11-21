@@ -47,14 +47,15 @@ Kairos Track 110 separately retains source regression, migration and retirement.
 Native wire serialization, a general normal-form envelope and a mandatory Gambit
 run were not added as unsupported extra prerequisites.
 
-## Current acceptance — 21 November 2026
+## Current acceptance — 22 November 2026
 
 T17.09 records the first application artifact receipt and T17.17 has the
 accepted executable profile. The merged Kairos `K01.port` receipt qualifies
 T17.08, T17.15 and T17.16. T17.07 is complete after the independent Leduc
-comparison and the legacy Kairos CFR retirement. Three leaves remain open
-(.10, .11 and .12). The bounded release check still requires a second matching
-application receipt. The valued-payoff handoff stays open.
+comparison and the legacy Kairos CFR retirement. T17.11 accepts the
+application's valued-payoff port and synthetic comparison. T17.10 and T17.12
+remain open. The bounded release check still requires a second matching
+application receipt.
 [Kairos port acceptance](https://github.com/edithatogo/kairos/blob/f7484751c4a058581f2425ca493faec8e85e5637/conductor/contracts/game-port-acceptance.md)
 
 Kairos withdrew the legacy S01 RK4 export at `ae9ae116` and the S03
@@ -749,19 +750,39 @@ oracle and result contract. Exclusion is not scientific completion.
 - Files: none in this provider leaf; the consumer owns its implementation and
   receipt. It executes its real model, records independent expected results and
   exact versions/hashes, and supplies the receipt for T17.12.
+- Five pricing controls passed in the Innovate candidate using the same
+  qualified `bd880dd` archives and semantic profile as the reimbursement case.
+  The receipt awaits application acceptance. The draft's RustSec and
+  release-readiness checks are failing.
+  [Innovate candidate](https://github.com/edithatogo/innovate/pull/696)
 - Static reimbursement plus Innovate is an eligible pair. CareOps can supply a
   different real case; an optional Kairos adapter is not a blanket prerequisite.
 
-### [ ] T17.11 — external reimbursement valued-payoff port
+### [x] T17.11 — external reimbursement valued-payoff port
 
 - Owner: [new-drug-reimbursement-game T17](https://github.com/edithatogo/new-drug-reimbursement-game/tree/main/conductor/tracks/t17_game_runtime_ecosystem_20261107).
 - Behavior: application inputs preserve declared units, perspective and valuation
   provenance and reject incompatible values before calling Paignia.
 - Depends on: T17.01; HEOR valuation and Voiage VOI remain separate owners.
 - Files/checks: the application owns its bounded implementation and
-  `payoff_input_contract` test. No valuation algorithm or second completion
-  authority is introduced in Paignia. This leaf does not gate another static
-  consumer that has its own qualified payoff contract.
+  `payoff_input_contract` test. It retains the valuation and comparison
+  assumptions, and Voiage retains the information-value arithmetic.
+- Acceptance: the signed application merge `f23ece4` matches the tree that
+  passed all five hosted PR checks. The producer used Rust 1.75.0 and the
+  qualified `bd880dd` archives with default features disabled under denied
+  network and source reads. The installed Voiage wheel from the tree accepted
+  by signed `7d44e3d9b` admitted the static
+  declared response and reproduced all five synthetic regimes. Disclosure-only
+  gives the institution +2, firm −1.5 and declared welfare +0.5. The research
+  cost brings the combined disclosure and research welfare change to −0.25.
+  The case keeps its synthetic application scope.
+  [Application #118](https://github.com/edithatogo/new-drug-reimbursement-game/pull/118) ·
+  [Voiage #1386](https://github.com/edithatogo/voiage/pull/1386)
+- Coordination: chat `01a1f635-4bc4-73f0-b6f2-2d2541bb46a0` records the
+  accepted handoff in `/Volumes/PortableSSD/GitHub/paignia-t17-valued-payoff-acceptance`.
+  This pass covers the T17 plan, index and metadata and the track registry.
+  Native execution evidence is retained by the application. The next release
+  action is to admit the accepted second consumer receipt under T17.12.
 
 ## Phase E — bounded evidence and release eligibility
 
@@ -774,17 +795,16 @@ oracle and result contract. Exclusion is not scientific completion.
   and semantic profile, and explicit S01–S04 dispositions. Receipt files are
   content-hashed; publication and full-track completion are separate decisions.
 - Scope: `scripts/validate_game_consumer_evidence.py`, its focused test file,
-  `docs/validation/game-consumers.json`, and this plan. Current real application
-  receipts are absent; the checked-in report must remain ineligible.
+  `docs/validation/game-consumers.json`, and this plan. The checked-in report
+  remains ineligible until both application receipts are accepted.
 - Tests distinguish two valid synthetic receipt records from duplicate, toy,
   mismatched, missing, corrupted, failed or unsupported-method evidence. These
   test records exercise admission only and never count as actual consumers.
 - Tests-first `76b3168` executes 12 tests with 20 errors from the explicit
   unimplemented validator. The initial implementation executes 13 passing tests,
-  including malformed-data rejection. The committed real manifest correctly
-  reports ineligible (exit 1): immutable artifacts/profile and both application
-  receipts are absent. This does not complete parent T17.12 or authenticate
-  external claims; owner review of the content-bound receipts remains required.
+  including malformed-data rejection. The initial manifest reported
+  ineligible (exit 1) before the immutable artifacts, profile and application
+  receipts arrived. Owner review of the content-bound receipts remains required.
   Independent review subsequently found identity canonicalization, profile
   binding, scientific-method evidence and feature-coverage gaps. Corrected
   admission now passes 30 controls; the real manifest remains ineligible.
@@ -802,12 +822,13 @@ oracle and result contract. Exclusion is not scientific completion.
   the supported capabilities claimed by the artifacts and consumer cases.
 - Execution: local evidence validation; reuse the numerical/public-contract
   reviews already recorded instead of requesting repeated human approval.
-- Files (4): `scripts/validate_game_consumer_evidence.py` (future),
-  `tests/test_game_consumer_evidence.py` (future),
-  `docs/validation/game-consumers.json` (future), `extraction-manifest.json`.
-- Checks: `python -m unittest discover -s tests -p
-  'test_game_consumer_evidence.py'` (future suite), `python
-  scripts/validate_game_consumer_evidence.py` (future guard), and
+- Release evidence is tracked in `docs/validation/game-consumers.json`
+  and `extraction-manifest.json`. The guard and its controls are in
+  `scripts/validate_game_consumer_evidence.py` and
+  `tests/test_game_consumer_evidence.py`.
+- Run `target/dev-python/bin/python -m unittest discover -s tests -p
+  'test_game_consumer_evidence.py'`,
+  `target/dev-python/bin/python scripts/validate_game_consumer_evidence.py` and
   `cargo test --locked -p paignia-core -p paignia-solve`.
   Reject duplicated application identities, mismatched artifacts/profiles,
   toy-only cases, absent/failed receipts and advertised capabilities without
