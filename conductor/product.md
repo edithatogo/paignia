@@ -11,8 +11,13 @@ normal-form tables and ODE states are not admitted as extensive-game graphs.
 The bounded perfect-recall information-set profile supports native CFR and
 CFR+ with independent Kuhn and Leduc controls. The binary commitment solver and
 Nash payoff hull enclosure expose their parameter domains and diagnostics.
-Native execution and upstream semantic acceptance remain open.
 [Provider review](../docs/validation/provider-review-20261120.md)
+
+Kairos accepted execution of a bounded finite perfect-information path,
+including isolated random streams and in-process checkpoint replay. UOGTO
+accepted the executable perfect-recall information-set profile.
+[Kairos acceptance](https://github.com/edithatogo/kairos/pull/405) ·
+[UOGTO acceptance](https://github.com/edithatogo/UOGTO/pull/139)
 
 The optional pinned Clarabel backend stays in solver scope; core and default
 solver consumers do not acquire that backend or its serialization dependencies.
