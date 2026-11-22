@@ -6,6 +6,41 @@ is the ontology authority. New games discovered in applications must improve
 both projects where they expose a reusable gap. Applications retain their
 institutions, empirical data, payoff construction, calibration and valuation.
 
+## Current applications and partner libraries
+
+The current downstream applications are
+[nhra_game](https://github.com/edithatogo/nhra_game),
+[gtpcnz](https://github.com/edithatogo/gtpcnz),
+[new-drug-reimbursement-game](https://github.com/edithatogo/new-drug-reimbursement-game),
+[ginsim](https://github.com/edithatogo/ginsim),
+[tobac](https://github.com/edithatogo/tobac) and
+[tutorial_health_gt](https://github.com/edithatogo/tutorial_health_gt).
+Each uses the relevant upstream capabilities and follows the contribution flow
+below for game-theory work. This names intended ownership; it does not claim
+that all six already consume qualified Paignia artifacts.
+
+The tutorial teaches these libraries and applications with versioned lessons,
+explicit upstream revisions and reproducible synthetic examples. Adopt accepted
+capabilities in successive tutorial versions while preserving older lessons'
+pins and limitations. New teaching examples feed semantic/example improvements
+to UOGTO and reusable game examples or methods to Paignia where appropriate.
+
+Innovate is a parallel innovation-methods library. It consumes Paignia for
+generic game capabilities while retaining diffusion, adoption, substitution and
+innovation-specific behaviour. Migrate mature generic game implementations
+method by method: inventory callers and limits, freeze reference results,
+qualify the Paignia replacement, then switch pinned consumers with compatibility
+and deprecation notes. Keep the working implementation until numerical and
+behavioural parity is demonstrated; do not force a wholesale rewrite.
+
+Voiage owns value of information, value of perspective (VoP) and value of
+heterogeneity (VoH). `vop_poc_nz` is the demonstration/application for that work;
+versioned adoption uses accepted Voiage interfaces and remains subject to
+consumer checks. It is not a direct game-library transfer lead. A demonstrated shared game need can
+still enter the appropriate intake. `archive-govt-nz` preserves public sources
+and provenance alongside the Hugging Face catalogue; analytical game methods
+belong in their libraries and consuming applications.
+
 ## Required contribution flow
 
 Apply this flow to a new game or a material change in players, information,
@@ -66,14 +101,15 @@ historical snapshots.
 | `evolutionary-population` | [Bounded replicator RK4/Euler](../validation/replicator-rk4.md). | Map a consumer's fitness, simplex and time assumptions before reusing the numerical API. A general evolutionary game or native simulation receipt is not implied. |
 | `leader-follower-commitment` | T18 [binary commitment](../validation/leader-follower.md) and [Nash payoff hull bounds](../validation/credal-nash.md). | Compare [NHRA's sequential model](https://github.com/edithatogo/nhra_game/blob/3fe4aaa08521d103ddffbedd58eaa9d7d5256a55/src/nhra_gt/subgames/sequential.py), GINSIM enforcement and the existing Tobac handoff before extending support. Make commitment and optimistic/pessimistic/first-index tie semantics explicit; the binary family is not a general Stackelberg solver. |
 | `repeated-bargaining` | No accepted Paignia alternating-offer contract is established by this review. | [NHRA Rubinstein formula](https://github.com/edithatogo/nhra_game/blob/3fe4aaa08521d103ddffbedd58eaa9d7d5256a55/src/nhra_gt/subgames/sequential.py) motivates assessment: freeze discount/first-mover domains and disagreement assumptions, derive an independent oracle, then propose bounded Rust support. Do not transplant the perfect-patience shortcut as a proven limit. |
-| `cooperative-attribution` | Provider ownership/algorithm assessment pending. | Review Voiage information portfolios and the [value-of-perspective proposal](https://github.com/edithatogo/vop_poc_nz/blob/7778459f1798e3b6631a285b292a3153ee233333/docs/method/COMPONENT_ATTRIBUTION_DESIGN.md). A future generic cooperative-game allocation routine belongs here; application characteristic functions and VOI estimands stay with their owners. Inspect source implementations before claiming that a Shapley-labelled output actually computes Shapley values. |
+| `cooperative-attribution` | Provider ownership/algorithm assessment pending. | Establish a shared cooperative-game need before proposing a generic allocation routine here. Voiage retains information-source, VoP and VoH methods, characteristic functions and estimands; the demo does not imply a Paignia transfer. Record coalition values, baseline and an independently derived oracle for any proposed generic method. |
 | `strategic-information` | [Existing Voiage handoff](voiage-handoff.md); no general information-design solver is admitted by that plan. | Reuse finite policies/outcomes where their contract fits; assess missing strategic response methods here and semantic gaps in UOGTO. Voiage retains information-value arithmetic, signed values and study comparisons. |
 
 [GINSIM's screening, proxy-information and compliance models](https://github.com/edithatogo/ginsim/blob/26548c26352dcb571acfc44816cf702a52543fe0/src/model/extended_games.py) need explicit
 information-structure and solution-concept assessment across the applicable
 keys. A response formula labelled an equilibrium is not enough to choose a
-solver. Optional CareOps operational games must first supply an actual game
-definition. Neither a repository name nor a roadmap creates an accepted game.
+solver. Historical candidate consumers outside the six applications are not
+current application obligations. Neither a repository name nor a roadmap
+creates an accepted game.
 
 [Voiage's strategic-behaviour source](https://github.com/edithatogo/voiage/blob/11a2bc8685f71c2ff351def742d439c28373cd46/voiage/methods/strategic_behavior.py)
 is an originating method-assessment lead. Its fixture-backed status is not
@@ -91,8 +127,15 @@ and route an improvement to that owner before creating a competing component.
 | --- | --- |
 | UOGTO ontology and semantic fixtures | Consume versioned definitions/profiles with full-IRI mappings and attributed fixtures. Its [executable information-set profile](https://github.com/edithatogo/UOGTO/blob/main/docs/contracts/executable-information-set-profile-v1.md) names a bounded projection. Paignia's typed identity conversion does not implement general RDF/JSON-LD ingestion. No ontology Python runtime becomes a prerequisite for static solving. |
 | Kairos time, events, state, RNG and replay | Reuse through the existing optional `paignia-kairos` workspace. Its [manifest](../../crates/paignia-kairos/Cargo.toml) owns the exact pin; its [native contract](../architecture/game-native-execution-v1.md) owns the supported execution boundary. Preserve minimal static `paignia-core`/`paignia-solve` dependencies. |
-| Voiage information value; Dapane costing/valuation | Compose via explicit optional adapters or versioned outcomes. Keep their arithmetic and valuation assumptions with those providers. Costs, transfers and funding do not automatically become game utilities. Avoid a reverse runtime dependency from Paignia core into its consumers. |
-| Innovate and domain applications | Consume Paignia and contribute reusable gaps, synthetic examples and tests upstream. Do not make Paignia import an application that already depends on it. |
+| Voiage information, perspective and heterogeneity value | Reuse Voiage's qualified estimands and arithmetic when a game analysis evaluates information, perspectives or population heterogeneity. Compose through an optional adapter that consumes the relevant providers, or through versioned paired outcomes. Static Paignia and default Voiage retain their existing independent build boundaries. |
+| Dapane costing/valuation | Reuse its qualified cost and valuation capabilities through optional adapters or versioned outputs. Declare units, perspective, transfers and the mapping from valuation to game utility. Costs, transfers and funding do not automatically become game utilities. |
+| Innovate | Parallel innovation library with an existing Paignia adapter. Retain innovation-specific methods; contribute mature generic game capabilities incrementally after parity and consumer checks. Neither core imports the other's game adapter. |
+| The six applications above | Consume the relevant libraries, retain domain models and contribute reusable gaps, synthetic examples and tests upstream. Do not make Paignia import an application that already depends on it. |
+
+These are capability boundaries, not a requirement that every repository fit a
+single total hierarchy. An optional composition package may depend on Paignia,
+Voiage, Kairos or Dapane as needed; the providers do not import that composition
+package. Record the resulting dependency graph and keep it acyclic.
 
 Research tools and evidence corpora can support discovery without becoming
 numerical runtime dependencies. Existing dependency guards, feature isolation,

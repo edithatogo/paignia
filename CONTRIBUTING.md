@@ -29,6 +29,11 @@ in the contract's reuse table. Record the capability, interface/pin, dependency
 direction and consumer evidence, or why an existing provider does not fit.
 Preserve static solving without a simulation runtime or domain dependency.
 
+The contract names the six current applications, versioned tutorial adoption,
+and Innovate's parallel innovation-methods role. Existing mature game methods
+migrate only after independent parity and caller checks. VoP/VoH methods belong
+in Voiage, with `vop_poc_nz` as their demonstration.
+
 ## Development and validation
 
 Use the toolchain profiles in [Native CI](.github/workflows/ci.yml); both stable Rust and the declared minimum Rust version matter. From the repository root, the established native checks are:

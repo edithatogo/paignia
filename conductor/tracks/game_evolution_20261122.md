@@ -7,6 +7,10 @@ new or materially changed downstream game records both semantic and provider
 coverage, including reuse decisions. Reusable gaps are implemented upstream;
 domain assumptions, data and valuation stay downstream. Relevant existing
 upstream libraries are reused through qualified interfaces without cycles.
+The scope is the six applications named in the intake contract. Innovate is a
+parallel innovation library with gradual generic-game migration. Voiage owns
+VoP/VoH methods and `vop_poc_nz` is their intended demonstration; archives retain source and
+provenance responsibilities. Tutorial adoption proceeds in versioned lessons.
 
 This is a contribution-workflow increment. It does not implement or qualify
 the candidate methods in the intake table or change T17/T18 acceptance.
@@ -28,8 +32,8 @@ fit. All open T17.10/T17.12 and T18.03 obligations remain open.
 ## Verification scope
 
 Documentation changes only, based on `3573ec7af6239be845f04c4a5ec7831198e09e92`.
-`git diff --check` passed. All 41 relative Markdown file links across the seven
-changed documents resolved, and the change-scope check found no other files.
+Focused verification covers whitespace, relative Markdown file links and the
+explicit eight-document allowlist; results are recorded in the pull request.
 Independent documentation review found a mismatch in semantic disposition names;
 the paired contracts now use the same four explicit semantic states, retaining
 pending review separately from unsupported capability. Native source,

@@ -192,7 +192,7 @@ the required receipt fields and reproducible qualification procedure.
 
 Keep domain game definitions and payoff construction in the consumer. The
 reimbursement application owns its finite offer/acceptance integration and
-valuation; Innovate and CareOps own their respective models.
+valuation; the other applications and partner libraries own their models.
 
 ## Ecosystem boundaries
 
@@ -202,14 +202,21 @@ The intake records existing support, missing semantics or methods, synthetic
 examples and eventual consumer adoption. An application-specific game can reuse
 an existing family without requiring a new ontology class or solver.
 
+The current applications are `nhra_game`, `gtpcnz`,
+`new-drug-reimbursement-game`, `ginsim`, `tobac` and `tutorial_health_gt`.
+The linked contract names their repositories and versioned adoption workflow.
+Innovate is a parallel innovation library that consumes Paignia for generic
+game methods; mature implementations migrate incrementally after parity checks.
+
 | Owner | Responsibility |
 |---|---|
 | Paignia | Generic game representation, supported algorithms, result contracts and diagnostics. |
 | UOGTO | Canonical game ontology, full IRIs, executable semantic profiles, SHACL and semantic conformance. |
 | Kairos | Native time, event scheduling, ECS state, resources, RNG and replay. An optional Paignia adapter depends on both libraries. |
 | Domain applications | Specific games, institutions, agents, payoffs, empirical assumptions and decisions. |
-| HEOR capability | Valuation with explicit units, perspectives and assumptions; not game solving or scheduling. |
-| Voiage | Value of information and decision uncertainty. |
+| Dapane | Costing and valuation with explicit units, perspectives and mappings into game utility. |
+| Voiage | Value of information, perspective and heterogeneity; reuse through optional composition or versioned outcomes. |
+| Innovate | Innovation-specific diffusion, adoption and substitution; generic game capabilities use Paignia as they are qualified. |
 
 No Kairos solver implementation, UOGTO ontology asset or Python core was copied
 in this transfer. The [transfer map](docs/architecture/paignia-transfer-map.md)
