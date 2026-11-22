@@ -6,9 +6,18 @@ Read the [Voiage handoff](voiage-handoff.md) and the concurrently authored
 [scientific-contract refinements](../../conductor/refinements/scientific-contracts-20261108.md).
 Existing owner plans retain task status and acceptance authority.
 
-Current reconciliation is in [provider acceptance and remaining owners](#provider-acceptance-and-remaining-owners--17-november-2026).
-The earlier 8–16 November snapshots remain historical source, planning and
-review evidence; they do not override the current Conductor acceptance receipt.
+For current status and owners, start with the [track registry](../../conductor/tracks.md)
+and the linked track plans. The dated snapshots below preserve historical source,
+planning, ownership and review evidence; they do not override current acceptance.
+
+## Simplification work — 22 November 2026
+
+Chat `01a1f8cf-0e42-7d21-a247-bb45ac8b70e0` works in the managed checkout
+`/Users/doughnut/.codex/worktrees/paignia-plan-ci-simplification/paignia`, branch
+`codex/simplify-plan-ci-20261122`. Its proposed PR covers the T17 plan and
+archive, workflow, this coordination record, and CI summary checking and its
+focused tests. It has no tenant or native-object scope. The next operation is
+review and hosted CI; shared `main` remains with the repository integrator.
 
 ## Source change reconciled
 

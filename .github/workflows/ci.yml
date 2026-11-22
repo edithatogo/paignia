@@ -51,41 +51,14 @@ jobs:
         run: |
           set -euo pipefail
           cargo test --workspace --all-targets --all-features --locked 2>&1 | tee target/all-features.log
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-          log = Path("target/all-features.log").read_text()
-          backend = re.search(
-              r"Running[^\n]*tests/clarabel_backend\.rs[^\n]*\n(.*?test result:[^\n]+)",
-              log, re.DOTALL,
-          )
-          required = "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;"
-          if backend is None or required not in backend.group(1):
-              raise SystemExit("Expected all eight optional native LP backend controls without skips or failures")
-          ce = re.search(
-              r"Running[^\n]*tests/correlated_equilibrium\.rs[^\n]*\n(.*?test result:[^\n]+)",
-              log, re.DOTALL,
-          )
-          required_ce = "test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;"
-          if ce is None or required_ce not in ce.group(1):
-              raise SystemExit("Expected all 28 optional native CE controls without skips or failures")
-          PY
+          python3 scripts/check_cargo_test_log.py target/all-features.log 8 --target tests/clarabel_backend.rs
+          python3 scripts/check_cargo_test_log.py target/all-features.log 28 --target tests/correlated_equilibrium.rs
       - name: Native role-separation doctests
         shell: bash
         run: |
           set -euo pipefail
           cargo test --locked -p paignia-core --doc 2>&1 | tee target/doctests.log
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-          summaries = re.findall(
-              r"^test result: ok\. (\d+) passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;",
-              Path("target/doctests.log").read_text(),
-              re.MULTILINE,
-          )
-          if len(summaries) != 1 or int(summaries[0]) < 4:
-              raise SystemExit("Expected the three role-separation and one observation-boundary doctests without skips or failures")
-          PY
+          python3 scripts/check_cargo_test_log.py target/doctests.log 4 --minimum
       - name: Source ownership and package boundary
         run: python3 scripts/validate_extraction.py --receipt target/static-dependency-boundary.json
       - name: Native solver API doctests
@@ -93,17 +66,7 @@ jobs:
         run: |
           set -euo pipefail
           cargo test --locked -p paignia-solve --doc --all-features 2>&1 | tee target/solver-doctests.log
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-          summaries = re.findall(
-              r"^test result: ok\. (\d+) passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;",
-              Path("target/solver-doctests.log").read_text(),
-              re.MULTILINE,
-          )
-          if len(summaries) != 1 or int(summaries[0]) < 1:
-              raise SystemExit("Expected the native mixed Nash API example without skips or failures")
-          PY
+          python3 scripts/check_cargo_test_log.py target/solver-doctests.log 1 --minimum
       - name: Package and consumer evidence regression controls
         run: python3 -B -m unittest discover -s tests
       - name: Retained independent public-interface and numerical controls
@@ -114,8 +77,10 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          import re
           import subprocess
+          import sys
+          sys.path.insert(0, "scripts")
+          from check_cargo_test_log import check_summary
           targets = [
               ("result_contract_review", 9, []),
               ("replicator_review", 10, []),
@@ -133,12 +98,12 @@ jobs:
                                    stderr=subprocess.STDOUT, check=False)
               (logs / f"{target}.log").write_text(run.stdout)
               print(run.stdout, end="")
-              summaries = re.findall(
-                  r"^test result: ok\. (\d+) passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;",
-                  run.stdout, re.MULTILINE,
-              )
-              if run.returncode or summaries != [str(expected)]:
-                  raise SystemExit(f"Expected exactly {expected} passing independent tests for {target}")
+              if run.returncode:
+                  raise SystemExit(f"Independent tests failed for {target}")
+              try:
+                  check_summary(run.stdout, expected)
+              except ValueError as error:
+                  raise SystemExit(f"{target}: {error}") from error
           PY
       - name: Isolated extracted-source consumer
         run: python3 scripts/validate_game_packages.py --source-smoke --receipt target/extracted-package-smoke.json
