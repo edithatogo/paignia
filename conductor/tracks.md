@@ -1,5 +1,11 @@
 # Tracks
 
+- [x] **Game evolution and upstream reuse contract**
+  [Scope, checks and remaining intake work](tracks/game_evolution_20261122.md).
+  Establishes the UOGTO/Paignia/downstream contribution workflow and records
+  existing application leads. It does not complete any solver migration,
+  semantic mapping, consumer qualification or release obligation.
+
 - [~] **T17 Paignia native packages and scientific maturity**
   [Specification, plan and handoff](tracks/t17_game_runtime_ecosystem_20261107/index.md).
   Fourteen provider-owned leaves plus three external consumer/valuation handoffs

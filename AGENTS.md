@@ -7,7 +7,19 @@ and recorded scientific limitations.
 - All game execution is Rust. Development orchestration/reference tooling is
   not another supported core and must never supply a silent fallback.
 - Keep domain models and valuation outside the generic packages. UOGTO owns
-  canonical semantics; Kairos owns native simulation primitives; Voiage owns VOI.
+  canonical semantics; Kairos owns native simulation primitives; Voiage owns
+  information, perspective and heterogeneity value; Dapane owns costing/valuation.
+- For every new or materially changed downstream game, follow
+  `docs/integrations/downstream-game-intake.md`: record both UOGTO semantic
+  coverage and Paignia capability disposition, including reuse of existing
+  support. Add reusable representations, methods and synthetic examples here;
+  retain application assumptions, data and payoff calibration downstream.
+- Assess existing upstream ecosystem capabilities before implementing shared
+  infrastructure. Reuse qualified interfaces with immutable pins and focused
+  consumer checks; preserve the static dependency boundary and avoid cycles.
+- Use the contract's six-application scope. Innovate is a parallel innovation
+  library: migrate mature generic game capabilities gradually after parity,
+  preserving working callers until their Paignia replacement is qualified.
 - Preserve one authoritative implementation of each supported method. A source
   move or rename does not discharge Kairos S01–S04 scientific obligations.
 - Use bounded Conductor leaves, focused checks and ordinary review. Do not add
