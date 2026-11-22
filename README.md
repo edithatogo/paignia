@@ -239,3 +239,13 @@ profile. Optional simulation and unrelated future algorithms do not gate that
 bounded release. Each advertised numerical method must satisfy its own
 independent controls. Routine work uses focused checks and coherent agent
 review; there is no repeated human approval loop.
+
+## Security
+
+Follow the [security policy](https://github.com/edithatogo/.github/blob/main/SECURITY.md) to report vulnerabilities
+privately. Keep credentials and sensitive data out of public issues and pull requests.
+
+## License
+
+See [LICENSE](LICENSE) for this repository's licensing terms. Retain the
+licences and attribution that accompany third-party material.

@@ -115,6 +115,40 @@ creates an accepted game.
 is an originating method-assessment lead. Its fixture-backed status is not
 evidence of a general equilibrium solver to transfer unchanged.
 
+### Recorded consumer case: tutorial coordination, edition 0.2
+
+Shared intake key: `finite-perfect-information`; case identity:
+`urn:tutorial-health-gt:coordination:v1`. Provider disposition: **reuse_existing**.
+The [paired UOGTO note](https://github.com/edithatogo/UOGTO/blob/main/docs/contracts/downstream-game-intake.md#recorded-consumer-case-tutorial-coordination-edition-02)
+records the semantic mapping and separately executed declaration checks.
+
+The [locked tutorial example](https://github.com/edithatogo/tutorial_health_gt/tree/3851a2346c8e9cc457c7bfee67848be13fc8ca46/examples/finite-coordination)
+uses `paignia-core` and `paignia-solve` at
+`bd880dd756d2ba56cc5f479bc078cea31b53c1d1`, calling `backward_induction` on the
+existing static finite perfect-information graph. The private consumer needs
+repository access; no private source or licence is copied here.
+
+The commissioner chooses whether to offer; the provider observes an offer and
+chooses participation or decline. Invented commissioner/provider utilities are
+`(1, 1)` for no offer, `(3, 2)` for participation and `(0, 0)` for decline.
+Independent backward reasoning gives `offer -> participate`, utilities `(3, 2)`.
+Changing only the provider's participation utility to `-1` gives `no-offer`,
+utilities `(1, 1)`, with decline as the off-path provider response. Removing a
+referenced terminal must reject the graph rather than return a strategy.
+
+On 22 November 2026, Rust/Cargo 1.100.0 on Linux executed `cargo test --locked`
+(one test covering all three cases) and `cargo run --locked` successfully.
+Source SHA-256: `ed9af70f81f90d2cc063f389eff7b021fe40d2962cdf46d7f6a39fc69114e18b`;
+Cargo lock SHA-256: `1c1810f97e87ec60ae99613d429b5101fae10f1c1af6a047d315781a88d39517`.
+UOGTO's successful declaration check separately retains
+`native_execution_qualified=false`; it does not certify this Rust graph.
+
+This records a verified use of an existing method and a reusable known-answer
+case. No new solver or mandatory provider dependency is needed. Admission of a
+public upstream fixture, full RDF mapping and hosted tutorial execution remain
+pending. T17/T18 acceptance and the authoritative consumer receipts are unchanged;
+the synthetic example is not empirical policy validation.
+
 ## Reuse the relevant upstream repositories
 
 Before implementing shared infrastructure, inspect the current ecosystem
