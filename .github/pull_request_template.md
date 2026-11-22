@@ -27,6 +27,15 @@ Identify checks not run, failures, and remaining limitations. -->
 Describe game semantics, solver diagnostics, compatibility, and ecosystem ownership.
 Include migration or rollback notes where relevant; otherwise explain why not. -->
 
+## Game and upstream impact
+
+<!-- For a new/changed game capability, follow docs/integrations/downstream-game-intake.md.
+Give the shared intake ID and originating application/source revision.
+Link UOGTO semantic coverage/change and Paignia reuse/extension/unsupported disposition.
+Identify the admitted profile, independent synthetic check and downstream adoption state.
+For shared infrastructure, record relevant upstream reuse and dependency direction.
+For an unrelated change, state "Not applicable" with a brief reason. -->
+
 ## Documentation and follow-up
 
 <!-- Identify affected documentation, examples, or release notes.

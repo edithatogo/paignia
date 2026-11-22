@@ -8,6 +8,27 @@ Read [AGENTS.md](AGENTS.md), [the project index](conductor/index.md), and the se
 
 For bugs, provide the affected version or commit, environment, minimal reproduction, expected result and observed result. For a substantial proposal, describe the use case and compatibility impact in an issue before expanding implementation scope. Use existing issue templates when offered.
 
+## Games discovered in downstream applications
+
+Follow the [downstream-game intake contract](docs/integrations/downstream-game-intake.md)
+for every new or materially changed game, information structure, solution method
+or payoff interpretation. Record both the UOGTO semantic disposition and the
+Paignia implementation disposition, including an evidenced reuse decision when
+the existing contracts suffice. Use one shared intake ID and link existing
+upstream work before creating another request.
+
+Extend UOGTO's definitions, constraints, examples or mappings where needed; add
+reusable Rust representations, algorithms and independently checked synthetic
+examples in Paignia. Keep empirical inputs, domain institutions, payoff
+calibration and valuation with the application. Pin the accepted contracts and
+provider revisions, then record a focused consumer check before changing its
+advertised support. A pending request is not a supported capability.
+
+Before adding shared infrastructure, assess the existing upstream repositories
+in the contract's reuse table. Record the capability, interface/pin, dependency
+direction and consumer evidence, or why an existing provider does not fit.
+Preserve static solving without a simulation runtime or domain dependency.
+
 ## Development and validation
 
 Use the toolchain profiles in [Native CI](.github/workflows/ci.yml); both stable Rust and the declared minimum Rust version matter. From the repository root, the established native checks are:

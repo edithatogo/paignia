@@ -1,7 +1,8 @@
 # Paignia
 
-Paignia is the Rust library for reusable game representations, supported game
-solving methods and solver diagnostics in the Kairos ecosystem. Its independent
+Paignia is the core Rust game-theory library for reusable game representations,
+supported solving methods and solver diagnostics. UOGTO is its canonical
+ontology; Kairos supplies optional native simulation execution. Its independent
 native seed was transferred from
 [new-drug-reimbursement-game](https://github.com/edithatogo/new-drug-reimbursement-game).
 Paignia is now the implementation home; domain applications consume it as a
@@ -194,6 +195,12 @@ reimbursement application owns its finite offer/acceptance integration and
 valuation; Innovate and CareOps own their respective models.
 
 ## Ecosystem boundaries
+
+New or materially changed games in downstream repositories feed back into
+[UOGTO semantic coverage and Paignia's reusable capabilities](docs/integrations/downstream-game-intake.md).
+The intake records existing support, missing semantics or methods, synthetic
+examples and eventual consumer adoption. An application-specific game can reuse
+an existing family without requiring a new ontology class or solver.
 
 | Owner | Responsibility |
 |---|---|
