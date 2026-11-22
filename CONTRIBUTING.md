@@ -25,6 +25,20 @@ target/dev-python/bin/python scripts/validate_game_packages.py
 
 Keep the committed lockfile and original source attribution. Add regression or reference cases for changed behaviour, including invalid inputs and method limitations. An extracted-source consumer test does not qualify a registry artifact or prove scientific validity. Publishing remains a separate operation.
 
+### Repository lint and health
+
+The **Repository Health** workflow runs on pull requests, pushes to `main`
+and merge groups. It can also run on demand from the Actions tab.
+
+- Run `alint check` at the repository root. The workflow reads `.alint.yml`,
+  annotates findings and fails on errors. [alint v0.22.1](https://github.com/asamarts/alint/releases/tag/v0.22.1)
+- Run `repohealth . --format markdown` in a full Git checkout. The workflow
+  publishes its informational score and recommendations in the run summary.
+  [RepoHealth v0.5.3](https://github.com/spbuilds/repohealth/releases/tag/v0.5.3)
+
+When upgrading RepoHealth, update its version and Linux amd64 archive SHA-256
+together in `.github/workflows/repository-health.yml`.
+
 ## Pull requests
 
 Create a focused branch from the current `main` branch and submit a pull request to this repository. Link the relevant issue or existing Conductor task, explain the resulting behaviour, and update affected examples, contracts and documentation. Keep unrelated changes in separate pull requests.
