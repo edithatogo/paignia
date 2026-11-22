@@ -78,6 +78,70 @@ ordering. Near-tie chains can depend on input order. The [native result contract
 names that behavior explicitly; it does not promise an exact equilibrium or an
 exhaustive catalogue. UOGTO names alone do not establish implementation support.
 
+## Getting started
+
+### Install the libraries
+
+Create a binary package with `cargo new --edition 2021 paignia-example`. Add both
+libraries to its `Cargo.toml` using the same reviewed Git revision. The example
+uses the revision in the static package handoff. [Package handoff](docs/validation/receipts/t17-bd880dd-handoff.json)
+
+```toml
+[dependencies]
+paignia-core = { git = "https://github.com/edithatogo/paignia.git", rev = "bd880dd756d2ba56cc5f479bc078cea31b53c1d1" }
+paignia-solve = { git = "https://github.com/edithatogo/paignia.git", rev = "bd880dd756d2ba56cc5f479bc078cea31b53c1d1" }
+```
+
+### Example
+
+A single player chooses between two terminal outcomes with payoffs of 2 and 0.
+Put this in `src/main.rs` and run `cargo run`. The solver prints `accept: 2`.
+
+```rust
+use std::collections::BTreeMap;
+
+use paignia_core::{ActionEdge, ActionId, Game, Node, NodeId, PlayerId};
+use paignia_solve::{backward_induction, SolveError};
+
+fn main() -> Result<(), SolveError> {
+    let player = PlayerId("chooser".into());
+    let root = NodeId("root".into());
+    let accept = NodeId("accept".into());
+    let decline = NodeId("decline".into());
+    let terminal = |payoff| Node::Terminal {
+        payoffs: BTreeMap::from([(player.clone(), payoff)]),
+    };
+
+    let decision = Node::Decision {
+        player: player.clone(),
+        edges: vec![
+            ActionEdge {
+                action: ActionId("accept".into()),
+                target: accept.clone(),
+            },
+            ActionEdge {
+                action: ActionId("decline".into()),
+                target: decline.clone(),
+            },
+        ],
+    };
+    let game = Game {
+        root: root.clone(),
+        nodes: BTreeMap::from([
+            (root.clone(), decision),
+            (accept, terminal(2.0)),
+            (decline, terminal(0.0)),
+        ]),
+    };
+    let solution = backward_induction(&game)?;
+    println!(
+        "{}: {}",
+        solution.choices[&root].0, solution.expected_payoffs[&player]
+    );
+    Ok(())
+}
+```
+
 ## Build and verify
 
 Use the CPython patch release recorded in `.python-version` for verification.
@@ -125,7 +189,6 @@ can test those bytes directly against their own models and expected outcomes.
 The [application-owner handoff](docs/validation/game-consumer-handoff.md) gives
 the required receipt fields and reproducible qualification procedure.
 
-Consume an exact reviewed Git revision until release artifacts are qualified.
 Keep domain game definitions and payoff construction in the consumer. The
 reimbursement application owns its finite offer/acceptance integration and
 valuation; Innovate and CareOps own their respective models.
