@@ -6,7 +6,7 @@ then run the existing bounded release eligibility check. Paignia owns the
 provider leaves. The applications own their model, valuation and acceptance.
 
 The [specification](spec.md) defines the capability and evidence boundaries.
-The [plan at `3573ec7`](https://github.com/edithatogo/paignia/blob/3573ec7af6239be845f04c4a5ec7831198e09e92/conductor/tracks/t17_game_runtime_ecosystem_20261107/plan.md)
+The [22 November plan archive](plan-history-20261122.md)
 preserves the dated dependencies, implementation, failed controls and reviews
 for completed work. Reuse the [static package review](../../../docs/validation/t17-review-20261117.md)
 and [native provider review](../../../docs/validation/provider-review-20261120.md)
@@ -107,8 +107,8 @@ independent equation 8.2 benchmark. [Application #114](https://github.com/editha
 The selected second application owns this gate. The
 [Innovate candidate](https://github.com/edithatogo/innovate/pull/696) ran five
 pricing controls on the same `bd880dd` archives and profile as T17.09 and awaits
-application acceptance. Another distinct real application, such as CareOps,
-can supply a matching receipt.
+application acceptance. Its RustSec and release-readiness checks still fail.
+Another distinct real application, such as CareOps, can supply a matching receipt.
 
 Use the [application handoff](../../../docs/validation/game-consumer-handoff.md).
 The owner runs its real model with independent expected results and records

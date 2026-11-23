@@ -1,0 +1,58 @@
+name: Solver property campaign
+
+on:
+  pull_request:
+    paths:
+      - "crates/paignia-core/**"
+      - "crates/paignia-solve/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/solver-properties.yml"
+  schedule:
+    - cron: "43 4 * * 2"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: solver-properties-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  generated-games:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CARGO_BUILD_JOBS: "2"
+    steps:
+      - uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca
+        with:
+          toolchain: "1.75.0"
+      - name: Build the generated-game campaign
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p target/property-evidence
+          rustc -Vv | tee target/property-evidence/compiler.log
+          git rev-parse HEAD | tee target/property-evidence/commit.log
+          timeout 480s cargo test --locked -p paignia-solve --test generated_game_invariants --no-run 2>&1 | tee target/property-evidence/build.log
+      - name: Execute bounded analytic and mutation cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 60s cargo test --locked -p paignia-solve --test generated_game_invariants -- --test-threads=1 --nocapture 2>&1 | tee target/property-evidence/tests.log
+      - name: Retain execution evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: solver-properties-rust-1.75.0
+          path: target/property-evidence/*.log
+          if-no-files-found: warn
+          retention-days: 14
