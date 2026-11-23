@@ -6,9 +6,18 @@ Read the [Voiage handoff](voiage-handoff.md) and the concurrently authored
 [scientific-contract refinements](../../conductor/refinements/scientific-contracts-20261108.md).
 Existing owner plans retain task status and acceptance authority.
 
-Current reconciliation is in [provider acceptance and remaining owners](#provider-acceptance-and-remaining-owners--17-november-2026).
-The earlier 8–16 November snapshots remain historical source, planning and
-review evidence; they do not override the current Conductor acceptance receipt.
+For current status and owners, start with the [track registry](../../conductor/tracks.md)
+and the linked track plans. The dated snapshots below preserve historical source,
+planning, ownership and review evidence; they do not override current acceptance.
+
+## Simplification work — 22 November 2026
+
+Chat `01a1f8cf-0e42-7d21-a247-bb45ac8b70e0` works in the managed checkout
+`/Users/doughnut/.codex/worktrees/paignia-plan-ci-simplification/paignia`, branch
+`codex/simplify-plan-ci-20261122`. Its proposed PR covers the T17 plan and
+archive, workflow, this coordination record, and CI summary checking and its
+focused tests. It has no tenant or native-object scope. The next operation is
+review and hosted CI; shared `main` remains with the repository integrator.
 
 ## Source change reconciled
 
@@ -843,3 +852,12 @@ operation is hosted CI for the Conductor status update. T17.10, T17.11
 and T17.12 retain their owners and acceptance criteria.
 [Paignia #62](https://github.com/edithatogo/paignia/pull/62) ·
 [Kairos #406](https://github.com/edithatogo/kairos/pull/406)
+
+## T17 plan and CI simplification on 23 November 2026
+
+Chat `01a1f635-4bc4-73f0-b6f2-2d2541bb46a0` owns the plan trim and its CI
+follow-up in `/Users/doughnut/.codex/worktrees/paignia-ponytail/paignia`.
+The plan branch `codex/paignia-t17-live-plan` covers the T17 plan and this
+handoff. The follow-up covers only `.github/workflows/ci.yml`. The scope is
+repository source and GitHub Actions. The next operation is hosted
+verification of the reviewed changes.

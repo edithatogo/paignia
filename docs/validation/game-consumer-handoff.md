@@ -43,31 +43,33 @@ does not complete the upstream obligations.
 Start from a clean, committed provider revision whose required native checks
 have passed. The package command rejects uncommitted package inputs; the
 receiving guard also rejects a package receipt that records a dirty worktree.
-Use Python 3.11 or later, the selected Rust toolchain and Linux `bubblewrap` as
-specified in the [build instructions](../../README.md#build-and-verify).
+Use the repository-local CPython interpreter selected by `.python-version`,
+the selected Rust toolchain and Linux `bubblewrap` as specified in the
+[build instructions](../../README.md#build-and-verify).
 
 These commands run actual package qualification. Choose a fresh destination for
 each handoff so a previous receipt cannot be confused with a new run:
 
 ```bash
 set -euo pipefail
+test "$(target/dev-python/bin/python --version)" = "Python $(cat .python-version)"
 mkdir -p target
 PAIGNIA_HANDOFF_DIR="$(mktemp -d "target/consumer-handoff-$(git rev-parse HEAD)-XXXXXX")"
 git rev-parse HEAD 'HEAD^{tree}' > "$PAIGNIA_HANDOFF_DIR/provider-identity.txt"
 cargo --version > "$PAIGNIA_HANDOFF_DIR/toolchain.txt"
 rustc --version >> "$PAIGNIA_HANDOFF_DIR/toolchain.txt"
 cargo fetch --locked
-python3 scripts/validate_game_packages.py \
+target/dev-python/bin/python scripts/validate_game_packages.py \
   --receipt "$PAIGNIA_HANDOFF_DIR/package-receipt.json" \
   --artifact-dir "$PAIGNIA_HANDOFF_DIR/archives" \
   2>&1 | tee "$PAIGNIA_HANDOFF_DIR/package-execution.log"
 cp docs/architecture/game-runtime-contract-v1.md \
   "$PAIGNIA_HANDOFF_DIR/profile-contract.md"
-sha256sum "$PAIGNIA_HANDOFF_DIR"/archives/*.crate \
-  "$PAIGNIA_HANDOFF_DIR/package-receipt.json" \
-  "$PAIGNIA_HANDOFF_DIR/profile-contract.md" \
-  "$PAIGNIA_HANDOFF_DIR/package-execution.log" \
-  > "$PAIGNIA_HANDOFF_DIR/SHA256SUMS"
+(
+  cd "$PAIGNIA_HANDOFF_DIR"
+  sha256sum archives/*.crate package-receipt.json profile-contract.md \
+    package-execution.log provider-identity.txt toolchain.txt > SHA256SUMS
+)
 ```
 
 The script creates actual `.crate` files, verifies packaged source and metadata,
@@ -123,8 +125,9 @@ this exact profile; the receiving owner must also review its actual semantics.
 
 ## 2. Execute the application's own model
 
-The application owner first checks both delivered archive hashes against the
-package receipt. Unpack the qualified archives into a dedicated artifact
+After transfer, run `sha256sum -c SHA256SUMS` from the received bundle directory.
+The application owner checks both delivered archive hashes against the package
+receipt. Unpack the qualified archives into a dedicated artifact
 location outside the provider checkout, preserving their contents, `LICENSE`
 and `NOTICE`. Resolve the application to those unpacked packages. An exact Git
 source dependency remains a useful development pin, but it does not establish
@@ -365,8 +368,8 @@ a manually shortened package receipt cannot stand in for the executed matrix.
 Run from the Paignia checkout:
 
 ```bash
-python3 -B -m unittest discover -s tests -p test_game_consumer_evidence.py
-python3 scripts/validate_game_consumer_evidence.py \
+target/dev-python/bin/python -B -m unittest discover -s tests -p test_game_consumer_evidence.py
+target/dev-python/bin/python scripts/validate_game_consumer_evidence.py \
   --manifest <received-evidence-manifest.json>
 ```
 

@@ -1,7 +1,8 @@
 # Paignia
 
-Paignia is the Rust library for reusable game representations, supported game
-solving methods and solver diagnostics in the Kairos ecosystem. Its independent
+Paignia is the core Rust game-theory library for reusable game representations,
+supported solving methods and solver diagnostics. UOGTO is its canonical
+ontology; Kairos supplies optional native simulation execution. Its independent
 native seed was transferred from
 [new-drug-reimbursement-game](https://github.com/edithatogo/new-drug-reimbursement-game).
 Paignia is now the implementation home; domain applications consume it as a
@@ -191,9 +192,21 @@ the required receipt fields and reproducible qualification procedure.
 
 Keep domain game definitions and payoff construction in the consumer. The
 reimbursement application owns its finite offer/acceptance integration and
-valuation; Innovate and CareOps own their respective models.
+valuation; the other applications and partner libraries own their models.
 
 ## Ecosystem boundaries
+
+New or materially changed games in downstream repositories feed back into
+[UOGTO semantic coverage and Paignia's reusable capabilities](docs/integrations/downstream-game-intake.md).
+The intake records existing support, missing semantics or methods, synthetic
+examples and eventual consumer adoption. An application-specific game can reuse
+an existing family without requiring a new ontology class or solver.
+
+The current applications are `nhra_game`, `gtpcnz`,
+`new-drug-reimbursement-game`, `ginsim`, `tobac` and `tutorial_health_gt`.
+The linked contract names their repositories and versioned adoption workflow.
+Innovate is a parallel innovation library that consumes Paignia for generic
+game methods; mature implementations migrate incrementally after parity checks.
 
 | Owner | Responsibility |
 |---|---|
@@ -201,8 +214,9 @@ valuation; Innovate and CareOps own their respective models.
 | UOGTO | Canonical game ontology, full IRIs, executable semantic profiles, SHACL and semantic conformance. |
 | Kairos | Native time, event scheduling, ECS state, resources, RNG and replay. An optional Paignia adapter depends on both libraries. |
 | Domain applications | Specific games, institutions, agents, payoffs, empirical assumptions and decisions. |
-| HEOR capability | Valuation with explicit units, perspectives and assumptions; not game solving or scheduling. |
-| Voiage | Value of information and decision uncertainty. |
+| Dapane | Costing and valuation with explicit units, perspectives and mappings into game utility. |
+| Voiage | Value of information, perspective and heterogeneity; reuse through optional composition or versioned outcomes. |
+| Innovate | Innovation-specific diffusion, adoption and substitution; generic game capabilities use Paignia as they are qualified. |
 
 No Kairos solver implementation, UOGTO ontology asset or Python core was copied
 in this transfer. The [transfer map](docs/architecture/paignia-transfer-map.md)
@@ -225,3 +239,13 @@ profile. Optional simulation and unrelated future algorithms do not gate that
 bounded release. Each advertised numerical method must satisfy its own
 independent controls. Routine work uses focused checks and coherent agent
 review; there is no repeated human approval loop.
+
+## Security
+
+Follow the [security policy](https://github.com/edithatogo/.github/blob/main/SECURITY.md) to report vulnerabilities
+privately. Keep credentials and sensitive data out of public issues and pull requests.
+
+## License
+
+See [LICENSE](LICENSE) for this repository's licensing terms. Retain the
+licences and attribution that accompany third-party material.
