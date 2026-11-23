@@ -28,7 +28,16 @@ feasibility alone does not establish that method's qualification.
 Static packages are independent of Kairos. The optional execution adapter
 consumes Kairos; neither generic provider imports the adapter. UOGTO remains the
 semantic authority. Applications own their games and payoffs. HEOR valuation
-and Voiage VOI remain distinct capabilities.
+and Voiage information, perspective and heterogeneity value remain distinct
+capabilities. Reuse Voiage and Dapane through qualified optional composition or
+versioned artifacts with explicit utility assumptions and no dependency cycles.
+
+The [game intake contract](../docs/integrations/downstream-game-intake.md)
+names the six current downstream applications and the UOGTO/Paignia feedback
+required for their game changes. Innovate remains a parallel innovation library;
+its mature generic game methods move to Paignia gradually after parity and
+consumer qualification. Versioned health-game tutorials adopt accepted library
+and application capabilities over time.
 
 The long-term goal is independently verified numerical behavior, efficient
 compact representations and reproducible package/consumer contracts. Comparative
