@@ -843,3 +843,12 @@ operation is hosted CI for the Conductor status update. T17.10, T17.11
 and T17.12 retain their owners and acceptance criteria.
 [Paignia #62](https://github.com/edithatogo/paignia/pull/62) ·
 [Kairos #406](https://github.com/edithatogo/kairos/pull/406)
+
+## T17 plan and CI simplification on 23 November 2026
+
+Chat `01a1f635-4bc4-73f0-b6f2-2d2541bb46a0` owns the plan trim and its CI
+follow-up in `/Users/doughnut/.codex/worktrees/paignia-ponytail/paignia`.
+The plan branch `codex/paignia-t17-live-plan` covers the T17 plan and this
+handoff. The follow-up covers only `.github/workflows/ci.yml`. The scope is
+repository source and GitHub Actions. The next operation is hosted
+verification of the reviewed changes.
