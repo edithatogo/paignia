@@ -8,6 +8,32 @@ Read [AGENTS.md](AGENTS.md), [the project index](conductor/index.md), and the se
 
 For bugs, provide the affected version or commit, environment, minimal reproduction, expected result and observed result. For a substantial proposal, describe the use case and compatibility impact in an issue before expanding implementation scope. Use existing issue templates when offered.
 
+## Games discovered in downstream applications
+
+Follow the [downstream-game intake contract](docs/integrations/downstream-game-intake.md)
+for every new or materially changed game, information structure, solution method
+or payoff interpretation. Record both the UOGTO semantic disposition and the
+Paignia implementation disposition, including an evidenced reuse decision when
+the existing contracts suffice. Use one shared intake ID and link existing
+upstream work before creating another request.
+
+Extend UOGTO's definitions, constraints, examples or mappings where needed; add
+reusable Rust representations, algorithms and independently checked synthetic
+examples in Paignia. Keep empirical inputs, domain institutions, payoff
+calibration and valuation with the application. Pin the accepted contracts and
+provider revisions, then record a focused consumer check before changing its
+advertised support. A pending request is not a supported capability.
+
+Before adding shared infrastructure, assess the existing upstream repositories
+in the contract's reuse table. Record the capability, interface/pin, dependency
+direction and consumer evidence, or why an existing provider does not fit.
+Preserve static solving without a simulation runtime or domain dependency.
+
+The contract names the six current applications, versioned tutorial adoption,
+and Innovate's parallel innovation-methods role. Existing mature game methods
+migrate only after independent parity and caller checks. VoP/VoH methods belong
+in Voiage, with `vop_poc_nz` as their demonstration.
+
 ## Development and validation
 
 Use the toolchain profiles in [Native CI](.github/workflows/ci.yml); both stable Rust and the declared minimum Rust version matter. From the repository root, the established native checks are:
@@ -24,6 +50,31 @@ target/dev-python/bin/python scripts/validate_game_packages.py
 ```
 
 Keep the committed lockfile and original source attribution. Add regression or reference cases for changed behaviour, including invalid inputs and method limitations. An extracted-source consumer test does not qualify a registry artifact or prove scientific validity. Publishing remains a separate operation.
+
+### Rust coverage
+
+**Native CI** measures `paignia-core` and `paignia-solve` on stable Rust with
+all workspace features enabled. The `rust-workspace-coverage` artifact
+contains an LCOV report and a per-file summary. To reproduce the summary,
+install `cargo-llvm-cov` 0.9.2 and the `llvm-tools` component for stable Rust, then
+run `cargo llvm-cov --locked --workspace --all-targets --all-features` from the
+repository root. [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov)
+
+### Repository lint and health
+
+The **Repository Health** workflow runs on pull requests, pushes to `main`
+and merge groups. It can also run on demand from the Actions tab.
+
+- Run `alint check` at the repository root. The workflow reads `.alint.yml`,
+  annotates findings and fails on errors. [alint v0.22.1](https://github.com/asamarts/alint/releases/tag/v0.22.1)
+- Run `repohealth . --format markdown` in a full Git checkout. The workflow
+  publishes its informational score and recommendations in the run summary.
+  Test-framework and coverage recommendations use file-name heuristics.
+  See the Native CI coverage artifact for measured Rust coverage.
+  [RepoHealth v0.5.3](https://github.com/spbuilds/repohealth/releases/tag/v0.5.3)
+
+When upgrading RepoHealth, update its version and Linux amd64 archive SHA-256
+together in `.github/workflows/repository-health.yml`.
 
 ## Pull requests
 

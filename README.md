@@ -1,7 +1,8 @@
 # Paignia
 
-Paignia is the Rust library for reusable game representations, supported game
-solving methods and solver diagnostics in the Kairos ecosystem. Its independent
+Paignia is the core Rust game-theory library for reusable game representations,
+supported solving methods and solver diagnostics. UOGTO is its canonical
+ontology; Kairos supplies optional native simulation execution. Its independent
 native seed was transferred from
 [new-drug-reimbursement-game](https://github.com/edithatogo/new-drug-reimbursement-game).
 Paignia is now the implementation home; domain applications consume it as a
@@ -78,6 +79,70 @@ ordering. Near-tie chains can depend on input order. The [native result contract
 names that behavior explicitly; it does not promise an exact equilibrium or an
 exhaustive catalogue. UOGTO names alone do not establish implementation support.
 
+## Getting started
+
+### Install the libraries
+
+Create a binary package with `cargo new --edition 2021 paignia-example`. Add both
+libraries to its `Cargo.toml` using the same reviewed Git revision. The example
+uses the revision in the static package handoff. [Package handoff](docs/validation/receipts/t17-bd880dd-handoff.json)
+
+```toml
+[dependencies]
+paignia-core = { git = "https://github.com/edithatogo/paignia.git", rev = "bd880dd756d2ba56cc5f479bc078cea31b53c1d1" }
+paignia-solve = { git = "https://github.com/edithatogo/paignia.git", rev = "bd880dd756d2ba56cc5f479bc078cea31b53c1d1" }
+```
+
+### Example
+
+A single player chooses between two terminal outcomes with payoffs of 2 and 0.
+Put this in `src/main.rs` and run `cargo run`. The solver prints `accept: 2`.
+
+```rust
+use std::collections::BTreeMap;
+
+use paignia_core::{ActionEdge, ActionId, Game, Node, NodeId, PlayerId};
+use paignia_solve::{backward_induction, SolveError};
+
+fn main() -> Result<(), SolveError> {
+    let player = PlayerId("chooser".into());
+    let root = NodeId("root".into());
+    let accept = NodeId("accept".into());
+    let decline = NodeId("decline".into());
+    let terminal = |payoff| Node::Terminal {
+        payoffs: BTreeMap::from([(player.clone(), payoff)]),
+    };
+
+    let decision = Node::Decision {
+        player: player.clone(),
+        edges: vec![
+            ActionEdge {
+                action: ActionId("accept".into()),
+                target: accept.clone(),
+            },
+            ActionEdge {
+                action: ActionId("decline".into()),
+                target: decline.clone(),
+            },
+        ],
+    };
+    let game = Game {
+        root: root.clone(),
+        nodes: BTreeMap::from([
+            (root.clone(), decision),
+            (accept, terminal(2.0)),
+            (decline, terminal(0.0)),
+        ]),
+    };
+    let solution = backward_induction(&game)?;
+    println!(
+        "{}: {}",
+        solution.choices[&root].0, solution.expected_payoffs[&player]
+    );
+    Ok(())
+}
+```
+
 ## Build and verify
 
 Use the CPython patch release recorded in `.python-version` for verification.
@@ -125,12 +190,23 @@ can test those bytes directly against their own models and expected outcomes.
 The [application-owner handoff](docs/validation/game-consumer-handoff.md) gives
 the required receipt fields and reproducible qualification procedure.
 
-Consume an exact reviewed Git revision until release artifacts are qualified.
 Keep domain game definitions and payoff construction in the consumer. The
 reimbursement application owns its finite offer/acceptance integration and
-valuation; Innovate and CareOps own their respective models.
+valuation; the other applications and partner libraries own their models.
 
 ## Ecosystem boundaries
+
+New or materially changed games in downstream repositories feed back into
+[UOGTO semantic coverage and Paignia's reusable capabilities](docs/integrations/downstream-game-intake.md).
+The intake records existing support, missing semantics or methods, synthetic
+examples and eventual consumer adoption. An application-specific game can reuse
+an existing family without requiring a new ontology class or solver.
+
+The current applications are `nhra_game`, `gtpcnz`,
+`new-drug-reimbursement-game`, `ginsim`, `tobac` and `tutorial_health_gt`.
+The linked contract names their repositories and versioned adoption workflow.
+Innovate is a parallel innovation library that consumes Paignia for generic
+game methods; mature implementations migrate incrementally after parity checks.
 
 | Owner | Responsibility |
 |---|---|
@@ -138,8 +214,9 @@ valuation; Innovate and CareOps own their respective models.
 | UOGTO | Canonical game ontology, full IRIs, executable semantic profiles, SHACL and semantic conformance. |
 | Kairos | Native time, event scheduling, ECS state, resources, RNG and replay. An optional Paignia adapter depends on both libraries. |
 | Domain applications | Specific games, institutions, agents, payoffs, empirical assumptions and decisions. |
-| HEOR capability | Valuation with explicit units, perspectives and assumptions; not game solving or scheduling. |
-| Voiage | Value of information and decision uncertainty. |
+| Dapane | Costing and valuation with explicit units, perspectives and mappings into game utility. |
+| Voiage | Value of information, perspective and heterogeneity; reuse through optional composition or versioned outcomes. |
+| Innovate | Innovation-specific diffusion, adoption and substitution; generic game capabilities use Paignia as they are qualified. |
 
 No Kairos solver implementation, UOGTO ontology asset or Python core was copied
 in this transfer. The [transfer map](docs/architecture/paignia-transfer-map.md)
@@ -162,3 +239,13 @@ profile. Optional simulation and unrelated future algorithms do not gate that
 bounded release. Each advertised numerical method must satisfy its own
 independent controls. Routine work uses focused checks and coherent agent
 review; there is no repeated human approval loop.
+
+## Security
+
+Follow the [security policy](https://github.com/edithatogo/.github/blob/main/SECURITY.md) to report vulnerabilities
+privately. Keep credentials and sensitive data out of public issues and pull requests.
+
+## License
+
+See [LICENSE](LICENSE) for this repository's licensing terms. Retain the
+licences and attribution that accompany third-party material.

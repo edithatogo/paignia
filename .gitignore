@@ -3,3 +3,11 @@
 /verification/*/target/
 __pycache__/
 *.py[cod]
+
+# Local secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
