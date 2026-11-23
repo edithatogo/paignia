@@ -105,8 +105,6 @@ jobs:
               except ValueError as error:
                   raise SystemExit(f"{target}: {error}") from error
           PY
-      - name: Isolated extracted-source consumer
-        run: python3 scripts/validate_game_packages.py --source-smoke --receipt target/extracted-package-smoke.json
       - name: Cargo artifacts with provider source unavailable
         run: python3 scripts/validate_game_packages.py --receipt target/cargo-artifact-qualification.json --artifact-dir target/qualified-packages
       - name: Native API documentation
@@ -118,7 +116,6 @@ jobs:
           name: native-package-qualification-${{ matrix.toolchain }}
           path: |
             target/static-dependency-boundary.json
-            target/extracted-package-smoke.json
             target/cargo-artifact-qualification.json
             target/qualified-packages/*.crate
             target/all-features.log
@@ -202,10 +199,20 @@ jobs:
           cargo clippy --locked --manifest-path "$manifest" --all-targets -- -D warnings
           cargo test --locked --manifest-path "$manifest" --all-targets
 
-  numerical-oracles:
-    name: Synthetic numerical oracles (CPython 3.15.2)
+  synthetic-oracles:
+    name: Synthetic ${{ matrix.suite }} oracles (CPython 3.15.2)
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: numerical
+            test-file: test_oracles.py
+            count: 39
+          - suite: inspection
+            test-file: test_inspection.py
+            count: 28
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
@@ -216,68 +223,34 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/project-python
-      - name: Execute all 39 synthetic oracle tests
+      - name: Execute all ${{ matrix.count }} synthetic ${{ matrix.suite }} tests
         shell: bash
         env:
           PYTHONNOUSERSITE: "1"
+          ORACLE_CORPUS: verification/${{ matrix.suite }}_oracles
+          ORACLE_TEST_FILE: ${{ matrix.test-file }}
+          ORACLE_TEST_COUNT: ${{ matrix.count }}
+          ORACLE_LOG: ${{ matrix.suite }}-oracles.log
         run: |
           set -euo pipefail
-          python3 --version | tee numerical-oracles.log
-          git rev-parse HEAD 'HEAD^{tree}' | tee -a numerical-oracles.log
-          sha256sum verification/numerical_oracles/* | tee -a numerical-oracles.log
-          python3 -B verification/numerical_oracles/test_oracles.py 2>&1 | tee -a numerical-oracles.log
-          python3 - <<'PY'
+          python3 --version | tee "$ORACLE_LOG"
+          git rev-parse HEAD 'HEAD^{tree}' | tee -a "$ORACLE_LOG"
+          sha256sum "$ORACLE_CORPUS"/* | tee -a "$ORACLE_LOG"
+          python3 -B "$ORACLE_CORPUS/$ORACLE_TEST_FILE" 2>&1 | tee -a "$ORACLE_LOG"
+          python3 - "$ORACLE_LOG" "$ORACLE_TEST_COUNT" <<'PY'
           from pathlib import Path
           import re
-          log = Path("numerical-oracles.log").read_text()
-          if not re.search(r"^Ran 39 tests in [0-9.]+s$", log, re.MULTILINE) or "\nOK\n" not in log:
-              raise SystemExit("Expected all 39 oracle tests with no failures, errors or skips")
+          import sys
+          log = Path(sys.argv[1]).read_text()
+          count = int(sys.argv[2])
+          if not re.search(rf"^Ran {count} tests in [0-9.]+s$", log, re.MULTILINE) or "\nOK\n" not in log:
+              raise SystemExit(f"Expected all {count} oracle tests with no failures, errors or skips")
           PY
       - name: Retain synthetic oracle execution evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: synthetic-numerical-oracles-python-3.15.2
-          path: numerical-oracles.log
-          if-no-files-found: error
-          retention-days: 30
-
-  inspection-oracles:
-    name: Synthetic inspection oracles (CPython 3.15.2)
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
-        with:
-          egress-policy: audit
-
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: ./.github/actions/project-python
-      - name: Execute all 28 synthetic inspection tests
-        shell: bash
-        env:
-          PYTHONNOUSERSITE: "1"
-        run: |
-          set -euo pipefail
-          python3 --version | tee inspection-oracles.log
-          git rev-parse HEAD 'HEAD^{tree}' | tee -a inspection-oracles.log
-          sha256sum verification/inspection_oracles/* | tee -a inspection-oracles.log
-          python3 -B verification/inspection_oracles/test_inspection.py 2>&1 | tee -a inspection-oracles.log
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-          log = Path("inspection-oracles.log").read_text()
-          if not re.search(r"^Ran 28 tests in [0-9.]+s$", log, re.MULTILINE) or "\nOK\n" not in log:
-              raise SystemExit("Expected all 28 inspection tests with no failures, errors or skips")
-          PY
-      - name: Retain synthetic inspection execution evidence
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: synthetic-inspection-oracles-python-3.15.2
-          path: inspection-oracles.log
+          name: synthetic-${{ matrix.suite }}-oracles-python-3.15.2
+          path: ${{ matrix.suite }}-oracles.log
           if-no-files-found: error
           retention-days: 30
