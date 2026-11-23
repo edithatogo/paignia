@@ -1,8 +1,8 @@
 # Workflow
 
 1. Read the source and existing T17 owner/contract before changing behavior.
-2. Select one bounded leaf (at most five implementation files); split additional
-   behavior into a linked slice without duplicating ownership.
+2. Select one coherent, reviewable leaf; split work when behavior, ownership or
+   reviewability requires it, without duplicating ownership.
 3. Implement and run focused checks. Numerical/public-contract work receives
    coherent specialist agent review; routine work needs no repeated human gate.
 4. Record exact results and remaining limitations. Do not mark a scientific,
