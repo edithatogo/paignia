@@ -5,7 +5,7 @@ use std::time::{Duration, Instant};
 
 use paignia_solve::{enclose_credal_nash, enclose_credal_nash_segment};
 
-#[path = "../tests/support/credal_segment_cases.rs"]
+#[path = "../../../crates/paignia-solve/tests/support/credal_segment_cases.rs"]
 mod cases;
 
 fn median(mut operation: impl FnMut()) -> Duration {

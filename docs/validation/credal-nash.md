@@ -113,7 +113,7 @@ unrepresentable.
 
 ```sh
 cargo test --locked -p paignia-solve --test credal_nash_segment
-cargo run --locked --release -p paignia-solve --example credal_nash_segment_benchmark
+cargo run --locked --release --manifest-path verification/credal_segment_benchmark/Cargo.toml
 ```
 
 The three synthetic cases use the same 64×64 finest grid. In the shared-weight
@@ -122,7 +122,7 @@ and `t ≥ 3/4` for the column player. The fixed grid retains all 4,096 cells.
 The segment solver examines 481 boxes and retains 127 leaf cells along the
 two axes. Both methods retain the same four cells in matching pennies. The
 interior all-tie case retains all 4,096 leaf cells and takes more work with
-adaptive subdivision. The example reports median runtime over 21 runs after
+adaptive subdivision. The benchmark reports median runtime over 21 runs after
 warm-up. Compare results on the same toolchain and machine.
 
 The next benchmark needs higher-dimensional uncertainty sets and an
