@@ -64,8 +64,14 @@ jobs:
           if citation.get("repository-code") != repository:
               raise SystemExit("CITATION.cff repository-code does not match the repository")
           package = tomllib.loads(Path("Cargo.toml").read_text())["workspace"]["package"]
-          if citation.get("license") != package["license"] or not Path("LICENSE").is_file():
-              raise SystemExit("Citation licence must match the Cargo workspace and a checked-in licence")
+          if citation.get("license") != package["license"]:
+              raise SystemExit("Citation licence must match the Cargo workspace")
+          licence = Path("LICENSE").read_bytes()
+          if hashlib.sha256(licence).hexdigest() != "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30":
+              raise SystemExit("LICENSE must contain the full official Apache-2.0 text")
+          for manifest in Path("crates").glob("*/Cargo.toml"):
+              if manifest.with_name("LICENSE").read_bytes() != licence:
+                  raise SystemExit(f"{manifest.parent} must carry the full workspace licence")
           tags = subprocess.check_output(["git", "tag", "--list"], text=True).splitlines()
           versioned_citation = "version" in citation
           persistent_identifier = "doi" in citation or any(
