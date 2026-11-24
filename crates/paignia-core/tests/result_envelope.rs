@@ -121,11 +121,14 @@ fn diagnostic() -> DeclaredDiagnostic {
 #[test]
 fn exact_versions_and_current_static_policy_are_admitted() {
     assert_eq!(RESULT_ENVELOPE_SCHEMA_VERSION, "1.0.0");
-    assert_eq!(BACKWARD_INDUCTION_ALGORITHM_VERSION, "1.0.0");
-    let value = record();
-    let before = value.clone();
-    assert_eq!(value.validate_against(&source(), &instance()), Ok(()));
-    assert_eq!(value, before);
+    assert_eq!(BACKWARD_INDUCTION_ALGORITHM_VERSION, "1.0.1");
+    for version in ["1.0.0", "1.0.1"] {
+        let mut value = record();
+        value.algorithm.version = version.into();
+        let before = value.clone();
+        assert_eq!(value.validate_against(&source(), &instance()), Ok(()));
+        assert_eq!(value, before);
+    }
 }
 
 #[test]
@@ -234,7 +237,7 @@ fn method_and_method_version_are_checked_independently() {
     value.algorithm.algorithm = ResultAlgorithm::PureNashEnumeration;
     rejects(&value, "unsupported_result_claim", "algorithm.algorithm");
     value.algorithm.algorithm = ResultAlgorithm::BackwardInduction;
-    for version in ["", "0.1.0", "1.0.1", "1.0.0+unqualified", "2.0.0"] {
+    for version in ["", "0.1.0", "1.0.2", "1.0.1+unqualified", "2.0.0"] {
         value.algorithm.version = version.into();
         rejects(
             &value,

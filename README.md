@@ -23,7 +23,7 @@ The initial source transfer is merged in [PR #2](https://github.com/edithatogo/p
 at `12b22ce7571b9c590405bf53c2c1c5862b49cd64`.
 [Native CI for that revision](https://github.com/edithatogo/paignia/actions/runs/42421109771)
 passed on stable Rust and Rust 1.75: formatting, Clippy, 15 library tests,
-documentation and the two-test extracted-source consumer described below.
+documentation and two historical extracted-source consumer tests.
 That is the historical transfer baseline. The current receipt above records
 subsequent contract, package and numerical work without relabelling the old run.
 
@@ -72,7 +72,8 @@ describes the bounded adapter and its independent build. The K01.port receipt
 covers the qualified native path, random-stream isolation and in-process replay.
 [Kairos K01.port acceptance](https://github.com/edithatogo/kairos/pull/405)
 
-Known seed behavior remains explicit: chance edges may have probability zero;
+Backward induction compensates rounding loss when summing chance payouts.
+Chance edges may have probability zero;
 extensive-form missing player payoffs currently act as zero; ties use the
 configured pairwise tolerance in stored edge order, followed by lexical action
 ordering. Near-tie chains can depend on input order. The [native result contract](docs/architecture/game-result-contract-v1.md)
@@ -179,8 +180,8 @@ does not download. Boundary inspection and artifact consumers then run offline.
 Library archive locks are omitted where needed for unpublished sibling packages;
 provider and isolated-consumer locks remain checked. This is library artifact
 consumption, not a `cargo install --locked` or registry-publication receipt.
-`--source-smoke` retains the older two-test copied-source check under its weaker,
-explicit scope. Neither check supplies the two required real application cases.
+The packed-artifact tests include the earlier copied-source assertions. The two
+required real application cases have their own receipts.
 
 Use `--artifact-dir target/qualified-packages` with `--receipt` to retain the
 exact archives after every profile passes. Hashes are rechecked before any

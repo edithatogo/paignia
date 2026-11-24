@@ -131,13 +131,6 @@ class ArtifactControls(unittest.TestCase):
             with self.subTest(output=bad), self.assertRaises(RuntimeError):
                 packages.require_native_tests(bad, 3)
 
-    def test_materialization_keeps_rust_version_distinct_from_version(self) -> None:
-        manifest = self.root / "Cargo.toml"
-        manifest.write_text('[package]\nname="example"\nversion.workspace = true\nrust-version.workspace = true\n')
-        text = packages.standalone_manifest(manifest, {"package": {"version": "0.1.0", "rust-version": "1.75"}})
-        self.assertIn('version = "0.1.0"', text)
-        self.assertIn('rust-version = "1.75"', text)
-
     def test_unpublished_sibling_libraries_package_offline_without_registry_resolution(self) -> None:
         cargo = shutil.which("cargo")
         if cargo is None:

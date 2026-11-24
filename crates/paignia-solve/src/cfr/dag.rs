@@ -21,11 +21,8 @@ impl Value {
         Self { high, low: 0.0 }
     }
 
-    // Knuth's TwoSum: for finite intermediates, high + low represents a + b.
     fn two_sum(a: f64, b: f64) -> Self {
-        let high = a + b;
-        let b_part = high - a;
-        let low = (a - (high - b_part)) + (b - b_part);
+        let (high, low) = crate::two_sum(a, b);
         Self { high, low }
     }
 
