@@ -70,3 +70,61 @@ regimes, invalid grids, an empty hull and arithmetic overflow.
 ```sh
 cargo test --locked -p paignia-solve --test credal_nash
 ```
+
+## Adaptive enclosure for two payoff vertices
+
+Pass exactly two paired 2×2 games to the segment solver
+(`paignia_solve::enclose_credal_nash_segment`). Vertex zero has weight
+`1 − t` and vertex one has weight `t`. The same rational weight applies to
+both payoff matrices. Depth zero visits the full strategy square. The maximum
+depth is seven, with at most 21,845 examined boxes. The uniform method above
+continues to accept arbitrary finite vertex hulls.
+
+For each closed strategy box, consider three support cases per player. The
+first action can be pure at share one, the second can be pure at share zero,
+and either can be used when the player is indifferent. Restrict the player's
+share to its support case before testing the other player's best response.
+
+For a fixed weight, a player's first-action advantage varies affinely in the
+opponent's share. A pure best response requires the appropriate sign at either
+endpoint of that opponent's restricted interval. Indifference requires the
+two endpoint values to straddle zero, including equalities. Each endpoint
+advantage is affine in the common weight. Its sign therefore defines a closed
+weight interval, an empty interval, or the whole unit interval. Intersect the
+two players' allowed weight intervals for each support pair. An excluded box
+has no nonempty intersection. The returned box coordinates and the two input
+games suffice to replay these finite rational tests.
+
+Each retained leaf carries one shared weight and strategy profile. At the
+chosen weight the two best-response conditions constrain different shares,
+so endpoint selection or an exact zero crossing gives a joint witness. Closed
+boundaries, singleton intervals and all-tie games remain covered. The tests
+recompute both players' expected and best pure payoffs from the original
+matrices and the witness.
+
+The method reports coordinate-wise payoff and share bounds, maximum deviation
+gain over the retained boxes and the whole segment, and the examined tree
+size. A retained box contains at least one equilibrium across the segment.
+Its other points and the payoff-bound endpoints can fall outside equilibrium.
+Checked rational arithmetic propagates an error when an intermediate is
+unrepresentable.
+
+### Reproduce the comparison
+
+```sh
+cargo test --locked -p paignia-solve --test credal_nash_segment
+cargo run --locked --release --manifest-path verification/credal_segment_benchmark/Cargo.toml
+```
+
+The three synthetic cases use the same 64×64 finest grid. In the shared-weight
+conflict, positive first-action shares require `t ≤ 1/4` for the row player
+and `t ≥ 3/4` for the column player. The fixed grid retains all 4,096 cells.
+The segment solver examines 481 boxes and retains 127 leaf cells along the
+two axes. Both methods retain the same four cells in matching pennies. The
+interior all-tie case retains all 4,096 leaf cells and takes more work with
+adaptive subdivision. The benchmark reports median runtime over 21 runs after
+warm-up. Compare results on the same toolchain and machine.
+
+The next benchmark needs higher-dimensional uncertainty sets and an
+independent feasibility oracle. Exact support feasibility for a line segment
+does not establish a speed or coverage claim for general payoff hulls.

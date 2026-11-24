@@ -48,14 +48,14 @@ impl Ratio {
         self.denominator
     }
 
-    fn zero() -> Self {
+    pub(crate) const fn zero() -> Self {
         Self {
             numerator: 0,
             denominator: 1,
         }
     }
 
-    fn one() -> Self {
+    pub(crate) const fn one() -> Self {
         Self {
             numerator: 1,
             denominator: 1,
@@ -124,7 +124,7 @@ impl Ratio {
         )
     }
 
-    fn div(self, other: Self) -> Result<Self, Error> {
+    pub(crate) fn div(self, other: Self) -> Result<Self, Error> {
         if other.numerator == 0 {
             return Err(Error::ZeroDenominator);
         }

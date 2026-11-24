@@ -37,8 +37,11 @@ pub use correlated_equilibrium::{
 };
 
 pub use credal_nash::{
-    enclose as enclose_credal_nash, Enclosure as CredalNashEnclosure, Error as CredalNashError,
-    MAX_GRID_DIVISIONS as MAX_CREDAL_NASH_GRID_DIVISIONS,
+    enclose as enclose_credal_nash, enclose_segment as enclose_credal_nash_segment,
+    Enclosure as CredalNashEnclosure, Error as CredalNashError,
+    SegmentCell as CredalNashSegmentCell, SegmentEnclosure as CredalNashSegmentEnclosure,
+    SegmentError as CredalNashSegmentError, SegmentWitness as CredalNashSegmentWitness,
+    MAX_GRID_DIVISIONS as MAX_CREDAL_NASH_GRID_DIVISIONS, MAX_SEGMENT_DEPTH,
 };
 
 pub use leader_follower::{

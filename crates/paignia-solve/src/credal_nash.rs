@@ -3,6 +3,13 @@
 use crate::{InspectionError, InspectionRatio as Ratio, RatioBounds};
 use paignia_core::Bimatrix2;
 
+mod segment;
+
+pub use segment::{
+    enclose as enclose_segment, Cell as SegmentCell, Enclosure as SegmentEnclosure,
+    Error as SegmentError, Witness as SegmentWitness, MAX_SEGMENT_DEPTH,
+};
+
 /// Maximum number of equal cells on each strategy axis.
 pub const MAX_GRID_DIVISIONS: u16 = 128;
 

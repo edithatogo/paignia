@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added adaptive Nash enclosure across a two-vertex payoff segment with shared
+  rational weights and exact equilibrium witnesses. [Segment contract](docs/validation/credal-nash.md#adaptive-enclosure-for-two-payoff-vertices)
+
 - Corrected chance-payoff cancellation in backward induction. Newly computed
   envelopes identify solver version `1.0.1` and existing `1.0.0` envelopes remain
   readable. [Static solver result](docs/architecture/solver-result-v1.md)
