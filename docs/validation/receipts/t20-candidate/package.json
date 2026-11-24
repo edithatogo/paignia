@@ -1,0 +1,883 @@
+{
+  "archive_lockfile_policy": "cargo-library-default",
+  "artifacts": {
+    "paignia-core": {
+      "archive_sha256": "e917b650bc7d008d4d0968dc6b0a4e04b1d9f6e0ae1c79818563fba111fac973",
+      "files_sha256": {
+        "Cargo.toml": "25f731e58d60fb1adb18ec559058170210cfb64c71f4d6cdf7b7bc50c7b23579",
+        "Cargo.toml.orig": "6de7583cea0d2e28d3ec1a291d81bd47952d37653142268a02e75abddb4fa94b",
+        "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "NOTICE": "7771d86aaffd6414f342b786024915f76908cb0cb67fad34dd369f76e595a1b8",
+        "src/conversion.rs": "204f5db27637593683698dd14ec00e0af21a870e3dce79c8c9af5c0f0bd57a16",
+        "src/information_sets.rs": "432bc1a9a9fafe75e84c638128d24e3fba684159e851f8c3e024f72b46bdf57f",
+        "src/lib.rs": "3706e21ac76526f8e677629e0605afec1deffc33f15a359073f7b413e4f06a75",
+        "src/observation.rs": "2ecf9dd1474ecf7dad14ac805da518303fe4622d7846172901a5f1bdc9afc711",
+        "src/result.rs": "a6444757ef28d259632f61f7b7681f6a45ab7ce4c45f8413e877d4cb2879fba3",
+        "tests/information_sets.rs": "3dab2c0da0fa18cace81340b9aaf2af52c6793127d71ca88618c5c2a46b7e1a5",
+        "tests/policy_observation.rs": "7c43f763d279c599bc9f31df3bee6a2c1b3b897b57f4173416436c0531593a75",
+        "tests/result_envelope.rs": "33b0b519287d9605155732d141e936da5965a4b2a9557054cb0d98e72c95fe7a",
+        "tests/runtime_contract.rs": "8b68dd738a77c08e70378a9a44add0faa69d70287aae6d0165c2aa8f6357e61e",
+        "tests/semantic_conversion.rs": "b5a48d4d72f72c2f2ab33a8cc6d9226d6c13db761b30ede17ebf5975ce72c26d"
+      },
+      "lock_in_archive": false,
+      "version": "0.1.0"
+    },
+    "paignia-solve": {
+      "archive_sha256": "638fb6c971e11750cee3b2c68cbc4f9ffa7a7d710b149dbbc58c8bde627fa7fc",
+      "files_sha256": {
+        "Cargo.toml": "a47d3326534b980da494928f14c6568826eb34ac7c54da372b287bafb9eea735",
+        "Cargo.toml.orig": "b3bf16ad1b120b4061ea28a5b9984d308eff87833013d6f384524b45d3b06eb0",
+        "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "NOTICE": "7771d86aaffd6414f342b786024915f76908cb0cb67fad34dd369f76e595a1b8",
+        "src/cfr.rs": "1e125d8deee4386b2870b5dbd462140dd9c85f7ed9ef480ccdb3071c4cdba0fd",
+        "src/cfr/dag.rs": "b310da5ecba5b5f33c09237b7922550972a27816f5ac5ad95bea414dff47deda",
+        "src/correlated_equilibrium.rs": "e77f54285db402c12024845f3e9c6911745e6a3009bf6d1c601ff349a5f0f96a",
+        "src/credal_nash.rs": "06806b1fcd1d6dbb591ec4cf7ca6e815359f9f1e27f50860062fa0bc539004fc",
+        "src/credal_nash/segment.rs": "2dd57c4e0b6c102ad2f8a46116964a41896c7044f7611a112e31d42f0f22c7e8",
+        "src/leader_follower.rs": "92c7047ac71d6871e2d05b7f840049e192cd54f7b1a3298ad4ceee7207130c38",
+        "src/lib.rs": "be79198455d88df025efc907286c244a595a21a2944ab4f70c3dc053f07a2c37",
+        "src/mixed_nash.rs": "003d93fd3b152e85d69b8c3fbe3ded23cfacf7ddac6df0ce7ddffd859cae9e77",
+        "src/replicator.rs": "5af35a43b1a6b90435350a30baa02b76fadfd33d19ac6f4da16023c4f89fc92f",
+        "src/result.rs": "719b2a98272207d712ccf0fb4a506904d1cdf7b86e5875f9c9b93c6c3803c2a0",
+        "tests/cfr_information_sets.rs": "0de1dcd996c504be56a18d9eeb20b2935756edcf5bb766aa2bb6945061ad1142",
+        "tests/clarabel_backend.rs": "119118b281cfdcc8fe74250dca242b6afa569c586c432ca0c4bb1a5779019405",
+        "tests/correlated_equilibrium.rs": "fcc808ab095eafb89d86eee1e1c82a9b89da1ebb7b9aa10bdb146f3e02413b6f",
+        "tests/credal_nash.rs": "1e86631bbc599175c390b634d17ef76d6684e2dd977a8653aa8180631b829594",
+        "tests/credal_nash_segment.rs": "c3696d93475ee65207d402826f767fec5ca526c75c6e2718487f9140c6cf4656",
+        "tests/error_contract.rs": "20bcad45989dc199511be6441699ef3250c174242d033c953b453e08c130e610",
+        "tests/generated_game_invariants.rs": "a0f92e0ca50c86a4e8d1891fff98725fdf95a05d802a35070240448103281124",
+        "tests/inspection_detection.rs": "d61cde135500159ef9a438551ae361a723877823d72a4fe6650b7733a02621b7",
+        "tests/inspection_interval.rs": "b2da7910be8b5b338b3462992330298aec9dadf143f97c659aba63a4b99904f8",
+        "tests/leader_follower.rs": "dcc3faf77432de548eff6bf2939a800fcb6d5bcd69ab13ad55f35fc4fe21f051",
+        "tests/mixed_nash.rs": "e267ca7dc4ca7e466f276db5c75022218bb10878cc125589a8b8d233670b6e50",
+        "tests/replicator_rk4.rs": "75cacb3bba6a438affbc59cf659b79faabc5b9d6cca2942c810c797a558626d2",
+        "tests/result_contract.rs": "7b36a2c4c6748317745690d4cd7820f9f78bbd6789fa90d21247c163c6cb6370",
+        "tests/support/cfr_fixture.rs": "d2b7031550479d70542ae0df838edeedc87809fa1f3befe77fc97e36eed40b0e",
+        "tests/support/credal_segment_cases.rs": "f4d8ffc8c2b3d1046f315d19756f803b3d2b3fbe650894106c0b3912ebd58c18",
+        "tests/support/leduc_reference.rs": "8d8bec5f3a813531a7fce11cf4b632f9245a6fbdd0f4889b68b2e2c40dbf6786"
+      },
+      "lock_in_archive": false,
+      "version": "0.1.0"
+    }
+  },
+  "cargo_version": "cargo 1.75.0 (1d8b05cdd 2023-11-20)",
+  "package_inputs_match_revision": true,
+  "profiles": [
+    {
+      "consumer_lock_sha256": "a909b9105a6fbedab2a61e3b0fcc1b258d7217bff240fc4ee48ac50301df23de",
+      "default_features": false,
+      "features": [],
+      "package": "paignia-core",
+      "profile": "minimal",
+      "resolved_dependencies": [
+        {
+          "name": "artifact-paignia-core",
+          "source": null,
+          "version": "0.0.0"
+        },
+        {
+          "name": "paignia-core",
+          "source": null,
+          "version": "0.1.0"
+        },
+        {
+          "name": "proc-macro2",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.107"
+        },
+        {
+          "name": "quote",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.47"
+        },
+        {
+          "name": "syn",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "2.0.119"
+        },
+        {
+          "name": "thiserror",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.69"
+        },
+        {
+          "name": "thiserror-impl",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.69"
+        },
+        {
+          "name": "unicode-ident",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.27"
+        }
+      ],
+      "resolved_graph_sha256": "9db91cbf8d582900a0283fc48979c979c0775b3b0735aa4d37e77364222adbca",
+      "tests_passed": 4
+    },
+    {
+      "consumer_lock_sha256": "a909b9105a6fbedab2a61e3b0fcc1b258d7217bff240fc4ee48ac50301df23de",
+      "default_features": true,
+      "features": [],
+      "package": "paignia-core",
+      "profile": "default",
+      "resolved_dependencies": [
+        {
+          "name": "artifact-paignia-core",
+          "source": null,
+          "version": "0.0.0"
+        },
+        {
+          "name": "paignia-core",
+          "source": null,
+          "version": "0.1.0"
+        },
+        {
+          "name": "proc-macro2",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.107"
+        },
+        {
+          "name": "quote",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.47"
+        },
+        {
+          "name": "syn",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "2.0.119"
+        },
+        {
+          "name": "thiserror",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.69"
+        },
+        {
+          "name": "thiserror-impl",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.69"
+        },
+        {
+          "name": "unicode-ident",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.27"
+        }
+      ],
+      "resolved_graph_sha256": "b6843873f469525d6d133da9b515f2d8ff7d51e7114f0ac441ca6937f10ec7a0",
+      "tests_passed": 4
+    },
+    {
+      "consumer_lock_sha256": "a909b9105a6fbedab2a61e3b0fcc1b258d7217bff240fc4ee48ac50301df23de",
+      "default_features": true,
+      "features": [],
+      "package": "paignia-core",
+      "profile": "all",
+      "resolved_dependencies": [
+        {
+          "name": "artifact-paignia-core",
+          "source": null,
+          "version": "0.0.0"
+        },
+        {
+          "name": "paignia-core",
+          "source": null,
+          "version": "0.1.0"
+        },
+        {
+          "name": "proc-macro2",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.107"
+        },
+        {
+          "name": "quote",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.47"
+        },
+        {
+          "name": "syn",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "2.0.119"
+        },
+        {
+          "name": "thiserror",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.69"
+        },
+        {
+          "name": "thiserror-impl",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.69"
+        },
+        {
+          "name": "unicode-ident",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.27"
+        }
+      ],
+      "resolved_graph_sha256": "6b23d1acbe19a9ae7f86629fe5b96141186b0865e2d2010f17d19dcc8ac5cafa",
+      "tests_passed": 4
+    },
+    {
+      "consumer_lock_sha256": "5f729e314dfeedf7966b05adfc4c072433db268c87501c9f0da58549cccdd686",
+      "default_features": false,
+      "features": [],
+      "package": "paignia-solve",
+      "profile": "minimal",
+      "resolved_dependencies": [
+        {
+          "name": "artifact-paignia-solve",
+          "source": null,
+          "version": "0.0.0"
+        },
+        {
+          "name": "paignia-core",
+          "source": null,
+          "version": "0.1.0"
+        },
+        {
+          "name": "paignia-solve",
+          "source": null,
+          "version": "0.1.0"
+        },
+        {
+          "name": "proc-macro2",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.107"
+        },
+        {
+          "name": "quote",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.47"
+        },
+        {
+          "name": "syn",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "2.0.119"
+        },
+        {
+          "name": "thiserror",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.69"
+        },
+        {
+          "name": "thiserror-impl",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.69"
+        },
+        {
+          "name": "unicode-ident",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.27"
+        }
+      ],
+      "resolved_graph_sha256": "1440a24efd266971e369585b216de353059a1186dea18a0ff52ce4bba3bf891c",
+      "tests_passed": 6
+    },
+    {
+      "consumer_lock_sha256": "5f729e314dfeedf7966b05adfc4c072433db268c87501c9f0da58549cccdd686",
+      "default_features": true,
+      "features": [],
+      "package": "paignia-solve",
+      "profile": "default",
+      "resolved_dependencies": [
+        {
+          "name": "artifact-paignia-solve",
+          "source": null,
+          "version": "0.0.0"
+        },
+        {
+          "name": "paignia-core",
+          "source": null,
+          "version": "0.1.0"
+        },
+        {
+          "name": "paignia-solve",
+          "source": null,
+          "version": "0.1.0"
+        },
+        {
+          "name": "proc-macro2",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.107"
+        },
+        {
+          "name": "quote",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.47"
+        },
+        {
+          "name": "syn",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "2.0.119"
+        },
+        {
+          "name": "thiserror",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.69"
+        },
+        {
+          "name": "thiserror-impl",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.69"
+        },
+        {
+          "name": "unicode-ident",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.27"
+        }
+      ],
+      "resolved_graph_sha256": "ca9e4a413ceec58ecf8df74582bd8670dd750c73ff0dea8ec846d69ed732fa7b",
+      "tests_passed": 6
+    },
+    {
+      "consumer_lock_sha256": "d8bba7154be029d134ca0a5d76c997e22d0081601f547117af65b1ec406dd964",
+      "default_features": false,
+      "features": [
+        "correlated-equilibrium"
+      ],
+      "package": "paignia-solve",
+      "profile": "feature:correlated-equilibrium",
+      "resolved_dependencies": [
+        {
+          "name": "amd",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.2.2"
+        },
+        {
+          "name": "artifact-paignia-solve",
+          "source": null,
+          "version": "0.0.0"
+        },
+        {
+          "name": "autocfg",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.5.1"
+        },
+        {
+          "name": "bumpalo",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "3.20.4"
+        },
+        {
+          "name": "cfg-if",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.5"
+        },
+        {
+          "name": "clarabel",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.11.1"
+        },
+        {
+          "name": "darling",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.14.4"
+        },
+        {
+          "name": "darling_core",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.14.4"
+        },
+        {
+          "name": "darling_macro",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.14.4"
+        },
+        {
+          "name": "derive_builder",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.11.2"
+        },
+        {
+          "name": "derive_builder_core",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.11.2"
+        },
+        {
+          "name": "derive_builder_macro",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.11.2"
+        },
+        {
+          "name": "either",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.19.0"
+        },
+        {
+          "name": "enum_dispatch",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.3.13"
+        },
+        {
+          "name": "fnv",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.7"
+        },
+        {
+          "name": "futures-core",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.3.34"
+        },
+        {
+          "name": "futures-task",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.3.34"
+        },
+        {
+          "name": "futures-util",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.3.34"
+        },
+        {
+          "name": "ident_case",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.1"
+        },
+        {
+          "name": "itertools",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.11.0"
+        },
+        {
+          "name": "itoa",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.19"
+        },
+        {
+          "name": "js-sys",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.3.107"
+        },
+        {
+          "name": "lazy_static",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.5.1"
+        },
+        {
+          "name": "memchr",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "2.8.3"
+        },
+        {
+          "name": "num-traits",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.2.19"
+        },
+        {
+          "name": "once_cell",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.21.4"
+        },
+        {
+          "name": "paignia-core",
+          "source": null,
+          "version": "0.1.0"
+        },
+        {
+          "name": "paignia-solve",
+          "source": null,
+          "version": "0.1.0"
+        },
+        {
+          "name": "pin-project-lite",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.2.17"
+        },
+        {
+          "name": "proc-macro2",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.107"
+        },
+        {
+          "name": "quote",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.47"
+        },
+        {
+          "name": "rustversion",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.23"
+        },
+        {
+          "name": "serde",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.229"
+        },
+        {
+          "name": "serde-big-array",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.5.1"
+        },
+        {
+          "name": "serde_core",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.229"
+        },
+        {
+          "name": "serde_derive",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.229"
+        },
+        {
+          "name": "serde_json",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.154"
+        },
+        {
+          "name": "slab",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.4.12"
+        },
+        {
+          "name": "strsim",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.10.0"
+        },
+        {
+          "name": "syn",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.109"
+        },
+        {
+          "name": "syn",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "2.0.119"
+        },
+        {
+          "name": "syn",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "3.0.10"
+        },
+        {
+          "name": "thiserror",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.69"
+        },
+        {
+          "name": "thiserror-impl",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.69"
+        },
+        {
+          "name": "unicode-ident",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.27"
+        },
+        {
+          "name": "wasm-bindgen",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.2.130"
+        },
+        {
+          "name": "wasm-bindgen-macro",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.2.130"
+        },
+        {
+          "name": "wasm-bindgen-macro-support",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.2.130"
+        },
+        {
+          "name": "wasm-bindgen-shared",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.2.130"
+        },
+        {
+          "name": "web-time",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.2.4"
+        },
+        {
+          "name": "zmij",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.23"
+        }
+      ],
+      "resolved_graph_sha256": "9dae59e844824ed765dd9d054331bb761494d2ff87e701be1f7dfecb28936b03",
+      "tests_passed": 8
+    },
+    {
+      "consumer_lock_sha256": "d8bba7154be029d134ca0a5d76c997e22d0081601f547117af65b1ec406dd964",
+      "default_features": true,
+      "features": [
+        "correlated-equilibrium"
+      ],
+      "package": "paignia-solve",
+      "profile": "all",
+      "resolved_dependencies": [
+        {
+          "name": "amd",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.2.2"
+        },
+        {
+          "name": "artifact-paignia-solve",
+          "source": null,
+          "version": "0.0.0"
+        },
+        {
+          "name": "autocfg",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.5.1"
+        },
+        {
+          "name": "bumpalo",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "3.20.4"
+        },
+        {
+          "name": "cfg-if",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.5"
+        },
+        {
+          "name": "clarabel",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.11.1"
+        },
+        {
+          "name": "darling",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.14.4"
+        },
+        {
+          "name": "darling_core",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.14.4"
+        },
+        {
+          "name": "darling_macro",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.14.4"
+        },
+        {
+          "name": "derive_builder",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.11.2"
+        },
+        {
+          "name": "derive_builder_core",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.11.2"
+        },
+        {
+          "name": "derive_builder_macro",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.11.2"
+        },
+        {
+          "name": "either",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.19.0"
+        },
+        {
+          "name": "enum_dispatch",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.3.13"
+        },
+        {
+          "name": "fnv",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.7"
+        },
+        {
+          "name": "futures-core",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.3.34"
+        },
+        {
+          "name": "futures-task",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.3.34"
+        },
+        {
+          "name": "futures-util",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.3.34"
+        },
+        {
+          "name": "ident_case",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.1"
+        },
+        {
+          "name": "itertools",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.11.0"
+        },
+        {
+          "name": "itoa",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.19"
+        },
+        {
+          "name": "js-sys",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.3.107"
+        },
+        {
+          "name": "lazy_static",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.5.1"
+        },
+        {
+          "name": "memchr",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "2.8.3"
+        },
+        {
+          "name": "num-traits",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.2.19"
+        },
+        {
+          "name": "once_cell",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.21.4"
+        },
+        {
+          "name": "paignia-core",
+          "source": null,
+          "version": "0.1.0"
+        },
+        {
+          "name": "paignia-solve",
+          "source": null,
+          "version": "0.1.0"
+        },
+        {
+          "name": "pin-project-lite",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.2.17"
+        },
+        {
+          "name": "proc-macro2",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.107"
+        },
+        {
+          "name": "quote",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.47"
+        },
+        {
+          "name": "rustversion",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.23"
+        },
+        {
+          "name": "serde",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.229"
+        },
+        {
+          "name": "serde-big-array",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.5.1"
+        },
+        {
+          "name": "serde_core",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.229"
+        },
+        {
+          "name": "serde_derive",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.229"
+        },
+        {
+          "name": "serde_json",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.154"
+        },
+        {
+          "name": "slab",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.4.12"
+        },
+        {
+          "name": "strsim",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.10.0"
+        },
+        {
+          "name": "syn",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.109"
+        },
+        {
+          "name": "syn",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "2.0.119"
+        },
+        {
+          "name": "syn",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "3.0.10"
+        },
+        {
+          "name": "thiserror",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.69"
+        },
+        {
+          "name": "thiserror-impl",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.69"
+        },
+        {
+          "name": "unicode-ident",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.27"
+        },
+        {
+          "name": "wasm-bindgen",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.2.130"
+        },
+        {
+          "name": "wasm-bindgen-macro",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.2.130"
+        },
+        {
+          "name": "wasm-bindgen-macro-support",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.2.130"
+        },
+        {
+          "name": "wasm-bindgen-shared",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.2.130"
+        },
+        {
+          "name": "web-time",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "0.2.4"
+        },
+        {
+          "name": "zmij",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "version": "1.0.23"
+        }
+      ],
+      "resolved_graph_sha256": "d7379f06c98c670a1c4088dd09dad42fc0041e6597f70e6f13bc46eec5a1c9db",
+      "tests_passed": 8
+    }
+  ],
+  "provider_checkout_dependency": false,
+  "provider_lock_sha256": "29132d6218500e8523f6e2a83b63cd5229d68a8fffd0a531eea78a939d41c196",
+  "provider_revision": "a04a19da06cc50e310a172574ed66f62000b891a",
+  "provider_tree_sha": "056db7c18014b5f760d289d672d171a7b4b14e56",
+  "provider_worktree_dirty": false,
+  "registry_publication": false,
+  "retained_artifact_files": [
+    "paignia-core-0.1.0.crate",
+    "paignia-solve-0.1.0.crate"
+  ],
+  "rustc_version": "rustc 1.75.0 (82e1608df 2023-12-21)",
+  "schema_version": 1,
+  "scope": "local-cargo-artifact-consumption",
+  "source_isolation": "bubblewrap masks the provider checkout during offline resolution, compilation and tests",
+  "two_real_consumer_acceptance": false
+}

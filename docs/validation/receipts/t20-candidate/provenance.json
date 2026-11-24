@@ -1,0 +1,16 @@
+{
+  "attestation_job": "https://github.com/edithatogo/paignia/actions/runs/45438493484/job/138607181794",
+  "github_hosted_only": true,
+  "native_run": "https://github.com/edithatogo/paignia/actions/runs/45438493484",
+  "offline_security_run": "https://github.com/edithatogo/paignia/actions/runs/45438494033",
+  "predicate_type": "https://slsa.dev/provenance/v1",
+  "schema_version": 1,
+  "signer_workflow": "edithatogo/paignia/.github/workflows/ci.yml",
+  "source_ref": "refs/heads/main",
+  "source_revision": "a04a19da06cc50e310a172574ed66f62000b891a",
+  "verified_subject_sha256": {
+    "cargo-artifact-qualification.json": "c47e1d1f7c0ce8f69daf3544301c22bff97fd4109c1aab499a8d64bd8a86cdb0",
+    "paignia-core-0.1.0.crate": "e917b650bc7d008d4d0968dc6b0a4e04b1d9f6e0ae1c79818563fba111fac973",
+    "paignia-solve-0.1.0.crate": "638fb6c971e11750cee3b2c68cbc4f9ffa7a7d710b149dbbc58c8bde627fa7fc"
+  }
+}
