@@ -1,0 +1,71 @@
+name: OpenSSF Scorecard
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths: ['.github/workflows/openssf-scorecard.yml']
+  schedule:
+    - cron: '17 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  checks: read
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  scorecard:
+    name: OpenSSF Scorecard report
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
+        with:
+          egress-policy: audit
+
+      - name: Install Scorecard
+        shell: bash
+        env:
+          SCORECARD_VERSION: '5.7.0'
+          SCORECARD_SHA256: 3b08ec0a8681806c3e744ec9210742a502c7d66f06f25523b70f7128738235d3
+        run: |
+          tool_dir="$RUNNER_TEMP/scorecard"
+          mkdir "$tool_dir"
+          archive="$tool_dir/scorecard.tar.gz"
+          curl --fail --silent --show-error --location --retry 3 --max-time 60 \
+            --output "$archive" \
+            "https://github.com/ossf/scorecard/releases/download/v$SCORECARD_VERSION/scorecard_${SCORECARD_VERSION}_linux_amd64.tar.gz"
+          printf '%s  %s\n' "$SCORECARD_SHA256" "$archive" | sha256sum --check --strict
+          tar -xzf "$archive" -C "$tool_dir" scorecard
+
+      - name: Assess supply-chain practices
+        shell: bash
+        env:
+          GITHUB_AUTH_TOKEN: ${{ github.token }}
+        run: |
+          result="$RUNNER_TEMP/scorecard.json"
+          commit="$GITHUB_SHA"
+          # Scorecard runs its full host-backed suite only in HEAD mode.
+          if [[ "$GITHUB_REF" == refs/heads/main ]]; then
+            commit=HEAD
+          fi
+          "$RUNNER_TEMP/scorecard/scorecard" --repo="github.com/$GITHUB_REPOSITORY" \
+            --commit="$commit" --format=json > "$result"
+          jq -e --arg sha "$GITHUB_SHA" \
+            '.repo.commit == $sha and (.score | type == "number") and (.checks | length > 0)' \
+            "$result" >/dev/null
+          {
+            jq -r '"## OpenSSF Scorecard\n\nScore \(.score)/10 for \(.repo.commit)\n\n| Check | Score |\n| --- | --- |", (.checks[] | "| \(.name) | \(if .score < 0 then "Unknown" else (.score | tostring) end) |")' "$result"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Retain the Scorecard report
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: openssf-scorecard
+          path: ${{ runner.temp }}/scorecard.json
+          if-no-files-found: error
+          retention-days: 30

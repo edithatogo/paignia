@@ -79,6 +79,16 @@ and merge groups. It can also run on demand from the Actions tab.
 When upgrading RepoHealth, update its version and Linux amd64 archive SHA-256
 together in `.github/workflows/repository-health.yml`.
 
+### Research software and supply-chain checks
+
+OpenSSF Scorecard reports supply-chain practices for the selected revision.
+Main runs the full suite. Pull requests that change the workflow report the
+checks that support a specific commit.
+Read the check-level report alongside Native CI and Offline AI Security.
+Unknown checks retain their unknown status in the report. The
+[research software readiness guide](docs/validation/research-software-readiness.md)
+maps FAIR and applicable software-review criteria to Paignia evidence.
+
 ## Pull requests
 
 Create a focused branch from the current `main` branch and submit a pull request to this repository. Link the relevant issue or existing Conductor task, explain the resulting behaviour, and update affected examples, contracts and documentation. Keep unrelated changes in separate pull requests.
@@ -87,7 +97,7 @@ Report executed commands, outcomes and the commit they validate. Identify unavai
 
 ## Security, rights and conduct
 
-Follow the [security policy](https://github.com/edithatogo/.github/blob/main/SECURITY.md). Use private vulnerability reporting if available; otherwise request a private contact without publishing vulnerability details. Keep credentials, personal information and restricted source material out of issues, fixtures, logs and artifacts.
+Follow [Paignia's security policy](SECURITY.md) for private reporting and affected-version guidance. Keep credentials, personal information and restricted source material out of issues, fixtures, logs and artifacts.
 
 Read the [existing licence](LICENSE) and preserve attribution and third-party terms. Follow the [code of conduct](https://github.com/edithatogo/.github/blob/main/CODE_OF_CONDUCT.md) and keep technical discussions respectful.
 

@@ -11,18 +11,87 @@ permissions:
 
 jobs:
   fair-software:
-    runs-on: ubuntu-latest
+    name: FAIR4RS metadata preflight
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - name: Harden the runner (Audit all outbound calls)
+      - name: Harden the runner
         uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
         with:
           egress-policy: audit
 
-      - name: Assess fair-software.eu recommendations
-        continue-on-error: true
-        uses: fair-software/howfairis-github-action@4c11146488125aa6e1531184eed51d781bcd5871 # v0.2.1
-        env:
-          PYCHARM_HOSTED: "1"
+      - name: Check out citation and version history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          MY_REPO_URL: "https://github.com/${{ github.repository }}"
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: ./.github/actions/project-python
+
+      - name: Install the locked schema validation tools
+        run: |
+          python -m pip install --require-hashes --only-binary :all: -r verification/requirements-citation.txt
+
+      - name: Validate citation metadata and report release evidence
+        shell: bash
+        run: |
+          schema="$RUNNER_TEMP/cff-schema.json"
+          curl --fail --silent --show-error --location --retry 3 --max-time 60 \
+            --output "$schema" \
+            https://raw.githubusercontent.com/citation-file-format/citation-file-format/396f738fb025b1d8acdb02a56ffc923f95dc8999/schema.json
+          python -I - "$schema" <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          import subprocess
+          import sys
+          import tomllib
+
+          import jsonschema
+          import yaml
+
+          schema_bytes = Path(sys.argv[1]).read_bytes()
+          if hashlib.sha256(schema_bytes).hexdigest() != "0b8d22140da702d766df318dcff3a91af2f39521298dcf36d76315fd99cc169b":
+              raise SystemExit("Citation File Format schema checksum mismatch")
+          schema = json.loads(schema_bytes)
+          citation = yaml.safe_load(Path("CITATION.cff").read_text())
+          jsonschema.validate(citation, schema)
+          sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+          if sha != os.environ["GITHUB_SHA"]:
+              raise SystemExit("Citation metadata came from a different checkout")
+          repository = f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}"
+          if citation.get("repository-code") != repository:
+              raise SystemExit("CITATION.cff repository-code does not match the repository")
+          package = tomllib.loads(Path("Cargo.toml").read_text())["workspace"]["package"]
+          if citation.get("license") != package["license"]:
+              raise SystemExit("Citation licence must match the Cargo workspace")
+          licence = Path("LICENSE").read_bytes()
+          if hashlib.sha256(licence).hexdigest() != "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30":
+              raise SystemExit("LICENSE must contain the full official Apache-2.0 text")
+          for manifest in Path("crates").glob("*/Cargo.toml"):
+              if manifest.with_name("LICENSE").read_bytes() != licence:
+                  raise SystemExit(f"{manifest.parent} must carry the full workspace licence")
+          tags = subprocess.check_output(["git", "tag", "--list"], text=True).splitlines()
+          versioned_citation = "version" in citation
+          persistent_identifier = "doi" in citation or any(
+              item["type"] == "doi" for item in citation.get("identifiers", [])
+          )
+          report = f"""## FAIR4RS metadata preflight
+
+          Checkout {sha}
+
+          | Evidence | Result |
+          | --- | --- |
+          | RDA F2 and R1.1 citation schema, repository and licence | Validated |
+          | RDA F1.2 Git tags | {len(tags)} |
+          | RDA F1.2 citation version | {"Declared" if versioned_citation else "Pending"} |
+          | RDA F1 DOI in citation metadata | {"Declared" if persistent_identifier else "Pending"} |
+
+          A declared DOI needs archive readback. The research software readiness guide
+          links the separate interoperability, installation and reproducibility evidence.
+          """
+          with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a") as summary:
+              summary.write(report)
+          print(report)
+          PY

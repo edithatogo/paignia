@@ -4,3 +4,10 @@ title: Paignia
 authors:
 - name: Paignia project
 repository-code: https://github.com/edithatogo/paignia
+license: Apache-2.0
+abstract: Rust libraries for finite game representations, bounded solvers, and reproducible numerical diagnostics.
+keywords:
+- game theory
+- equilibrium computation
+- Rust
+- research software

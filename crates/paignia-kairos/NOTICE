@@ -1,0 +1,3 @@
+Paignia's native execution adapter uses Kairos through pinned Cargo dependencies.
+The Kairos distribution retains its upstream licences and attribution.
+Paignia's source-transfer attribution is retained in the repository NOTICE.
