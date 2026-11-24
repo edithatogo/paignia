@@ -27,7 +27,8 @@ The paired UOGTO policy belongs to its existing semantic-game-contract track.
 Implementation requests retain separate owners and acceptance: NHRA bargaining
 and QRE need assessment; GINSIM information/compliance models need classification;
 existing finite-game applications reuse accepted provider contracts where they
-fit. All open T17.10/T17.12 and T18.03 obligations remain open.
+fit. T17.10 and T17.12 are complete. T18.03 remains pending with its application
+owner. [T17 archive](../archive/t17_game_runtime_ecosystem_20261107/index.md) · [T18 archive](../archive/t18_illicit_enforcement_inspection_games_20261110/index.md)
 
 ## Verification scope
 

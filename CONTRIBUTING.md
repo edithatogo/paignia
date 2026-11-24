@@ -69,8 +69,11 @@ and merge groups. It can also run on demand from the Actions tab.
   annotates findings and fails on errors. [alint v0.22.1](https://github.com/asamarts/alint/releases/tag/v0.22.1)
 - Run `repohealth . --format markdown` in a full Git checkout. The workflow
   publishes its informational score and recommendations in the run summary.
-  Test-framework and coverage recommendations use file-name heuristics.
-  See the Native CI coverage artifact for measured Rust coverage.
+  The report detects test tools, coverage configuration, and build commands
+  using checkout heuristics. Native CI compiles the workspace, runs the Cargo
+  tests, and publishes measured Rust line coverage. GitHub displays the
+  inherited community policies and the effective rules for `main`.
+  [Main branch rules](https://github.com/edithatogo/paignia/rules/27976609)
   [RepoHealth v0.5.3](https://github.com/spbuilds/repohealth/releases/tag/v0.5.3)
 
 When upgrading RepoHealth, update its version and Linux amd64 archive SHA-256
