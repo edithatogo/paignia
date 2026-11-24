@@ -15,9 +15,9 @@ support enumeration, optional correlated equilibrium, static identity conversion
 and owned policy observations. The [static package review](docs/validation/t17-review-20261117.md)
 and [native provider review](docs/validation/provider-review-20261120.md) record
 exact sources, checks and limits. Registry publication remains disabled.
-The accepted reimbursement Chapter 8 case supplies the first real application
-receipt. Bounded release eligibility still requires a second application on the
-same artifacts and profile. [Chapter 8 receipt](docs/validation/receipts/t17-reimbursement-chapter8.json)
+The reimbursement Chapter 8 and Innovate sequential pricing cases satisfy the
+two-application receipt requirement for the same qualified artifacts and static
+profile. [Consumer evidence](docs/validation/game-consumer-handoff.md)
 
 The initial source transfer is merged in [PR #2](https://github.com/edithatogo/paignia/pull/2)
 at `12b22ce7571b9c590405bf53c2c1c5862b49cd64`.

@@ -27,7 +27,7 @@ case, and T17.12 admits both application receipts for graph backward induction.
 - [Identity and promotion record](paignia-identity-and-promotion.md)
 - [Metadata](metadata.json)
 - [20 November provider review](../../../docs/validation/provider-review-20261120.md)
-- [T18 inspection/interdiction game contracts for tobac](../../tracks/t18_illicit_enforcement_inspection_games_20261110/index.md)
+- [T18 inspection/interdiction game contracts for tobac](../t18_illicit_enforcement_inspection_games_20261110/index.md)
 - [Source transfer and retention map](../../../docs/architecture/paignia-transfer-map.md)
 
 Paignia now owns T17.01–T17.08 and T17.12–T17.17. The reimbursement application

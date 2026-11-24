@@ -15,7 +15,7 @@ reserves only these four new files: `README.md`, `inspection_2x2_v1.json`,
 acknowledges this lane as worker `6af9c112-7efc-83ec-8798-c10017de8c5f`.
 
 The reference implements the independent analytical part of
-[T18.01](../../conductor/tracks/t18_illicit_enforcement_inspection_games_20261110/plan.md).
+[T18.01](../../conductor/archive/t18_illicit_enforcement_inspection_games_20261110/plan.md).
 The live base is `fca2b2f8811c8cd56d27be4c9407f573d54ad1e9`.
 The T18 specification and plan blobs are respectively
 `b1805340504c5601c3cbbe5c51be1853d7eae630` and
