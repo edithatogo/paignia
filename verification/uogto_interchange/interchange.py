@@ -8,10 +8,10 @@ from pathlib import Path
 import re
 from urllib.request import urlopen
 
+from pyoxigraph import RdfFormat, parse as parse_rdf, serialize as serialize_rdf
 from pyshacl import validate as shacl_validate
 import rdflib
 from rdflib import Graph, Literal, OWL, RDF, RDFS, URIRef, XSD
-from rdflib.compare import isomorphic, to_canonical_graph
 
 HERE = Path(__file__).resolve().parent
 LOCK = HERE / "ontology-lock.json"
@@ -19,7 +19,8 @@ SOURCE = "https://raw.githubusercontent.com/edithatogo/UOGTO"
 UOGTO = "https://w3id.org/uogto/"
 CLASS_TYPES = {OWL.Class, RDFS.Class}
 PROPERTY_TYPES = {OWL.ObjectProperty, OWL.DatatypeProperty, OWL.AnnotationProperty, RDF.Property}
-FORMATS = {".ttl": "turtle", ".nt": "nt"}
+FORMATS = {".ttl": RdfFormat.TURTLE, ".nt": RdfFormat.N_TRIPLES}
+SCHEMA_PREDICATES = {RDFS.subClassOf, RDFS.subPropertyOf, RDFS.domain, RDFS.range}
 INTEGER = re.compile(r"[+-]?[0-9]+")
 DECIMAL = re.compile(r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)")
 REAL = re.compile(DECIMAL.pattern + r"(?:[eE][+-]?[0-9]+)?")
@@ -137,20 +138,23 @@ class Bundle:
                     raise ValueError(f"Unknown UOGTO property or wrong value kind for {predicate} at {subject}")
             if isinstance(value, Literal) and not valid_literal(value):
                 raise ValueError(f"Ill-typed literal {value.n3()} for {predicate} at {subject}")
+        # Only the pinned bundle may supply schema axioms used for inference.
+        data = Graph()
+        data += (triple for triple in graph if triple[1] not in SCHEMA_PREDICATES)
         conforms, _, report = shacl_validate(
-            graph, shacl_graph=self.shapes, ont_graph=self.ontology,
+            data, shacl_graph=self.shapes, ont_graph=self.ontology,
             inference="rdfs", inplace=False, do_owl_imports=False,
         )
         if not conforms:
             raise ValueError(str(report))
 
-    def roundtrip(self, source):
-        self.validate(source)
-        canonical = to_canonical_graph(source)
-        output = ("\n".join(sorted(canonical.serialize(format="nt").rstrip("\n").split("\n"))) + "\n").encode()
-        restored = parse_graph(output, "nt")
-        if not isomorphic(source, restored):
+    def roundtrip(self, source, format_name, base=None):
+        asserted = set(parse_rdf(input=source, format=format_name, base_iri=base, without_named_graphs=True))
+        rendered = serialize_rdf(asserted, format=RdfFormat.N_TRIPLES)
+        output = b"".join(sorted(line + b"\n" for line in rendered.split(b"\n") if line))
+        if set(parse_rdf(input=output, format=RdfFormat.N_TRIPLES)) != asserted:
             raise ValueError("RDF terms changed during N-Triples round-trip")
+        restored = parse_graph(output, "nt")
         self.validate(restored)
         return output, restored
 
@@ -176,8 +180,7 @@ def main():
         format_name = FORMATS.get(args.input.suffix.lower())
         if not format_name:
             raise ValueError("Input must have a .ttl or .nt extension")
-        graph = parse_graph(args.input.read_bytes(), format_name, args.input.resolve().as_uri())
-        output, _ = bundle.roundtrip(graph)
+        output, _ = bundle.roundtrip(args.input.read_bytes(), format_name, args.input.resolve().as_uri())
         args.output.write_bytes(output)
     except (OSError, ValueError, SyntaxError, rdflib.exceptions.Error) as error:
         parser.exit(1, f"{error}\n")

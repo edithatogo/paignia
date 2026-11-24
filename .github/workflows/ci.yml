@@ -114,15 +114,19 @@ jobs:
           cargo clippy --locked --manifest-path crates/paignia-io/Cargo.toml --all-targets -- -D warnings
           python3 -m pip install --require-hashes --only-binary :all: -r verification/uogto_interchange/requirements.txt
           python3 -I verification/uogto_interchange/interchange.py stage --ontology-dir target/uogto-bundle
-          UOGTO_BUNDLE=target/uogto-bundle python3 -I -m unittest discover -s verification/uogto_interchange -v
+          cargo fetch --locked --manifest-path crates/paignia-io/Cargo.toml
+          bwrap --die-with-parent --unshare-net --dev-bind / / -- bash -euo pipefail <<'REPLAY'
+          export UOGTO_BUNDLE=target/uogto-bundle CARGO_NET_OFFLINE=true
+          python3 -I -m unittest discover -s verification/uogto_interchange -v
           python3 -I verification/uogto_interchange/verify.py \
-            --ontology-dir target/uogto-bundle/ontologies/core --output target/uogto-interchange
-          python3 -I verification/uogto_interchange/interchange.py inventory --ontology-dir target/uogto-bundle \
+            --ontology-dir "$UOGTO_BUNDLE/ontologies/core" --output target/uogto-interchange
+          python3 -I verification/uogto_interchange/interchange.py inventory --ontology-dir "$UOGTO_BUNDLE" \
             > target/uogto-interchange/ontology-inventory.json
-          python3 -I verification/uogto_interchange/interchange.py roundtrip --ontology-dir target/uogto-bundle \
+          python3 -I verification/uogto_interchange/interchange.py roundtrip --ontology-dir "$UOGTO_BUNDLE" \
             --input verification/uogto_interchange/game.ttl --output target/uogto-interchange/game-validated.nt
-          python3 -I verification/uogto_interchange/interchange.py roundtrip --ontology-dir target/uogto-bundle \
+          python3 -I verification/uogto_interchange/interchange.py roundtrip --ontology-dir "$UOGTO_BUNDLE" \
             --input target/uogto-interchange/result.nt --output target/uogto-interchange/result-validated.nt
+          REPLAY
       - name: Cargo artifacts with provider source unavailable
         run: python3 scripts/validate_game_packages.py --receipt target/cargo-artifact-qualification.json --artifact-dir target/qualified-packages
       - name: Native API documentation

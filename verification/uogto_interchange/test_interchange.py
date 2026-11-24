@@ -24,7 +24,9 @@ class InterchangeTests(unittest.TestCase):
             output = Path(temp) / "graph.nt"
             source.write_text(
                 '<urn:buyer> <urn:note> [ <urn:value> "+001"^^<http://www.w3.org/2001/XMLSchema#integer> ; '
-                '<urn:caption> "café\u2028au lait"@fr ; <urn:choice> <urn:one:choice>, <urn:two:choice> ] .',
+                '<urn:caption> "café\u2028au lait"@fr ; <urn:choice> <urn:one:choice>, <urn:two:choice> ] .\n'
+                '<urn:buyer> <urn:number> +001, 1, 01.20 ; '
+                '<urn:whitespace> "  a  b "^^<http://www.w3.org/2001/XMLSchema#token> .',
                 encoding="utf-8",
             )
             args = ["interchange.py", "roundtrip", "--ontology-dir", str(self.directory),
@@ -34,8 +36,11 @@ class InterchangeTests(unittest.TestCase):
             rendered = output.read_text(encoding="utf-8")
             self.assertIn('"+001"^^', rendered)
             self.assertIn('"café\u2028au lait"@fr', rendered)
-            result = parse_graph(output.read_bytes(), FORMATS[".nt"])
-            self.assertEqual(len(result), 5)
+            self.assertIn('"01.20"^^', rendered)
+            self.assertIn('"  a  b "^^', rendered)
+            self.assertEqual(rendered.count("<urn:number>"), 3)
+            result = parse_graph(output.read_bytes(), "nt")
+            self.assertEqual(len(result), 9)
             self.assertEqual(set(result.objects(None, URIRef("urn:choice"))),
                              {URIRef("urn:one:choice"), URIRef("urn:two:choice")})
 
@@ -44,7 +49,17 @@ class InterchangeTests(unittest.TestCase):
         player = next(graph.subjects(RDF.type, GT.Player))
         graph.remove((player, GT.identifier, None))
         with self.assertRaisesRegex(ValueError, "MinCountConstraintComponent"):
-            Bundle(self.directory).roundtrip(graph)
+            Bundle(self.directory).validate(graph)
+
+    def test_input_schema_cannot_supply_a_missing_shacl_assertion(self):
+        graph = b"""
+            @prefix g: <https://w3id.org/uogto/core#> .
+            @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+            <urn:game> a g:GameSpecification ; <urn:unqualifiedPlayer> <urn:buyer> .
+            <urn:unqualifiedPlayer> rdfs:subPropertyOf g:hasPlayer .
+        """
+        with self.assertRaisesRegex(ValueError, "MinCountConstraintComponent"):
+            Bundle(self.directory).roundtrip(graph, FORMATS[".ttl"])
 
     def test_rejects_wrong_value_kind_or_unknown_class(self):
         bundle = Bundle(self.directory)
@@ -55,7 +70,7 @@ class InterchangeTests(unittest.TestCase):
             graph = parse_graph(b"", "turtle")
             graph.add(statement)
             with self.assertRaisesRegex(ValueError, expected):
-                bundle.roundtrip(graph)
+                bundle.validate(graph)
 
     def test_rejects_malformed_literal_and_changed_bundle_bytes(self):
         for lexical, datatype in [("1_0", XSD.integer), ("1e2", XSD.decimal), ("inf", XSD.double)]:

@@ -59,9 +59,10 @@ target/dev-python/bin/python -I verification/uogto_interchange/interchange.py ro
   --output target/game.nt
 ```
 
-The command accepts a single Turtle or N-Triples graph. It checks UOGTO
-declaration roles and runs the pinned SHACL shapes with RDFS inference for
-validation. The exported N-Triples contain the asserted graph. A bundle hash,
+The command accepts a single Turtle or N-Triples graph. Oxigraph preserves
+lexical RDF terms, including Turtle numeric shorthand. RDFLib and PySHACL
+check UOGTO declaration roles and the pinned shapes with RDFS inference from
+the pinned ontology. The exported N-Triples contain the asserted graph. A bundle hash,
 RDF, or validation failure exits nonzero before writing output. Game execution
 uses the optional Rust package. The frozen static v1 JSON records came from the
 published T19 replay on Paignia `11102e0`.
