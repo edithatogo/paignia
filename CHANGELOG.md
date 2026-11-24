@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Corrected chance-payoff cancellation in backward induction. Newly computed
+  envelopes identify solver version `1.0.1` and existing `1.0.0` envelopes remain
+  readable. [Static solver result](docs/architecture/solver-result-v1.md)
+- Removed the copied-source smoke mode. Isolated package tests retain both
+  assertions and verify the unpacked Cargo artifacts.
+
 - Added versioned finite-game profiles, role-specific identities, result
   envelopes, and policy observations in `paignia-core`. [Runtime contract](docs/architecture/game-runtime-contract-v1.md)
 - Added backward induction, bounded Nash support enumeration, and CFR/CFR+

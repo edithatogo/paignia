@@ -16,8 +16,9 @@ use crate::{
 
 /// Exact native-envelope schema; no serialized wire format is defined here.
 pub const RESULT_ENVELOPE_SCHEMA_VERSION: &str = "1.0.0";
-/// Version of the seed's input-order, pairwise-tolerance selection algorithm.
-pub const BACKWARD_INDUCTION_ALGORITHM_VERSION: &str = "1.0.0";
+/// Current input-order, pairwise-tolerance method with compensated chance sums.
+pub const BACKWARD_INDUCTION_ALGORITHM_VERSION: &str = "1.0.1";
+const LEGACY_BACKWARD_INDUCTION_ALGORITHM_VERSION: &str = "1.0.0";
 
 /// Declared representation; only the acyclic extensive form is admitted here.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -301,7 +302,10 @@ impl Envelope {
                 ));
             }
         }
-        if self.algorithm.version != BACKWARD_INDUCTION_ALGORITHM_VERSION {
+        if !matches!(
+            self.algorithm.version.as_str(),
+            LEGACY_BACKWARD_INDUCTION_ALGORITHM_VERSION | BACKWARD_INDUCTION_ALGORITHM_VERSION
+        ) {
             return Err(EnvelopeError::new(
                 "unsupported_result_algorithm_version",
                 "algorithm.version",

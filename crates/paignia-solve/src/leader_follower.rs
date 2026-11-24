@@ -602,20 +602,15 @@ pub fn commitment_at_with_detection(
         Ratio::one(),
         expected_payoffs_with_detection(game, detection, inspect, Ratio::one())?,
     );
-    let mut options = Vec::with_capacity(2);
-    match comply.1.follower.cmp(&evade.1.follower) {
-        Ordering::Greater => options.push(comply),
-        Ordering::Less => options.push(evade),
-        Ordering::Equal => {
-            options.push(comply);
-            options.push(evade);
-        }
-    }
-    options
-        .first()
-        .copied()
-        .map(|_| select_tie(&options, tie))
-        .ok_or(Error::InconsistentWitness)
+    Ok(match comply.1.follower.cmp(&evade.1.follower) {
+        Ordering::Greater => comply,
+        Ordering::Less => evade,
+        Ordering::Equal => match tie {
+            FollowerTie::Optimistic if comply.1.leader >= evade.1.leader => comply,
+            FollowerTie::Pessimistic if comply.1.leader < evade.1.leader => comply,
+            _ => evade,
+        },
+    })
 }
 
 /// Exact commitment value on `[0, budget]`, including a one-sided supremum.
@@ -867,25 +862,6 @@ fn require_probability(value: Ratio) -> Result<(), Error> {
             denominator: value.denominator,
         })
     }
-}
-
-fn select_tie(options: &[(Ratio, Payoffs)], tie: FollowerTie) -> (Ratio, Payoffs) {
-    let mut best = options[0];
-    for candidate in options.iter().skip(1) {
-        let order = candidate.1.leader.cmp(&best.1.leader);
-        let replace = match tie {
-            FollowerTie::Optimistic => {
-                order == Ordering::Greater || (order == Ordering::Equal && candidate.0 < best.0)
-            }
-            FollowerTie::Pessimistic => {
-                order == Ordering::Less || (order == Ordering::Equal && candidate.0 > best.0)
-            }
-        };
-        if replace {
-            best = *candidate;
-        }
-    }
-    best
 }
 
 fn from_i128(mut numerator: i128, mut denominator: i128) -> Result<Ratio, Error> {

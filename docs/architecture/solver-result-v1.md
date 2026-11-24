@@ -9,9 +9,11 @@ The implementation validates the input and supplied role-specific identities,
 compares the specification ID, executes the existing Rust solver, constructs
 the [native result envelope](game-result-contract-v1.md), and validates the
 generated record against the source graph. It never calls another engine.
-The existing solver APIs, error enum and numerical behavior remain unchanged.
+The existing solver API signatures and typed error boundaries are preserved.
 
-The method identifies itself as `paignia/backward-induction`, version `1.0.0`.
+The method identifies itself as `paignia/backward-induction`, version `1.0.1`.
+Each chance node accumulates probability-weighted payoffs with an addition
+correction per player. Products and returned values still use binary64.
 Its selection rule is the seed's input-order pairwise tolerance followed by a
 lexical tie comparison. Near-tie chains can depend on edge order. This is a
 tolerance-aware contingent policy, not a certificate of exact subgame-perfect
@@ -34,4 +36,4 @@ This API supplies computed native records; it defines no serialization format,
 general equilibrium catalogue, conversion receipt or application acceptance.
 The public regression target is `cargo test --locked -p paignia-solve --test
 result_contract`. Its expectations independently fix the schema/selection scope,
-typed failure boundaries and unchanged source solver result.
+typed failure boundaries and agreement with the current native solver.

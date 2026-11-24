@@ -75,6 +75,7 @@ fn generated_record_is_admitted_and_preserves_the_native_result() {
     )
     .unwrap();
     assert_eq!(result.envelope.status, ResultStatus::Completed);
+    assert_eq!(result.envelope.algorithm.version, "1.0.1");
     assert_eq!(result.envelope.catalogue, CatalogueClaim::OneFound);
     assert_eq!(
         result.envelope.selection_rule,
@@ -261,4 +262,70 @@ fn signed_zero_tolerance_and_full_role_strings_survive_emission() {
     .unwrap();
     assert_eq!(result.envelope.identities, ids);
     assert_eq!(result.envelope.tolerance.to_bits(), (-0.0_f64).to_bits());
+}
+
+#[test]
+fn chance_cancellation_preserves_the_better_action_for_every_outcome_order() {
+    let node = |id: &str| NodeId(id.into());
+    let player = PlayerId("p".into());
+    let mut source = specification();
+    let large = 2_f64.powi(55);
+    let outcomes = [
+        ("high", 0.25, large),
+        ("middle", 0.5, 1.0),
+        ("low", 0.25, -large),
+    ];
+
+    for (id, _, payoff) in outcomes {
+        source.game.nodes.insert(
+            node(id),
+            Node::Terminal {
+                payoffs: BTreeMap::from([(player.clone(), payoff)]),
+            },
+        );
+    }
+    source.game.nodes.insert(
+        node("b"),
+        Node::Terminal {
+            payoffs: BTreeMap::from([(player.clone(), 0.25)]),
+        },
+    );
+    for order in [
+        [0, 1, 2],
+        [0, 2, 1],
+        [1, 0, 2],
+        [1, 2, 0],
+        [2, 0, 1],
+        [2, 1, 0],
+    ] {
+        source.game.nodes.insert(
+            node("a"),
+            Node::Chance {
+                edges: order
+                    .map(|i| ChanceEdge {
+                        probability: outcomes[i].1,
+                        target: node(outcomes[i].0),
+                    })
+                    .into(),
+            },
+        );
+        // The three dyadic terms sum to 1/2, above the certain 1/4.
+        let result = backward_induction_result(
+            &source,
+            STATIC_GAME_PROFILE_V1,
+            identities(),
+            SolverConfig::default(),
+        )
+        .unwrap();
+        let policy = &result.envelope.solutions[0];
+        assert_eq!(
+            policy.choices[&node("root")],
+            ActionId("a".into()),
+            "{order:?}"
+        );
+        assert_eq!(
+            policy.expected_payoffs[&player].to_bits(),
+            0.5_f64.to_bits()
+        );
+    }
 }

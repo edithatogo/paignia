@@ -281,7 +281,7 @@ fn solve_node(
             result
         }
         Node::Chance { edges } => {
-            let mut expected = PayoffVector::new();
+            let mut expected = BTreeMap::<_, ChancePayoff>::new();
             for edge in edges {
                 let child = solve_node(
                     game,
@@ -294,9 +294,16 @@ fn solve_node(
                     depth + 1,
                 )?;
                 for (player, payoff) in child {
-                    *expected.entry(player).or_insert(0.0) += edge.probability * payoff;
+                    expected
+                        .entry(player)
+                        .or_default()
+                        .add(edge.probability * payoff);
                 }
             }
+            let expected = expected
+                .into_iter()
+                .map(|(player, payoff)| (player, payoff.value + payoff.correction))
+                .collect();
             push_trace(trace, node_id, TraceNodeKind::Chance, None, &expected);
             expected
         }
@@ -361,6 +368,33 @@ fn push_trace(
         selected_action,
         expected_payoffs: expected_payoffs.clone(),
     });
+}
+
+#[derive(Default)]
+struct ChancePayoff {
+    value: f64,
+    correction: f64,
+}
+
+impl ChancePayoff {
+    fn add(&mut self, payoff: f64) {
+        let (sum, lost) = two_sum(self.value, payoff);
+        self.value = sum;
+        // Keep nonfinite aggregates visible to result admission.
+        self.correction = if sum.is_finite() {
+            self.correction + lost
+        } else {
+            0.0
+        };
+    }
+}
+
+// Knuth's TwoSum retains the addition remainder for finite intermediates.
+fn two_sum(a: f64, b: f64) -> (f64, f64) {
+    let high = a + b;
+    let b_part = high - a;
+    let low = (a - (high - b_part)) + (b - b_part);
+    (high, low)
 }
 
 fn payoff_for(payoffs: &PayoffVector, player: &PlayerId) -> f64 {

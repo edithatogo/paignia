@@ -22,13 +22,15 @@ catalogue or application acceptance is implied.
 | Information structure | `ResultInformationStructure::PerfectInformation` |
 | Solution concept | `ResultSolutionConcept::ToleranceAwareBackwardInductionPolicy` |
 | Algorithm | `ResultAlgorithm::BackwardInduction`, native method identifier `paignia/backward-induction` |
-| Algorithm version | Exactly `1.0.0`, independently of envelope and input schema |
+| Algorithm version | `1.0.0` or `1.0.1`, independently of envelope and input schema |
 | Selection | `ResultSelectionRule::InputOrderPairwiseToleranceThenLexicographic` |
 | Catalogue | `CatalogueClaim::OneFound` |
 | Payload | Exactly one `StaticPolicyResult` |
 
-The method version describes the existing seed's pairwise tolerance comparison
-in stored edge order. A candidate action replaces the current best when its
+Both method versions use the pairwise tolerance comparison in stored edge
+order. Version `1.0.1` compensates addition rounding within each chance node.
+Version `1.0.0` records remain structurally admissible. Historical execution is
+reproduced by pinning the original implementation revision. A candidate action replaces the current best when its
 utility is greater outside tolerance, or when its action string is lexically
 smaller within tolerance. A chain of near ties can therefore change the selected
 action when input order changes. This record does not promise input-order

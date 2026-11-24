@@ -3,8 +3,7 @@
 
 Linux bubblewrap makes the provider checkout unavailable during resolution,
 compilation and tests. No registry publication, scientific-method qualification
-or real-application receipt is inferred. --source-smoke retains the historical
-copy-based development check under its explicitly weaker scope.
+or real-application receipt is inferred.
 """
 
 from __future__ import annotations
@@ -24,7 +23,7 @@ import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGES = ("paignia-core", "paignia-solve")
-CONSUMER_TEST = r'''
+ARTIFACT_SOLVER_TEST = r'''
 use std::collections::BTreeMap;
 use paignia_core::{ActionEdge, ActionId, ChanceEdge, Game, Node, NodeId, PlayerId};
 use paignia_solve::backward_induction;
@@ -67,10 +66,6 @@ fn invalid_graph_is_rejected() {
     let game = Game { root: NodeId("missing".into()), nodes: BTreeMap::new() };
     assert!(backward_induction(&game).is_err());
 }
-'''
-
-ARTIFACT_SOLVER_TEST = CONSUMER_TEST + r'''
-
 #[test]
 fn pure_coordination_preserves_both_equilibria() {
     use paignia_solve::{pure_nash_equilibria, NormalFormGame, SolverConfig};
@@ -549,111 +544,19 @@ def artifact_qualification(cargo: str, artifact_dir: Path | None = None) -> dict
     return receipt
 
 
-def standalone_manifest(source: Path, workspace: dict) -> str:
-    """Resolve inherited metadata/lints while retaining the package's source manifest."""
-    text = source.read_text(encoding="utf-8")
-    package = tomllib.loads(text)["package"]
-    for name, value in package.items():
-        if value == {"workspace": True}:
-            inherited = workspace["package"][name]
-            assignment = rf"(?m)^{re.escape(name)}\.workspace[ \t]*=[ \t]*true[ \t]*$"
-            text, replaced = re.subn(
-                assignment, lambda _: f"{name} = {json.dumps(inherited)}", text
-            )
-            if replaced != 1:
-                raise ValueError(f"expected one inherited package assignment: {name}")
-    lint_lines: list[str] = []
-    for group, lints in workspace.get("lints", {}).items():
-        lint_lines.append(f"[lints.{group}]")
-        for name, value in lints.items():
-            if not isinstance(value, (str, int, bool)):
-                raise ValueError(f"unsupported inherited lint value: {group}.{name}")
-            lint_lines.append(f"{name} = {json.dumps(value)}")
-        lint_lines.append("")
-    text = text.replace("[lints]\nworkspace = true", "\n".join(lint_lines).rstrip())
-    if "workspace = true" in text:
-        raise ValueError("unresolved workspace inheritance in extracted package")
-    resolved = tomllib.loads(text)["package"]
-    for name, value in package.items():
-        expected = workspace["package"][name] if value == {"workspace": True} else value
-        if resolved.get(name) != expected:
-            raise ValueError(f"extracted package field changed during materialization: {name}")
-    return text
-
-
-def source_smoke(cargo: str) -> dict:
-    """Retain the historical weaker copy-based development check explicitly."""
-    workspace = tomllib.loads((ROOT / "Cargo.toml").read_text())["workspace"]
-    receipt: dict = {
-        "scope": "extracted-source-package-smoke",
-        "registry_artifact": False,
-        "two_real_consumer_acceptance": False,
-        "source_files_sha256": {},
-        "packages": list(PACKAGES),
-    }
-    with tempfile.TemporaryDirectory(prefix="paignia-extracted-") as temporary:
-        staging = Path(temporary).resolve()
-        if staging.is_relative_to(ROOT):
-            raise ValueError("smoke consumer must be outside the provider workspace")
-        for name in PACKAGES:
-            source = ROOT / "crates" / name
-            destination = staging / name
-            shutil.copytree(source, destination, ignore=shutil.ignore_patterns("target", ".git"))
-            (destination / "Cargo.toml").write_text(
-                standalone_manifest(source / "Cargo.toml", workspace), encoding="utf-8"
-            )
-            for path in sorted(destination.rglob("*")):
-                if path.is_file():
-                    key = path.relative_to(staging).as_posix()
-                    receipt["source_files_sha256"][key] = hashlib.sha256(path.read_bytes()).hexdigest()
-        consumer = staging / "consumer"
-        (consumer / "src").mkdir(parents=True)
-        (consumer / "tests").mkdir()
-        version = json.dumps(workspace["package"]["version"])
-        dependencies = "\n".join(
-            f'{name} = {{ path = "../{name}", version = {version} }}' for name in PACKAGES
-        )
-        (consumer / "Cargo.toml").write_text(
-            '[package]\nname = "paignia-extracted-consumer"\nversion = "0.0.0"\n'
-            'edition = "2021"\npublish = false\n\n[dependencies]\n' + dependencies + "\n",
-            encoding="utf-8",
-        )
-        (consumer / "src/lib.rs").write_text("//! Isolated package smoke consumer.\n")
-        (consumer / "tests/extracted_consumer.rs").write_text(CONSUMER_TEST)
-        manifest = str(consumer / "Cargo.toml")
-        run([cargo, "generate-lockfile", "--offline", "--manifest-path", manifest], consumer)
-        output = run(
-            [cargo, "test", "--offline", "--locked", "--manifest-path", manifest,
-             "--test", "extracted_consumer"],
-            consumer,
-        )
-        require_native_tests(output, 2)
-        receipt["tests_passed"] = 2
-        receipt["cargo_version"] = run([cargo, "--version"], consumer).strip()
-        receipt["provider_checkout_dependency"] = False
-        receipt["manifest_resolution"] = "workspace fields materialized; sibling path+version dependencies; offline lockfile"
-    return receipt
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--receipt", type=Path, help="optional JSON result from successful native execution")
     parser.add_argument("--artifact-dir", type=Path, help="retain exact .crate archives only after every artifact profile passes")
-    parser.add_argument("--source-smoke", action="store_true", help="run only the historical copied-source smoke")
     args = parser.parse_args()
-    if args.source_smoke and args.artifact_dir is not None:
-        parser.error("--artifact-dir requires actual artifact qualification, not --source-smoke")
     cargo = shutil.which("cargo")
     if cargo is None:
         parser.exit(1, "cargo is required; native package consumer was not executed\n")
-    receipt = source_smoke(cargo) if args.source_smoke else artifact_qualification(cargo, args.artifact_dir)
+    receipt = artifact_qualification(cargo, args.artifact_dir)
     if args.receipt:
         args.receipt.parent.mkdir(parents=True, exist_ok=True)
         args.receipt.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
-    if args.source_smoke:
-        print("Extracted source-package smoke passed (2 native tests; no artifact acceptance)")
-    else:
-        print(f'Cargo artifact qualification passed ({len(receipt["profiles"])} isolated profiles; no registry publication)')
+    print(f'Cargo artifact qualification passed ({len(receipt["profiles"])} isolated profiles; no registry publication)')
     return 0
 
 

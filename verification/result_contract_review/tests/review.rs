@@ -65,7 +65,7 @@ fn explicit_legacy_tie_version_permits_the_documented_order_effect() {
     assert_eq!(second.envelope.solutions[0].choices[&n("root")],a("a"));
     for value in [first,second] {
         assert_eq!(value.envelope.selection_rule,ResultSelectionRule::InputOrderPairwiseToleranceThenLexicographic);
-        assert_eq!(value.envelope.algorithm.version,"1.0.0");
+        assert_eq!(value.envelope.algorithm.version,"1.0.1");
         assert_eq!(value.envelope.solution_concept,ResultSolutionConcept::ToleranceAwareBackwardInductionPolicy);
     }
 }

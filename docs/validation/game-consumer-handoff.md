@@ -76,8 +76,8 @@ The script creates actual `.crate` files, verifies packaged source and metadata,
 unpacks them, and runs native consumers with the provider checkout unavailable.
 It separately executes minimal, default, each advertised feature, and all-feature
 profiles. It retains archives only after every profile passes, rechecking each
-archive's hash before copying. `--source-smoke` is a separate copied-source check
-and cannot produce this artifact handoff.
+archive's hash before copying. The packed-artifact tests retain both
+assertions from the historical copied-source check.
 
 The package receipt records the provider commit and tree, provider lock hash,
 Cargo and Rust versions, both archive versions/hashes, and every profile's
