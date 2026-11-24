@@ -6,12 +6,17 @@ from hashlib import sha256
 import json
 from pathlib import Path
 import re
+from struct import pack, unpack
 from urllib.request import urlopen
 
-from pyoxigraph import RdfFormat, parse as parse_rdf, serialize as serialize_rdf
+from pyoxigraph import (
+    BlankNode, Literal as OxLiteral, NamedNode, Quad, RdfFormat, Store,
+    parse as parse_rdf, serialize as serialize_rdf,
+)
 from pyshacl import validate as shacl_validate
 import rdflib
 from rdflib import Graph, Literal, OWL, RDF, RDFS, URIRef, XSD
+from rdflib.term import bind
 
 HERE = Path(__file__).resolve().parent
 LOCK = HERE / "ontology-lock.json"
@@ -34,10 +39,39 @@ def owned(term):
     return isinstance(term, URIRef) and term.startswith(UOGTO)
 
 
+def float32(lexical):
+    # Oxigraph's RDF store applies the XSD binary32 lexical-to-value mapping.
+    # Its shortest round-trippable spelling is decoded to the exact float value.
+    store = Store()
+    store.add(Quad(NamedNode("urn:float:subject"), NamedNode("urn:float:value"),
+                   OxLiteral(lexical.strip(" \t\r\n"), datatype=NamedNode(str(XSD.float)))))
+    canonical = next(iter(store)).object.value
+    return unpack(">f", pack(">f", float(canonical)))[0]
+
+
 def parse_graph(data, format_name, base=None):
-    # XSD lexical forms are part of an asserted RDF term.
+    # PySHACL may restore RDFLib's default bindings after a validation.
+    if Literal("1.00000001", datatype=XSD.float, normalize=False).value != 1.0:
+        bind(XSD.float, float, constructor=float32, datatype_specific=True)
     rdflib.NORMALIZE_LITERALS = False
     return Graph().parse(data=data, format=format_name, publicID=base)
+
+
+def asserted_quads(source, format_name, base=None):
+    parsed = parse_rdf(input=source, format=format_name, base_iri=base, without_named_graphs=True)
+    if format_name != RdfFormat.TURTLE:
+        return set(parsed)
+    labels = {}
+
+    def label(term):
+        if isinstance(term, BlankNode):
+            if term not in labels:
+                labels[term] = BlankNode(f"b{len(labels)}")
+            return labels[term]
+        return term
+
+    # Rename in parser encounter order so the same Turtle has stable output.
+    return {Quad(label(quad.subject), quad.predicate, label(quad.object)) for quad in parsed}
 
 
 def verified_bytes(path, expected, data):
@@ -75,7 +109,7 @@ def valid_literal(literal):
     if datatype == XSD.decimal:
         return DECIMAL.fullmatch(lexical) is not None
     if datatype in {XSD.double, XSD.float}:
-        return lexical in {"INF", "-INF", "NaN"} or REAL.fullmatch(lexical) is not None
+        return lexical in {"INF", "+INF", "-INF", "NaN"} or REAL.fullmatch(lexical) is not None
     if type(literal.value) is int:
         return INTEGER.fullmatch(lexical) is not None
     return True
@@ -149,7 +183,7 @@ class Bundle:
             raise ValueError(str(report))
 
     def roundtrip(self, source, format_name, base=None):
-        asserted = set(parse_rdf(input=source, format=format_name, base_iri=base, without_named_graphs=True))
+        asserted = asserted_quads(source, format_name, base)
         rendered = serialize_rdf(asserted, format=RdfFormat.N_TRIPLES)
         output = b"".join(sorted(line + b"\n" for line in rendered.split(b"\n") if line))
         if set(parse_rdf(input=output, format=RdfFormat.N_TRIPLES)) != asserted:

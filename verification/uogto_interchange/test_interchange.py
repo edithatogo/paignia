@@ -34,6 +34,9 @@ class InterchangeTests(unittest.TestCase):
             with patch("sys.argv", args), patch("interchange.urlopen", side_effect=AssertionError):
                 main()
             rendered = output.read_text(encoding="utf-8")
+            with patch("sys.argv", args):
+                main()
+            self.assertEqual(rendered, output.read_text(encoding="utf-8"))
             self.assertIn('"+001"^^', rendered)
             self.assertIn('"café\u2028au lait"@fr', rendered)
             self.assertIn('"01.20"^^', rendered)
@@ -43,6 +46,20 @@ class InterchangeTests(unittest.TestCase):
             self.assertEqual(len(result), 9)
             self.assertEqual(set(result.objects(None, URIRef("urn:choice"))),
                              {URIRef("urn:one:choice"), URIRef("urn:two:choice")})
+
+    def test_shacl_uses_declared_float_value_space(self):
+        source = b"""
+            @prefix g: <https://w3id.org/uogto/core#> .
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+            <urn:edge> g:probability "1.00000001"^^xsd:float ; <urn:limit> "+INF"^^xsd:double .
+        """
+        bundle = Bundle(self.directory)
+        output, _ = bundle.roundtrip(source, FORMATS[".ttl"])
+        self.assertIn(b'"1.00000001"^^', output)
+        self.assertIn(b'"+INF"^^', output)
+        above_one = source.replace(b"1.00000001", b"1.0000000596046447753906250000000000001")
+        with self.assertRaisesRegex(ValueError, "Probability values"):
+            bundle.roundtrip(above_one, FORMATS[".ttl"])
 
     def test_rejects_missing_required_relationship(self):
         graph = parse_graph((HERE / "game.ttl").read_bytes(), "turtle")
