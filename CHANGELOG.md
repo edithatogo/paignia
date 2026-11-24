@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-- Add opt-in `paignia-io` JSON interchange and a checked public UOGTO game-to-result example.
+- Added validated RDF interchange for every class and property in the pinned
+  UOGTO edition, with versioned backward-induction, CFR, CFR+ and bounded
+  Nash replays. [Interchange guide](verification/uogto_interchange/README.md)
 - Require alint signature verification and record the security baseline, paper readiness and release plan.
 
 - Added adaptive Nash enclosure across a two-vertex payoff segment with shared
