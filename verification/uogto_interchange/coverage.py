@@ -8,12 +8,14 @@ import posixpath
 import subprocess
 import sys
 
-from rdflib import Namespace, RDF, RDFS
+from rdflib import Literal, Namespace, OWL, RDF, RDFS, XSD
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from interchange import Bundle, FORMATS, HERE, SOURCE, digest, parse_graph
 
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
+CORE = Namespace("https://w3id.org/uogto/core#")
+EXTENSIONS = Namespace("https://w3id.org/uogto/extensions#")
 
 
 def inline_context(bundle, value, directory):
@@ -48,6 +50,56 @@ def fixtures(bundle):
         yield str(path.relative_to(HERE)), source, source, FORMATS[".ttl"], path.as_uri()
 
 
+def asserted_types(graph, ontology, resource):
+    return {
+        parent
+        for declared in graph.objects(resource, RDF.type)
+        for parent in ontology.transitive_objects(declared, RDFS.subClassOf)
+    }
+
+
+def property_expectations(bundle, graph, triple):
+    subject, predicate, value = triple
+    schema = bundle.ontology
+    domains = set(schema.objects(predicate, RDFS.domain))
+    ranges = set(schema.objects(predicate, RDFS.range))
+    checked_domains = domains
+    # This pinned declaration uses the extensions namespace for the core GameInstance.
+    if (predicate == EXTENSIONS.hasTransactionCost and domains == {EXTENSIONS.GameInstance}
+            and EXTENSIONS.GameInstance not in bundle.classes):
+        checked_domains = {CORE.GameInstance}
+    subject_types = asserted_types(graph, schema, subject)
+    if not (checked_domains - {RDFS.Resource, OWL.Thing}) <= subject_types:
+        return None
+    if isinstance(value, Literal):
+        datatype = value.datatype or (RDF.langString if value.language else XSD.string)
+        value_types = {datatype, RDFS.Literal}
+    else:
+        value_types = asserted_types(graph, schema, value) | {RDFS.Resource, OWL.Thing}
+    if not ranges <= value_types:
+        return None
+    return {
+        "domain": sorted(map(str, domains)),
+        "checked_domain": sorted(map(str, checked_domains)),
+        "range": sorted(map(str, ranges)),
+        "subject_type_evidence": sorted(map(str, subject_types)),
+        "value_type_evidence": sorted(map(str, value_types)),
+    }
+
+
+def subject_context(graph, subject):
+    context = {
+        (subject, predicate, value)
+        for predicate, value in graph.predicate_objects(subject)
+        if predicate != RDF.type
+    } | {
+        (actor, predicate, subject)
+        for actor, predicate in graph.subject_predicates(subject)
+        if predicate != RDF.type
+    }
+    return sorted(([part.n3() for part in triple] for triple in context))[:3]
+
+
 def term_proof(bundle, term, graph, triple, fixture, declarations):
     subject = triple[0]
     definition = bundle.ontology.value(term, SKOS.definition) or bundle.ontology.value(term, RDFS.comment)
@@ -78,13 +130,15 @@ def replay(bundle):
             subject, predicate, value = triple
             if predicate == RDF.type and value in bundle.classes and value not in classes:
                 # An instance witness must participate in the case beyond its class assertion.
-                grounded = any(p != RDF.type for p in graph.predicates(subject)) or any(graph.subjects(None, subject))
-                if grounded:
-                    classes[value] = term_proof(bundle, value, graph, triple, name, inventory["classes"][value])
+                context = subject_context(graph, subject)
+                if context:
+                    proof = term_proof(bundle, value, graph, triple, name, inventory["classes"][value])
+                    classes[value] = proof | {"context_assertions": context}
             if predicate in bundle.properties and predicate not in properties:
-                properties[predicate] = term_proof(
-                    bundle, predicate, graph, triple, name, inventory["properties"][predicate],
-                )
+                expectations = property_expectations(bundle, graph, triple)
+                if expectations is not None:
+                    proof = term_proof(bundle, predicate, graph, triple, name, inventory["properties"][predicate])
+                    properties[predicate] = proof | {"contract": expectations}
     missing = sorted(bundle.classes.keys() - classes.keys()) + sorted(bundle.properties.keys() - properties.keys())
     if missing:
         raise ValueError(

@@ -85,3 +85,15 @@ and the ontology lock have separate SHA-256 digests in the report.
 The full gate requires 322 class witnesses and 212 property witnesses on the
 pinned revision. These are vocabulary interoperability results. Numerical
 methods have their own profiles and acceptance evidence.
+
+The property witness gate checks declared domains and ranges against explicit
+fixture types and the pinned superclass hierarchy. It retains the asserted
+datatype, including cases where an example originally used a different numeric
+datatype. The pinned `hasTransactionCost` declaration refers to an undeclared
+extensions `GameInstance`. The receipt records the declared and checked domains and
+checks the trade against the canonical core `GameInstance` and the ordinary
+upstream shape. The remaining declared type checks use the source IRIs directly.
+
+For an upstream revision update, regenerate the lock and inventory from the whole
+source edition. Review additions, removals, role changes and modified shapes
+against the previous receipt, then run the complete witness gate with the new pin.

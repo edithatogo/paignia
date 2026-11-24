@@ -96,9 +96,15 @@ e:public-dialogue a x:LLMInteractionGame ; g:hasPlayer e:operator, e:observer ;
     dct:hasPart e:dialogue, e:clerk .
 e:dialogue a x:AgentProtocolSession ; dct:hasPart e:question ;
     rdfs:label "One public clarification request and one reply" .
-e:question a x:AgentMessage ; rdfs:label "Ask for published office hours" .
-e:clerk a x:LLMAgent ; x:hasPromptState e:public-prompt ; x:hasMemoryState e:question-history ;
+e:question a x:AgentMessage ; rdfs:label "Ask for published office hours" ;
+    x:hasToolInvocation e:directory-lookup .
+e:directory-lookup a x:ToolInvocation ; x:hasConsentBoundary e:public-directory-only ;
+    rdfs:label "Select the public directory lookup in the synthetic dialogue" .
+e:public-directory-only a x:ConsentBoundary ; rdfs:label "Use only the public directory" .
+e:clerk a x:LLMAgent, g:Agent ; x:hasPromptState e:public-prompt ; x:hasMemoryState e:question-history ;
+    x:hasActionSpace e:directory-actions ;
     x:temperatureValue "0"^^xsd:double ; dct:hasPart e:summarizing, e:short-window .
+e:directory-actions a x:ActionSpace ; rdfs:label "Answer directly or look up public office hours" .
 e:public-prompt a x:PromptState ; rdfs:label "Use the public directory only" .
 e:question-history a x:MemoryState ; rdfs:label "Earlier public directory question" .
 e:summarizing a x:AgentCapability ; rdfs:label "Summarize public opening-hour text" .

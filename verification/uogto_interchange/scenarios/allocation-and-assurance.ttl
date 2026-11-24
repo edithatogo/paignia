@@ -14,7 +14,7 @@ e:second a g:Player ; g:identifier "second" .
 e:selection-session a g:PlaySession ; g:hasState e:initial-assignment ;
     x:hasMatchingMarket e:room-market .
 e:initial-assignment a g:State ; rdfs:label "Room assignments before swaps" .
-e:room-market a x:MatchingMarket ; x:hasAllocation e:fair-rooms ;
+e:room-market a x:MatchingMarket ; x:hasAllocation e:fair-rooms ; x:hasMatching e:initial-match ;
     dct:hasPart e:initial-match, e:evaluate-envy .
 e:fair-rooms a x:Allocation, x:EnvyFreeAllocation, x:ProportionalAllocation ;
     x:valuationValue "10"^^xsd:double ;
@@ -37,6 +37,7 @@ e:transfer-queue a x:PetriNetGame ; g:hasPlayer e:first ;
     x:hasPetriNet e:transfer-model ; x:hasPlace e:source-place, e:destination-place ;
     x:hasTransitionNode e:transfer-token .
 e:transfer-model a x:PetriNet ; x:hasMarking e:initial-tokens ; dct:hasPart e:sender-receiver ;
+    x:hasPlace e:source-place, e:destination-place ; x:hasTransitionNode e:transfer-token ;
     rdfs:comment "A token moves from source to destination when there is capacity." .
 e:initial-tokens a x:Marking ; dct:hasPart e:one-waiting-token .
 e:one-waiting-token a x:Token ; dct:isPartOf e:source-place .

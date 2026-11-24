@@ -27,7 +27,9 @@ e:clock-down a x:Auction, x:DutchAuction ; x:hasBiddingRule e:accept-clock .
 e:accept-clock a g:Rule ; rdfs:comment "The first bidder accepting the descending price wins." .
 e:open-cry a x:EnglishAuction ; x:hasBiddingRule e:raise-clock .
 e:raise-clock a g:Rule ; rdfs:comment "Public bids must exceed the standing bid." .
-e:sealed-second-price a x:SecondPriceAuction, x:VickreyAuction ; x:hasBiddingRule e:sealed-bid .
+e:sealed-second-price a x:Auction, x:SecondPriceAuction, x:VickreyAuction ;
+    x:hasBiddingRule e:sealed-bid ; x:hasReservePrice "8"^^xsd:double ;
+    x:hasHighestBidder e:ada ; x:hasWinningBid "13"^^xsd:double ; x:hasSecondHighestBid "10"^^xsd:double .
 e:sealed-bid a g:Rule ; rdfs:comment "Highest sealed bid wins and pays the next highest bid." .
 
 # The two players divide a divisible resource with zero disagreement utility.
@@ -119,8 +121,11 @@ e:arrival-clock a x:MonitoringTechnology ; rdfs:label "Receipt time stamp" .
 e:acceptance-floor a x:ParticipationConstraint ; rdfs:label "Expected wage must meet the courier's outside utility" .
 
 e:shared-service a x:CooperativeGame, x:TransferableUtilityGame ; g:hasPlayer e:ada, e:ren ;
-    x:hasCoalition e:joint-crew ; x:hasCoreSolution e:balanced-savings ; x:hasShapleyValue e:marginal-savings .
+    x:hasCoalition e:joint-crew ; x:hasCoreSolution e:balanced-savings ; x:hasShapleyValue e:marginal-savings ;
+    dct:hasPart e:joint-savings-function .
 e:joint-crew a g:Coalition ; dct:hasPart e:ada, e:ren .
+e:joint-savings-function a x:CharacteristicFunction ; dct:isPartOf e:joint-crew ;
+    x:coalitionValueValue "12"^^xsd:double .
 e:balanced-savings a x:CoreSolution ; rdfs:comment "Each singleton receives at least its stand-alone surplus." .
 e:marginal-savings a x:ShapleyValue ; rdfs:comment "Average the savings contributions over both arrival orders." .
 e:nonexchangeable-capacity a x:NonTransferableUtilityGame ; g:hasPlayer e:ada, e:ren ;
