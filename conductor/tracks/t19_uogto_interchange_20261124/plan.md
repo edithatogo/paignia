@@ -15,8 +15,16 @@ replay.
 
 ## Phase 2 Compatibility and ontology coverage
 
-- [ ] Task: Qualify a separate downstream consumer against frozen game and result wire records before expanding the public compatibility promise.
+- [x] Task: Qualify a separate downstream consumer against frozen game and result wire records before expanding the public compatibility promise.
 - [x] Task: Review local mapping terms against upstream UOGTO and qualify an additional executable profile with its own oracle.
+
+The New Drug Reimbursement Game replays the two frozen v1 records in its
+required Rust CI. At application revision `8e7b0674b234521e97abd7e65b655892fb646636`,
+the replay validated both fixture hashes and matched every response byte using
+`paignia-io` from provider revision `2f297bf3eb6031e455af41211063a949656a3bcf`.
+The application records the fixture and lockfile digests and the replay on Rust
+1.75 and stable. [Application receipt](https://github.com/edithatogo/new-drug-reimbursement-game/blob/8e7b0674b234521e97abd7e65b655892fb646636/docs/validation/receipts/t19-paignia-static-v1.md)
+· [Merged application replay](https://github.com/edithatogo/new-drug-reimbursement-game/actions/runs/45430226149/job/138573168468)
 
 ## Phase 3 Full UOGTO vocabulary interchange
 
@@ -35,5 +43,3 @@ The native evidence includes Kuhn poker for CFR and CFR+, Prisoner's Dilemma
 for pure Nash and matching pennies for mixed Nash. The installed consumer
 replays the original static v1 records outside the provider checkout. Its receipt
 qualifies installation and wire compatibility in a standalone consumer fixture.
-The separate downstream acceptance task requires a receipt owned by a downstream
-application.
