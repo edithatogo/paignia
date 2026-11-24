@@ -1,0 +1,28 @@
+{
+  "artifacts": {
+    "paignia-core": "c184e24dd9b96c7a2b64614378ff150e559f1ed823312d7265385e0a89fda99e",
+    "paignia-solve": "f2d7974020b0e63c3e023923223af913d4cf076600bc5286637e1ba52e766f1d"
+  },
+  "case_kind": "application-model",
+  "case_name": "Innovate sequential price commitment with structural demand",
+  "commands": [
+    "cargo metadata --offline --locked --format-version 1 --manifest-path /tmp/work/application/rust/crates/innovate-games/Cargo.toml",
+    "cargo test --offline --locked --manifest-path /tmp/work/application/rust/crates/innovate-games/Cargo.toml --test price_commitment --jobs 2"
+  ],
+  "execution_evidence": {
+    "path": "docs/validation/receipts/t17-innovate-price-commitment-linux-x64.log",
+    "sha256": "2b137ae7fbbafe3ae9f468441239efb9c453613779fe22998daf65bda89ed8d9"
+  },
+  "expected_result_basis": "Independent rational multinomial-logit shares with an outside option. See the T17.10 static price commitment section in conductor/tracks/kairos_runtime_boundary_20261107/strategic-information-integration.md at the application revision.",
+  "profile_sha256": "8c20e1969e3e33bf1a8ac6b3ba6073775e06782348b733da73603441a068f59e",
+  "provider_revision": "bd880dd756d2ba56cc5f479bc078cea31b53c1d1",
+  "repository": "https://github.com/edithatogo/innovate",
+  "result": "passed",
+  "revision": "7999fddec28fea30e93c67c4e15857c42c884616",
+  "schema_version": 1,
+  "scope": "real-application-artifact-consumer",
+  "semantic_profile": "paignia/static-finite-perfect-information-sparse-zero/1.0.0",
+  "tests_failed": 0,
+  "tests_passed": 5,
+  "tests_skipped": 0
+}

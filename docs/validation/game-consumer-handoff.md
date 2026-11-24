@@ -5,9 +5,9 @@ eligibility decision. The deliverable is two real application receipts for the
 **same qualified package bytes and semantic profile**, supported by executed
 application models and independently justified expected results.
 
-The [consumer manifest](game-consumers.json) records the first application
-receipt for the reimbursement Chapter 8 case. The eligibility check requires
-a second distinct application receipt against the same archives and profile.
+The [consumer manifest](game-consumers.json) records the reimbursement Chapter
+8 case and Innovate's sequential pricing case. The eligibility check requires
+both application receipts to match the same archives and profile.
 The [evidence guard](../../scripts/validate_game_consumer_evidence.py) defines
 schema version `1`; the [package qualifier](../../scripts/validate_game_packages.py)
 defines how the native archives and package receipt are produced.
@@ -22,7 +22,7 @@ defines how the native archives and package receipt are produced.
 | Reimbursement application, T17.11 | Preserve its payoff units, perspective and valuation provenance, and reject incompatible inputs. HEOR valuation and Voiage remain separate owners. |
 | Paignia, T17.12 | Review the received evidence, bind the retained files by hash, run the guard and record its bounded eligibility result. |
 
-These are ownership links from the [T17 plan](../../conductor/tracks/t17_game_runtime_ecosystem_20261107/plan.md),
+These are ownership links from the [T17 plan](../../conductor/archive/t17_game_runtime_ecosystem_20261107/plan.md),
 not assertions that the linked application work is complete. Application owners
 retain their game definitions, data, institutions, payoff construction and
 empirical assumptions. Each application needs only the algorithm and native
@@ -377,8 +377,7 @@ The regression suite checks the guard; its synthetic successful cases are not
 application receipts. The second command admits the actual referenced evidence:
 exit `0` with `eligible: true` means its bounded checks passed; exit `1` reports
 ineligibility and explicit errors. Running without `--manifest` reads
-`docs/validation/game-consumers.json`, which remains ineligible until real
-qualifying evidence is received.
+`docs/validation/game-consumers.json`, which holds the two reviewed receipts.
 
 Resolve a provider commit, profile or archive-hash mismatch by selecting a single
 qualified bundle and executing the affected application against it. Editing its
