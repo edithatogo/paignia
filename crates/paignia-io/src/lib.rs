@@ -1,7 +1,10 @@
-//! Opt-in JSON interchange for one finite, perfect-information game profile.
+//! Opt-in JSON interchange for bounded, finite game profiles.
 //!
 //! The request carries declared source identities. The caller checks those
 //! bindings against its source. The solver and graph validation are native.
+
+mod profiles;
+pub use profiles::{solve_profile_json, ProfileError, NORMAL_FORM_PROFILE};
 
 use std::collections::{btree_map::Entry, BTreeMap};
 

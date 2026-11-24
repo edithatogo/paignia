@@ -98,3 +98,32 @@ upstream shape. The remaining declared type checks use the source IRIs directly.
 For an upstream revision update, regenerate the lock and inventory from the whole
 source edition. Review additions, removals, role changes and modified shapes
 against the previous receipt, then run the complete witness gate with the new pin.
+
+## Replay the native profiles
+
+```sh
+CARGO_NET_OFFLINE=true target/dev-python/bin/python -I verification/uogto_interchange/verify_profiles.py \
+  --ontology-dir target/uogto-bundle --output target/native-profiles
+CARGO_NET_OFFLINE=true target/dev-python/bin/python -I verification/uogto_interchange/verify_consumer.py \
+  --output target/installed-consumer.json
+```
+
+The replay validates and projects the asserted game, runs the Rust wire
+interface and validates the exported RDF result. The pinned UOGTO projector
+supplies the perfect-recall partition. The Kuhn oracle independently enumerates
+deals and pure deviations for both CFR variants. Prisoner's Dilemma must yield
+mutual defection. Matching pennies must return both half-half strategies with
+zero value and zero deviation gain. The installed consumer runs the frozen
+static v1 records using a standalone Cargo package built from a provider archive.
+
+### Mapping review
+
+UOGTO's declared strategy, strategy profile and payoff links carry the
+normal-form strategies and utilities. The Paignia `payoffCell` link assigns a
+profile to a specific normal-form representation. `position` and `action` bind
+transition order and the selected action. `payoffProfile` associates terminal
+nodes with complete payoffs. Result choices, diagnostic fields and run metadata
+are Paignia's projection terms. The pinned UOGTO declarations supply the game,
+record and result vocabulary, and PROV-O binds results to source and execution.
+Keep these bridge predicates scoped to the versioned projections until an
+upstream term carries the same meaning.
