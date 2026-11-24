@@ -14,7 +14,10 @@ use paignia_solve::{
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
-use crate::{build_nodes, is_hex, NodeRecord, Source, MAX_REQUEST_BYTES, WIRE_VERSION};
+use crate::{
+    admit_source_id, build_nodes, is_hex, NamedSource, NodeRecord, Payoff, Source,
+    MAX_REQUEST_BYTES, WIRE_VERSION,
+};
 
 pub const NORMAL_FORM_PROFILE: &str = "paignia/finite-two-player-normal-form/1.0.0";
 
@@ -66,7 +69,7 @@ enum Input {
     },
     NormalForm {
         players: [Seat; 2],
-        payoffs: Vec<Vec<[f64; 2]>>,
+        payoffs: Vec<Vec<NormalCell>>,
         method: NashMethod,
     },
 }
@@ -106,6 +109,14 @@ struct SetRecord {
 struct Seat {
     id: String,
     strategies: Vec<String>,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct NormalCell {
+    profile: String,
+    payoff_profile: String,
+    payoffs: [Payoff; 2],
 }
 
 #[derive(Serialize)]
@@ -182,7 +193,12 @@ pub fn solve_profile_json(input: &[u8]) -> Result<Vec<u8>, ProfileError> {
             players,
             payoffs,
             method,
-        } => nash(&players, &payoffs, method)?,
+        } => {
+            let matrix = native_payoff_table(&players, &payoffs)?;
+            let (algorithm, version, status, mut result) = nash(&players, &matrix, method)?;
+            result["source_cells"] = json!(payoffs);
+            (algorithm, version, status, result)
+        }
     };
     Ok(serde_json::to_vec_pretty(&Response {
         version: WIRE_VERSION,
@@ -271,11 +287,10 @@ fn regret(
     ))
 }
 
-fn nash(
+fn native_payoff_table(
     players: &[Seat; 2],
-    payoffs: &[Vec<[f64; 2]>],
-    method: NashMethod,
-) -> Result<MethodResult, ProfileError> {
+    payoffs: &[Vec<NormalCell>],
+) -> Result<Vec<Vec<[f64; 2]>>, ProfileError> {
     let [row, column] = players;
     if row.id == column.id
         || players.iter().any(|seat| {
@@ -294,6 +309,54 @@ fn nash(
     {
         return Err(ProfileError::PayoffTable);
     }
+    let mut profiles = BTreeSet::new();
+    let mut payoff_profiles = BTreeMap::new();
+    let mut links = BTreeMap::new();
+    payoffs
+        .iter()
+        .map(|cells| {
+            cells
+                .iter()
+                .map(|cell| {
+                    if cell.profile.trim().is_empty()
+                        || !profiles.insert(cell.profile.as_str())
+                        || cell.payoff_profile.trim().is_empty()
+                    {
+                        return Err(ProfileError::PayoffTable);
+                    }
+                    let payoff_ids = [cell.payoffs[0].id.as_str(), cell.payoffs[1].id.as_str()];
+                    if payoff_profiles
+                        .insert(cell.payoff_profile.as_str(), payoff_ids)
+                        .is_some_and(|prior| prior != payoff_ids)
+                    {
+                        return Err(ProfileError::PayoffTable);
+                    }
+                    for (payoff, player) in cell.payoffs.iter().zip(players) {
+                        if payoff.player != player.id {
+                            return Err(ProfileError::PayoffTable);
+                        }
+                        admit_source_id(
+                            &mut links,
+                            payoff.id.clone(),
+                            NamedSource::Payoff {
+                                player: payoff.player.clone(),
+                                value_bits: payoff.value.to_bits(),
+                            },
+                        )?;
+                    }
+                    Ok([cell.payoffs[0].value, cell.payoffs[1].value])
+                })
+                .collect()
+        })
+        .collect()
+}
+
+fn nash(
+    players: &[Seat; 2],
+    payoffs: &[Vec<[f64; 2]>],
+    method: NashMethod,
+) -> Result<MethodResult, ProfileError> {
+    let [row, column] = players;
     match method {
         NashMethod::Pure => pure_nash(row, column, payoffs),
         NashMethod::Mixed => mixed_nash(row, column, payoffs),

@@ -100,7 +100,7 @@ struct ChanceOutcome {
     target: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct Payoff {
     id: String,

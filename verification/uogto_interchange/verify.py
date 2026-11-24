@@ -104,9 +104,12 @@ def transitions(graph, state, states):
     return [(edge, record) for _, edge, record in ordered]
 
 
-def project(graph, source_hash, *, require_singleton=True):
+def project(graph, source_hash, *, require_singleton=True, representation=None):
     spec = typed(graph, exactly_one(graph.subjects(RDF.type, GT.GameSpecification), "game"), GT.GameSpecification)
-    rep = typed(graph, exactly_one(graph.objects(spec, GT.hasRepresentation), "representation"), GT.ExtensiveFormRepresentation)
+    representations = set(graph.objects(spec, GT.hasRepresentation))
+    chosen = representation if representation is not None else exactly_one(representations, "representation")
+    require(chosen in representations, "Selected representation is outside the declared game")
+    rep = typed(graph, chosen, GT.ExtensiveFormRepresentation)
     players = {typed(graph, value, GT.Player) for value in graph.objects(spec, GT.hasPlayer)}
     require(players, "missing declared players")
     states = set(graph.objects(spec, GT.hasState))

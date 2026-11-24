@@ -30,6 +30,8 @@ def kuhn_graph():
     graph.add((spec, RDF.type, GT.GameSpecification))
     graph.add((spec, GT.hasRepresentation, rep))
     graph.add((rep, RDF.type, GT.ExtensiveFormRepresentation))
+    graph.add((spec, GT.hasRepresentation, KUHN.strategic_form))
+    graph.add((KUHN.strategic_form, RDF.type, GT.NormalFormRepresentation))
     graph.add((spec, GT.hasInitialState, root))
     graph.add((root, RDF.type, GT.ChanceNode))
     graph.add((spec, GT.hasState, root))
@@ -103,7 +105,8 @@ def normal_graph(case, actions, cells):
         graph.add((profile, RDF.type, GT.StrategyProfile))
         for strategy in joint:
             graph.add((profile, GT.hasStrategy, strategy))
-            graph.add((profile, GT.comprisesStrategy, strategy))
+            if case != "matching-pennies":
+                graph.add((profile, GT.comprisesStrategy, strategy))
         graph.add((profile, GT.hasPayoff, payoffs))
         named_payoffs(graph, payoffs, players, cell)
     return graph

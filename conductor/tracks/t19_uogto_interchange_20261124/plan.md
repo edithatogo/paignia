@@ -15,7 +15,7 @@ replay.
 
 ## Phase 2 Compatibility and ontology coverage
 
-- [x] Task: Qualify a separate downstream consumer against frozen game and result wire records before expanding the public compatibility promise.
+- [ ] Task: Qualify a separate downstream consumer against frozen game and result wire records before expanding the public compatibility promise.
 - [x] Task: Review local mapping terms against upstream UOGTO and qualify an additional executable profile with its own oracle.
 
 ## Phase 3 Full UOGTO vocabulary interchange
@@ -35,3 +35,5 @@ The native evidence includes Kuhn poker for CFR and CFR+, Prisoner's Dilemma
 for pure Nash and matching pennies for mixed Nash. The installed consumer
 replays the original static v1 records outside the provider checkout. Its receipt
 qualifies installation and wire compatibility in a standalone consumer fixture.
+The separate downstream acceptance task requires a receipt owned by a downstream
+application.

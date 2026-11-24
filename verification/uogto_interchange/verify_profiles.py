@@ -41,7 +41,8 @@ def bindings(specification, representation, source, bundle, profile, method):
 def perfect_recall_request(graph, source, bundle, method, iterations, projector):
     specification = exactly_one(graph.subjects(RDF.type, GT.GameSpecification), "game")
     partition = projector(graph, specification)
-    topology, _ = project(graph, digest(source), require_singleton=False)
+    representation = URIRef(partition["representation_iri"])
+    topology, _ = project(graph, digest(source), require_singleton=False, representation=representation)
     require(
         partition["specification_iri"] == topology["specification"]
         and partition["representation_iri"] == topology["source"]["representation"]
@@ -49,7 +50,6 @@ def perfect_recall_request(graph, source, bundle, method, iterations, projector)
         and set(partition["state_types"]) == {node["id"] for node in topology["nodes"]},
         "UOGTO partition and projected topology use different identities",
     )
-    representation = URIRef(partition["representation_iri"])
     declaration = partition["declaration"]
     request = bindings(specification, representation, source, bundle, declaration["semantic_profile"], method)
     request["game"] = {
@@ -75,8 +75,10 @@ def normal_request(graph, source, bundle, method):
     matrix = {}
     for profile in graph.objects(representation, BRIDGE.payoffCell):
         typed(graph, profile, GT.StrategyProfile)
-        actions = set(graph.objects(profile, GT.comprisesStrategy))
-        require(actions == set(graph.objects(profile, GT.hasStrategy)), f"Conflicting strategies for {profile}")
+        components = set(graph.objects(profile, GT.comprisesStrategy))
+        declared = set(graph.objects(profile, GT.hasStrategy))
+        require(not components or not declared or components == declared, f"Conflicting strategies for {profile}")
+        actions = components or declared
         require(len(actions) == 2, f"Expected two strategies for {profile}")
         pair = tuple(exactly_one(actions.intersection(seat), f"one owned strategy for {profile}") for seat in strategies)
         require(pair not in matrix, f"Duplicate normal-form payoff cell: {profile}")
@@ -86,9 +88,13 @@ def normal_request(graph, source, bundle, method):
             typed(graph, link, GT.PlayerPayoffLink)
             player = exactly_one(graph.objects(link, GT.payoffPlayer), "payoff recipient")
             require(player in players and player not in values, f"Foreign or repeated payoff recipient at {link}")
-            values[player] = number(exactly_one(graph.objects(link, GT.payoffValue), "payoff value"))
+            values[player] = {
+                "id": iri(link), "player": iri(player),
+                "value": number(exactly_one(graph.objects(link, GT.payoffValue), "payoff value")),
+            }
         require(set(values) == set(players), f"Incomplete payoffs at {profile}")
-        matrix[pair] = [values[player] for player in players]
+        matrix[pair] = {"profile": iri(profile), "payoff_profile": iri(payoff_profile),
+                        "payoffs": [values[player] for player in players]}
     require(len(matrix) == len(strategies[0]) * len(strategies[1]), "Incomplete normal-form payoff matrix")
     request = bindings(specification, representation, source, bundle, NORMAL_FORM, method)
     request["game"] = {
@@ -136,6 +142,10 @@ def result_graph(response, source):
     for key in ("ontology_revision", "rdf_sha256"):
         graph.add((run, BRIDGE[key], Literal(response["source"][key])))
     result = response["result"]
+    for row in result.get("source_cells", ()):
+        for cell in row:
+            for identity in (cell["profile"], cell["payoff_profile"], *(link["id"] for link in cell["payoffs"])):
+                graph.add((run, PROV.used, URIRef(identity)))
     if "policy" in result:
         for index, (actor, choices) in enumerate(sorted(result["policy"].items())):
             add_policy(graph, solution, actor, BRIDGE.informationSet, choices, index)
@@ -147,9 +157,10 @@ def result_graph(response, source):
             member = URIRef(f"{solution}:joint:{index}")
             graph.add((solution, GT.hasStrategyProfile, member))
             graph.add((member, RDF.type, GT.StrategyProfile))
-            for action in profile.values():
+            for seat, (player, action) in enumerate(sorted(profile.items())):
                 graph.add((member, GT.hasStrategy, URIRef(action)))
                 graph.add((member, GT.comprisesStrategy, URIRef(action)))
+                add_policy(graph, member, player, BRIDGE.player, [(action, 1.0)], seat)
     else:
         for index, candidate in enumerate(result["candidates"]):
             member = URIRef(f"{solution}:candidate:{index}")
@@ -164,6 +175,7 @@ def result_graph(response, source):
 def check_normal(response, request, method):
     result = response["result"]
     players = request["game"]["players"]
+    require(result["source_cells"] == request["game"]["payoffs"], "Normal-form payoff provenance changed")
     if method == "pure":
         expected = {seat["id"]: exactly_one(
             (action for action in seat["strategies"] if action.endswith(":defect")), "defect strategy")
@@ -183,6 +195,29 @@ def check_normal(response, request, method):
         require(candidate["max_gain"] == 0.0, "Matching pennies witness admits a profitable deviation")
 
 
+def check_result_provenance(response, graph):
+    result = response["result"]
+    run = URIRef(response["run"])
+    referenced = set(graph.objects(run, PROV.used))
+    for row in result.get("source_cells", ()):
+        for cell in row:
+            identities = [cell["profile"], cell["payoff_profile"], *(link["id"] for link in cell["payoffs"])]
+            require(all(URIRef(identity) in referenced for identity in identities),
+                    "Normal-form result lost source payoff records")
+    if "profiles" in result:
+        solution = URIRef(f"{run}:result")
+        mapped = []
+        for member in graph.objects(solution, GT.hasStrategyProfile):
+            choices = {}
+            for record in graph.objects(member, BRIDGE.choice):
+                player = iri(exactly_one(graph.objects(record, BRIDGE.player), "result player"))
+                require(player not in choices, "Duplicated player in the pure RDF policy")
+                choices[player] = iri(exactly_one(graph.objects(record, BRIDGE.action), "result strategy"))
+            mapped.append(choices)
+        require(sorted(map(encode, mapped)) == sorted(map(encode, result["profiles"])),
+                "Pure Nash RDF lost player-to-strategy bindings")
+
+
 def check_rejections(solver, perfect_recall, normal):
     incomplete = deepcopy(perfect_recall)
     incomplete["game"]["declaration"]["sets"].pop()
@@ -192,15 +227,17 @@ def check_rejections(solver, perfect_recall, normal):
     node["actions"].reverse()
     incomplete_table = deepcopy(normal)
     incomplete_table["game"]["payoffs"][0].pop()
+    wrong_recipient = deepcopy(normal)
+    wrong_recipient["game"]["payoffs"][0][0]["payoffs"].reverse()
     wrong_profile = dict(normal, semantic_profile=perfect_recall["semantic_profile"])
     for request, error in (
         (incomplete, "UnassignedDecisionNode"), (reordered, "ActionMismatch"),
-        (incomplete_table, "PayoffTable"), (wrong_profile, "Profile"),
+        (incomplete_table, "PayoffTable"), (wrong_recipient, "PayoffTable"), (wrong_profile, "Profile"),
     ):
         result = run_solver(solver, encode(request))
         require(result.returncode and not result.stdout and error in result.stderr.decode(),
                 f"Native profile did not reject {error}")
-    return ["UnassignedDecisionNode", "ActionMismatch", "PayoffTable", "Profile"]
+    return ["UnassignedDecisionNode", "ActionMismatch", "PayoffTable", "PayoffRecipientOrder", "Profile"]
 
 
 def replay(bundle, solver, destination):
@@ -250,7 +287,8 @@ def replay(bundle, solver, destination):
                     check_kuhn(response["result"], reference)
                 else:
                     check_normal(response, request, method)
-                result, _ = bundle.roundtrip(asserted_bytes(result_graph(response, graph)), FORMATS[".nt"])
+                result, restored = bundle.roundtrip(asserted_bytes(result_graph(response, graph)), FORMATS[".nt"])
+                check_result_provenance(response, restored)
                 files = {"game.nt": source, "request.json": wire, "result.json": run.stdout, "result.nt": result}
                 directory = destination / name
                 directory.mkdir(exist_ok=True)
