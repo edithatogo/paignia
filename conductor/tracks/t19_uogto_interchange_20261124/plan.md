@@ -20,6 +20,12 @@ replay.
 
 ## Phase 3 Full UOGTO vocabulary interchange
 
-- [ ] Generate the 322-class and 212-property inventory from the complete pinned ontology. Qualify an offline asserted-RDF command with the upstream shapes and the existing static v1 replay.
-- [ ] Prove every declaration in a meaningful graph with a definition-based assertion or upstream shape and retain the term evidence in CI.
+- [x] Generate the 322-class and 212-property inventory from the complete pinned ontology. Qualify an offline asserted-RDF command with the upstream shapes and the existing static v1 replay.
+- [x] Prove every declaration in a meaningful graph with a definition-based assertion or upstream shape and retain the term evidence in CI.
 - [ ] Qualify perfect-recall CFR and finite two-player Nash interchange with independent numerical oracles. Report the qualified native profiles separately from vocabulary coverage.
+
+
+The [coverage replay](../../../verification/uogto_interchange/README.md#replay-term-coverage)
+binds one asserted witness per class and property to its upstream definition
+and a verified input/output graph. The four applied packs are in the same
+denominator. Native execution qualification has its own evidence.

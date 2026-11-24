@@ -1,0 +1,159 @@
+@prefix g: <https://w3id.org/uogto/core#> .
+@prefix x: <https://w3id.org/uogto/extensions#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix e: <https://example.org/paignia/coverage/strategy#> .
+
+e:ada a g:Player ; g:identifier "Ada" .
+e:ren a g:Player ; g:identifier "Ren" .
+e:closed a g:Payoff ; rdfs:label "Closed-branch payoff" .
+
+# Compare worst and best equilibrium system cost against the social optimum.
+e:routing-analysis a x:AlgorithmicGame ; g:hasPlayer e:ada, e:ren ;
+    x:hasPriceOfAnarchy e:worst-ratio ; x:hasPriceOfStability e:best-ratio ;
+    dct:hasPart e:find-route-equilibrium, e:cost-bound .
+e:find-route-equilibrium a x:ComputationalProblem, x:EquilibriumComputationProblem ;
+    x:hasComplexityClass e:ppad ; g:solvedBy e:route-solver .
+e:ppad a x:ComplexityClass ; rdfs:label "PPAD" .
+e:route-solver a x:AlgorithmicSolver ; dct:hasPart e:cost-bound .
+e:cost-bound a x:ApproximationGuarantee ; rdfs:comment "Additive path-cost error at most 0.01." .
+e:worst-ratio a x:PriceOfAnarchy ; x:poaValue "1.3333333333333333"^^xsd:double .
+e:best-ratio a x:PriceOfStability ; x:posValue "1.0"^^xsd:double .
+
+# The same lot is sold under alternative price and disclosure rules.
+e:land-sale dct:hasPart e:clock-down, e:open-cry, e:sealed-second-price .
+e:clock-down a x:Auction, x:DutchAuction ; x:hasBiddingRule e:accept-clock .
+e:accept-clock a g:Rule ; rdfs:comment "The first bidder accepting the descending price wins." .
+e:open-cry a x:EnglishAuction ; x:hasBiddingRule e:raise-clock .
+e:raise-clock a g:Rule ; rdfs:comment "Public bids must exceed the standing bid." .
+e:sealed-second-price a x:Auction, x:SecondPriceAuction, x:VickreyAuction ;
+    x:hasBiddingRule e:sealed-bid ; x:hasReservePrice "8"^^xsd:double ;
+    x:hasHighestBidder e:ada ; x:hasWinningBid "13"^^xsd:double ; x:hasSecondHighestBid "10"^^xsd:double .
+e:sealed-bid a g:Rule ; rdfs:comment "Highest sealed bid wins and pays the next highest bid." .
+
+# The two players divide a divisible resource with zero disagreement utility.
+e:division a x:BargainingGame ; g:hasPlayer e:ada, e:ren ;
+    x:hasNegotiator e:ada, e:ren ; x:hasBargainingProtocol e:alternating-offers ;
+    x:disagreementPoint "0"^^xsd:double ; x:concessionRate "0.1"^^xsd:double ;
+    x:hasBargainingSolution e:split-nash, e:split-ks .
+e:alternating-offers a x:BargainingProtocol ; rdfs:comment "Each player may accept or counter the other's offer." .
+e:split-nash a x:BargainingSolution, x:NashBargainingSolution ;
+    rdfs:comment "With equal weights the 50–50 split maximizes the product of gains." .
+e:split-ks a x:KalaiSmorodinskySolution ; rdfs:comment "Equal gains as fractions of equal ideal utilities." .
+
+# Choice under noisy best response and inequity aversion.
+e:noisy-choice a x:BehaviouralGame ; g:hasPlayer e:ada, e:ren ; x:hasQRE e:logit-equilibrium ;
+    dct:hasPart e:lab-protocol, e:fair-split, e:population-levels .
+e:ada x:hasBoundedModel e:one-step ; x:cognitiveLevel 1 .
+e:one-step a x:BoundedRationalityModel, x:LevelKModel ; x:rationalityParameter "0.8"^^xsd:double ;
+    rdfs:comment "Best-response depth one against the baseline player." .
+e:population-levels a x:CognitiveHierarchyModel ; rdfs:comment "Players best respond to a mixture of lower levels." .
+e:lab-protocol a x:ExperimentalProtocol ; rdfs:comment "Each participant independently chooses one allocation." .
+e:fair-split a x:FairnessPreference ; x:inequityAversionAlpha "0.7"^^xsd:double .
+e:logit-equilibrium a x:QuantalResponseEquilibrium ;
+    rdfs:comment "The two choices follow smooth logit responses at the fixed point." .
+
+# Price changes demand, and demand changes seller utility.
+e:demand-game a x:CausalGame ; g:hasPlayer e:ada, e:ren ; x:hasCausalModel e:demand-model .
+e:demand-model a x:CausalModel ; x:hasCausalGraph e:price-demand-utility ;
+    x:hasStructuralEquation e:demand-equation ; dct:hasPart e:profit-equation .
+e:price-demand-utility a x:CausalGraph ; rdfs:comment "Directed edges price to demand, demand to utility." .
+e:demand-equation a x:StructuralEquation ; rdfs:comment "Demand equals 10 minus the posted price." .
+e:profit-equation a x:CausalPayoffModel ; rdfs:comment "Profit equals demand times margin." .
+e:price-trial a g:PlaySession ; g:hasState e:base-demand ;
+    x:hasIntervention e:set-price-three ; x:hasCounterfactualOutcome e:seven-orders .
+e:base-demand a g:State ; rdfs:label "Baseline with price four" .
+e:set-price-three a x:Intervention ; rdfs:label "Set the price to three" .
+e:seven-orders a x:CounterfactualOutcome ; g:assignsPayoff e:closed ;
+    rdfs:label "Seven orders in the alternate price scenario" .
+
+# Compose an offer stage and an acceptance stage through a shared price lens.
+e:offer-and-response a x:CompositionalGame ; g:hasPlayer e:ada, e:ren ;
+    x:hasComposition e:sequential-composition .
+e:sequential-composition a x:MonoidalComposition ; dct:hasPart e:offer-stage, e:response-stage .
+e:offer-stage a x:OpenGame ; g:hasPlayer e:ada ; x:hasLens e:price-lens ;
+    x:hasPlayFunction e:forward-price ; x:hasCoplayFunction e:backward-utility ;
+    x:hasEquilibriumPredicate e:offer-best-response .
+e:response-stage a x:OpenGame ; g:hasPlayer e:ren ; x:hasLens e:price-lens .
+e:price-lens a x:Lens, x:StrategyLens ;
+    rdfs:comment "Passes a price forward and receives a settlement utility back." .
+e:forward-price a x:PlayFunction ; rdfs:label "Map the offer strategy to posted price" .
+e:backward-utility a x:CoplayFunction ; rdfs:label "Return utility from acceptance" .
+e:offer-best-response a x:EquilibriumPredicate ; rdfs:label "Local best response to continuation utility" .
+
+# Three ballots choose an opening-time policy.
+e:opening-vote a x:VotingGame ; g:hasPlayer e:ada, e:ren ;
+    x:hasVoter e:early-voter, e:late-voter ; x:hasCandidate e:open-early, e:open-late ;
+    x:hasSocialChoiceFunction e:pairwise-majority ; g:governedByRule e:head-to-head ;
+    dct:hasPart e:submitted-rankings, e:strategic-ballot .
+e:early-voter a x:Voter ; x:hasBallot e:early-ballot .
+e:late-voter a x:Voter ; x:hasBallot e:late-ballot .
+e:early-ballot a x:Ballot ; rdfs:label "Early greater than late" .
+e:late-ballot a x:Ballot ; rdfs:label "Late greater than early" .
+e:submitted-rankings a x:PreferenceProfile ; dct:hasPart e:early-ballot, e:late-ballot .
+e:open-early a x:Candidate, x:CondorcetWinner ; x:voteCount 2 .
+e:open-late a x:Candidate ; x:voteCount 1 .
+e:pairwise-majority a x:SocialChoiceFunction ; rdfs:label "Choose the head-to-head majority winner" .
+e:head-to-head a x:VotingRule ; rdfs:label "Count first preference with two alternatives" .
+e:strategic-ballot a x:ManipulationProblem ; rdfs:comment "Can a voter improve the outcome by reversing a ranking?" .
+
+# Two routes have equal marginal cost at the equilibrium split.
+e:parallel-routes a x:RoutingGame, x:PotentialGame ; g:hasPlayer e:ada, e:ren ;
+    x:hasResource e:north, e:south ; x:hasNetworkFlow e:split-flow ;
+    x:hasWardropEquilibrium e:equal-route-cost .
+e:north a x:Resource, x:ResourceEdge ; rdfs:label "North route segment" .
+e:south a x:Resource, x:ResourceEdge ; rdfs:label "South route segment" .
+e:split-flow a x:NetworkFlow ; rdfs:label "One traveller on each route" .
+e:equal-route-cost a x:WardropEquilibrium ; rdfs:label "No occupied route has higher cost at the split" .
+
+# A contractor chooses unobserved effort after accepting a delivery contract.
+e:delivery-contract a x:ContractGame, x:PrincipalAgentGame ; g:hasPlayer e:ada, e:ren ;
+    x:hasContract e:agreement ; x:hasPrincipal e:buyer-role ; x:hasAgentRole e:courier-role .
+e:buyer-role a x:Principal ; rdfs:label "Buyer offering delivery terms" .
+e:courier-role a x:AgentRole ; dct:hasPart e:unobserved-effort, e:private-cost .
+e:unobserved-effort a x:HiddenAction ; rdfs:label "Courier effort before the recorded arrival" .
+e:private-cost a x:HiddenInformation ; rdfs:label "Courier's privately known opportunity cost" .
+e:agreement a x:Contract ; x:hasIncentiveScheme e:on-time-bonus ;
+    dct:hasPart e:arrival-clock, e:acceptance-floor .
+e:on-time-bonus a x:IncentiveScheme ; x:wageValue "12"^^xsd:double .
+e:arrival-clock a x:MonitoringTechnology ; rdfs:label "Receipt time stamp" .
+e:acceptance-floor a x:ParticipationConstraint ; rdfs:label "Expected wage must meet the courier's outside utility" .
+
+e:shared-service a x:CooperativeGame, x:TransferableUtilityGame ; g:hasPlayer e:ada, e:ren ;
+    x:hasCoalition e:joint-crew ; x:hasCoreSolution e:balanced-savings ; x:hasShapleyValue e:marginal-savings ;
+    dct:hasPart e:joint-savings-function .
+e:joint-crew a g:Coalition ; dct:hasPart e:ada, e:ren .
+e:joint-savings-function a x:CharacteristicFunction ; dct:isPartOf e:joint-crew ;
+    x:coalitionValueValue "12"^^xsd:double .
+e:balanced-savings a x:CoreSolution ; rdfs:comment "Each singleton receives at least its stand-alone surplus." .
+e:marginal-savings a x:ShapleyValue ; rdfs:comment "Average the savings contributions over both arrival orders." .
+e:nonexchangeable-capacity a x:NonTransferableUtilityGame ; g:hasPlayer e:ada, e:ren ;
+    x:hasCoalition e:joint-crew ; rdfs:comment "The two personal relief-time benefits cannot be transferred." .
+
+# A consent rule permits a report, obliges logging, and prohibits private detail.
+e:sharing-rules a x:DeonticLogicSystem ; dct:hasPart e:report-norm, e:reviewed-modality .
+e:report-norm a x:Norm ; dct:hasPart e:allowed-report, e:required-log, e:forbidden-detail .
+e:reviewed-modality a x:DeonticModality ; rdfs:label "Explicit permission for an aggregated report" .
+e:report-compliance a x:ComplianceState ; x:hasObligation e:required-log ;
+    x:hasPermission e:allowed-report ; x:hasProhibition e:forbidden-detail ; x:isCompliant true .
+e:required-log a x:Obligation ; rdfs:label "Record the decision to publish the summary" .
+e:allowed-report a x:Permission ; rdfs:label "Release aggregate counts" .
+e:forbidden-detail a x:Prohibition ; rdfs:label "Suppress any individual record" .
+e:reporting-breach a x:Violation ; dct:isPartOf e:report-norm ; x:hasSanction e:remove-report .
+e:remove-report a x:Sanction ; rdfs:label "Withdraw the nonconforming report" .
+
+# A storage controller adjusts inflow and switches modes at a threshold.
+e:storage-control a x:ContinuousTimeGame, x:DifferentialGame ; g:hasPlayer e:ada, e:ren ;
+    x:hasHamiltonian e:stock-cost ; x:hasStateEquation e:net-flow ; x:timeHorizon "24"^^xsd:double ;
+    dct:hasPart e:minimax-order .
+e:ada x:hasControlVariable e:inflow .
+e:inflow a x:ControlVariable ; rdfs:label "Controllable input rate" .
+e:stock-cost a x:Hamiltonian ; rdfs:comment "Holding cost plus the shadow price times net flow." .
+e:net-flow a x:StateEquation ; x:driftRate "0.5"^^xsd:double ;
+    rdfs:comment "Stock changes by inflow minus expected use." .
+e:minimax-order a x:IsaacsCondition ; rdfs:label "Inner min-max order yields the same Hamiltonian" .
+e:threshold-control a x:HybridGame ; g:hasPlayer e:ada ; g:hasState e:net-flow ;
+    rdfs:comment "Switch between fill and drain when the threshold is crossed." .
+e:noisy-storage a x:StochasticDifferentialGame ; g:hasPlayer e:ren ; g:hasState e:net-flow ;
+    rdfs:comment "The stock equation also includes a zero-mean noise term." .

@@ -1,0 +1,138 @@
+@prefix g: <https://w3id.org/uogto/core#> .
+@prefix x: <https://w3id.org/uogto/extensions#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix e: <https://example.org/paignia/coverage/dynamics#> .
+
+e:operator a g:Player ; g:identifier "operator" .
+e:observer a g:Player ; g:identifier "observer" .
+
+# The simulator reads a reservoir marker and issues a gate adjustment.
+e:reservoir a x:DigitalTwin ; x:hasPhysicalThing e:demo-reservoir ;
+    x:hasAffordance e:manual-gate, e:read-level, e:gate-alert ; x:samplingInterval "5"^^xsd:double ;
+    dct:hasPart e:measured-level .
+e:demo-reservoir a x:Thing ; rdfs:label "Synthetic training reservoir" .
+e:manual-gate a x:InteractionAffordance, x:ActionAffordance ; x:hasProtocolBinding e:simulator-api ;
+    rdfs:label "Set a synthetic gate to a permitted position" .
+e:read-level a x:PropertyAffordance ; rdfs:label "Read the measured level" .
+e:gate-alert a x:EventAffordance ; rdfs:label "Notify observers of a gate change" .
+e:simulator-api a x:ProtocolBinding ; rdfs:label "Local demonstration request and response" .
+e:measured-level a x:CyberPhysicalState ; rdfs:comment "The observed level and the corresponding simulated level." .
+
+# A buyer knows their own valuation type and receives a private demand cue.
+e:two-types a x:EpistemicGame ; g:hasPlayer e:operator, e:observer ;
+    g:hasInformationSet e:private-market-info ; x:hasTypeSpace e:buyer-types ;
+    dct:hasPart e:public-offer-rule, e:surviving-actions .
+e:private-market-info a g:InformationSet ; rdfs:label "The buyer's private market cue" .
+e:buyer-types a x:TypeSpace ; dct:hasPart e:high-valuation, e:low-valuation .
+e:operator x:hasType e:high-valuation .
+e:observer x:hasType e:low-valuation .
+e:high-valuation a x:Type ; x:hasBeliefHierarchy e:beliefs-about-demand ;
+    x:hasPrivateSignal e:demand-cue ; x:rationalizableActions e:accept-offer .
+e:low-valuation a x:Type ; x:rationalizableActions e:wait .
+e:beliefs-about-demand a x:BeliefHierarchy ; rdfs:comment "The buyer believes the seller believes demand is higher in the evening, and extends this belief to higher orders." .
+e:demand-cue a x:PrivateSignal ; rdfs:label "Buyer-only cue consistent with high demand" .
+e:public-offer-rule a x:CommonKnowledge ; rdfs:comment "Both players know the posted offer rule and know that the other knows it, recursively." .
+e:surviving-actions a x:Rationalizability ; dct:hasPart e:accept-offer, e:wait .
+e:accept-offer a g:Action ; rdfs:label "Accept a high-surplus offer" .
+e:wait a g:Action ; rdfs:label "Wait after a low-surplus offer" .
+
+# Two strategies compete in a population with occasional mutation.
+e:entry-competition a x:EvolutionaryGame ; g:hasPlayer e:operator, e:observer ;
+    x:hasPopulation e:entrants ; g:hasStrategy e:cautious, e:rapid ;
+    g:producesOutcome e:cautious-majority ; x:hasESS e:noninvadable .
+e:entrants a x:Population ; x:hasMutationOperator e:one-in-a-hundred .
+e:cautious a g:Strategy ; rdfs:label "Enter after observing demand" .
+e:rapid a g:Strategy ; rdfs:label "Enter immediately" .
+e:cautious-majority a g:Outcome ; g:assignsPayoff e:entry-surplus .
+e:entry-surplus a g:Payoff ; rdfs:label "Positive surplus at cautious-majority composition" .
+e:noninvadable a x:EvolutionarilyStableStrategy ; dct:hasPart e:cautious ;
+    rdfs:comment "A rare rapid entrant has lower expected utility than cautious incumbents." .
+e:one-in-a-hundred a x:MutationOperator ; rdfs:comment "A replacement entrant switches strategies with probability 0.01." .
+
+# A two-turn counter game can be described in three rule formats.
+e:counter a x:RuleEncodedGame, x:GDLGame ; g:hasPlayer e:operator, e:observer ;
+    dct:isPartOf e:samples ; x:hasGDLDescription "(role mover) (init (count 0))" ;
+    x:hasGoalRule e:count-two ; x:hasLegalMoveRule e:increment-until-two ;
+    x:hasRulePredicate e:count-predicate ; x:hasTerminalRule e:stop-two ;
+    dct:hasPart e:increment-rule .
+e:samples a x:GameDescriptionLanguage ; g:hasPlayer e:operator ;
+    rdfs:label "Sample game descriptions in GDL syntax" ;
+    dct:hasPart e:private-counter, e:ludii-counter .
+e:private-counter a x:GDLII_Game ; g:hasPlayer e:operator, e:observer ;
+    rdfs:comment "Only the active player observes the current counter." .
+e:ludii-counter a x:LudiiGame ; g:hasPlayer e:operator, e:observer ;
+    rdfs:label "Two consecutive increments on a size-two board" .
+e:count-two a x:GoalRule ; rdfs:label "Award payoff for reaching count two" .
+e:increment-until-two a x:LegalMoveRule ; rdfs:label "Increment is legal when count is below two" .
+e:count-predicate a x:RulePredicate ; rdfs:label "The count equals the recorded integer" .
+e:stop-two a x:TerminalRule ; rdfs:label "Stop when the count equals two" .
+e:increment-rule a x:TransitionRule ; rdfs:label "Add one to the count after the legal move" .
+
+e:quality-message a x:PersuasionMechanism ; dct:hasPart e:approval-belief ;
+    rdfs:comment "A sender discloses a public quality category to influence adoption." .
+e:approval-belief a x:ReceiverBelief ; rdfs:comment "Given a high category the adopter assigns 0.8 to the high-quality state." .
+
+# An exchange votes on rule changes and charges two units to settle a trade.
+e:market-assembly a x:CollectiveChoiceArena ; dct:hasPart e:clearing-board ;
+    rdfs:label "Participants vote here on the settlement rule" .
+e:clearing-board a x:GovernanceMechanism ; rdfs:label "Verify reported trades against the rule" .
+e:operator x:hasPropertyRight e:stock-title .
+e:stock-title a x:PropertyRight ; rdfs:label "Buyer title to the acquired units" .
+e:trade a g:GameInstance ; g:governedByRule e:exchange-rule ; x:hasTransactionCost e:clearing-fee .
+e:exchange-rule a g:Rule ; rdfs:label "Clear acknowledged offers at the agreed price" .
+e:clearing-fee a x:TransactionCost ; x:costValue "2"^^xsd:double .
+
+e:learning-run a x:LearningProcess ; x:explorationRate "0.05"^^xsd:double ;
+    x:hasQTable e:estimated-values ; dct:hasPart e:empirical-responses, e:regret-updates, e:share-dynamics .
+e:estimated-values a g:State ; rdfs:label "Estimated action values at iteration ten" .
+e:empirical-responses a x:FictitiousPlay ; rdfs:comment "Best respond to the observed action frequencies." .
+e:regret-updates a x:RegretMatching ; rdfs:comment "Weight each action by its positive cumulative regret." .
+e:share-dynamics a x:ReplicatorLearning ; rdfs:comment "Increase the fraction of actions with above-average payoff." .
+
+# A simulated dialogue chooses whether to ask for public information.
+e:public-dialogue a x:LLMInteractionGame ; g:hasPlayer e:operator, e:observer ;
+    dct:hasPart e:dialogue, e:clerk .
+e:dialogue a x:AgentProtocolSession ; dct:hasPart e:question ;
+    rdfs:label "One public clarification request and one reply" .
+e:question a x:AgentMessage ; rdfs:label "Ask for published office hours" ;
+    x:hasToolInvocation e:directory-lookup .
+e:directory-lookup a x:ToolInvocation ; x:hasConsentBoundary e:public-directory-only ;
+    rdfs:label "Select the public directory lookup in the synthetic dialogue" .
+e:public-directory-only a x:ConsentBoundary ; rdfs:label "Use only the public directory" .
+e:clerk a x:LLMAgent, g:Agent ; x:hasPromptState e:public-prompt ; x:hasMemoryState e:question-history ;
+    x:hasActionSpace e:directory-actions ;
+    x:temperatureValue "0"^^xsd:double ; dct:hasPart e:summarizing, e:short-window .
+e:directory-actions a x:ActionSpace ; rdfs:label "Answer directly or look up public office hours" .
+e:public-prompt a x:PromptState ; rdfs:label "Use the public directory only" .
+e:question-history a x:MemoryState ; rdfs:label "Earlier public directory question" .
+e:summarizing a x:AgentCapability ; rdfs:label "Summarize public opening-hour text" .
+e:short-window a x:ContextWindow ; rdfs:label "Current request and its public reference" .
+
+e:practice a x:SelfPlay ; dct:hasPart e:paired-policy, e:policy-deviation, e:cumulative-regret ;
+    rdfs:comment "Both seats use a snapshot of the same policy during practice." .
+e:paired-policy a x:JointPolicy ; rdfs:label "Wait then accept policy in both seats" .
+e:policy-deviation a x:ExploitabilityMetric ; rdfs:label "Measure the payoff gain available to a unilateral deviation" .
+e:cumulative-regret a x:RegretMetric ; x:regretValue "0.4"^^xsd:double .
+
+# A large population chooses between two travel times.
+e:departure a x:MeanFieldGame ; g:hasPlayer e:operator ;
+    x:hasRepresentativeAgent e:traveller ; x:hasPopulationState e:time-shares ;
+    x:hasMeanFieldEquilibrium e:consistent-shares .
+e:traveller a x:RepresentativeAgent ; rdfs:label "Representative time-of-day traveller" .
+e:time-shares a x:PopulationState ; x:hasDistributionalState e:split-times .
+e:split-times a x:DistributionalState ; rdfs:comment "Sixty percent leave early and the remainder leave late." .
+e:consistent-shares a x:MeanFieldEquilibrium ; rdfs:comment "The individual best response aggregates to the same population distribution." .
+
+# Neighbours determine the social payoff from adoption.
+e:local-recommendation a x:NetworkGame, x:DiffusionGame ; g:hasPlayer e:operator, e:observer ;
+    x:hasGraphPlayer e:north-node, e:south-node ; x:hasNetworkEdge e:neighbour-link .
+e:peer-pressure a x:InfluenceGame ; g:hasPlayer e:operator, e:observer ;
+    dct:isPartOf e:local-recommendation ; rdfs:label "The neighbour's choice changes the gain from adopting" .
+e:north-node a x:GraphPlayer ; x:degreeValue 1 ; x:hasLocalInteraction e:two-node-payoff ;
+    x:hasNeighborSet e:next-door .
+e:south-node a x:GraphPlayer ; x:degreeValue 1 .
+e:neighbour-link a x:NetworkEdge ; dct:hasPart e:north-node, e:south-node .
+e:two-node-payoff a x:LocalInteraction ; rdfs:label "Both neighbours gain when both adopt" .
+e:next-door a x:NeighborSet ; dct:hasPart e:south-node .

@@ -1,0 +1,86 @@
+@prefix g: <https://w3id.org/uogto/core#> .
+@prefix x: <https://w3id.org/uogto/extensions#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix e: <https://example.org/paignia/coverage/core#> .
+
+# In a finite two-move offer, a shopper proposes a price and a shop accepts.
+e:offer a g:FiniteGame ; g:hasPlayer e:shopper, e:shop ;
+    g:hasRepresentation e:tree ; g:hasTerminalState e:accepted ;
+    g:hasSolutionConcept e:subgame-perfection ; g:hasActionProfile e:simultaneous-check ;
+    g:hasActionSpace e:offer-space .
+e:offer-space a x:ActionSpace ; g:hasAction e:post-six ; g:belongsToPlayer e:shopper .
+e:shopper a g:HumanPlayer ; g:identifier "shopper" ; g:hasRole e:proposer ;
+    g:participatesIn e:offer ; g:hasStrategy e:offer-six .
+e:shop a g:Player, g:ArtificialAgent ; g:identifier "shop" ; g:hasStrategy e:accept-six .
+e:proposer a g:Role ; rdfs:label "Posts the first offer" ;
+    g:hasUtilityFunction e:shopper-surplus .
+e:shopper-surplus a g:UtilityFunction ; rdfs:comment "Reservation value less agreed price." .
+e:tree a g:GameRepresentation, g:ExtensiveFormRepresentation ; g:hasState e:reply .
+e:reply a g:GameNode, g:DecisionNode ; g:belongsToInformationSet e:observed ;
+    g:hasAvailableAction e:accept ; g:hasInformationSet e:observed .
+e:observed a g:PerfectInformation ; rdfs:comment "The shop observes the posted price before replying." .
+e:accept a g:SequentialAction ; rdfs:label "Accept at the reply node" ;
+    g:producesOutcome e:accepted .
+e:accepted a g:TerminalState, g:DeterministicOutcome ;
+    g:assignsPayoff e:buy-surplus ; g:utilityValue "2"^^xsd:double .
+e:buy-surplus a g:CardinalPayoff ; rdfs:label "Two utility units on acceptance" .
+e:offer-six a g:PureStrategy ; rdfs:comment "Post six at the only proposal node." .
+e:accept-six a g:PureStrategy ; rdfs:comment "Accept every offer of at least six." .
+e:deal-profile a g:StrategyProfile ; g:hasStrategy e:offer-six, e:accept-six ;
+    g:comprisesStrategy e:offer-six, e:accept-six .
+e:deal-equilibrium a g:GameSolution, g:SubgamePerfectEquilibrium ;
+    g:hasStrategyProfile e:deal-profile ; g:hasSolutionConcept e:subgame-perfection ;
+    g:solvedBy e:backward-induction .
+e:subgame-perfection a g:SolutionConcept ; rdfs:label "Nash in every subgame" .
+e:backward-induction a g:Solver ; rdfs:label "Backward induction for the offer tree" .
+e:simultaneous-check a g:ActionProfile ; dct:hasPart e:post-six, e:accept ;
+    rdfs:comment "Joint action only in the equivalent simultaneous-policy check." .
+e:post-six a g:Action ; rdfs:label "Post price six" .
+
+# A sealed offer chooses one bid from a continuum. The agent sees demand
+# probabilities and ranks rejection below an accepted offer.
+e:sealed-offers a g:InfiniteGame, g:StaticGame ; g:hasPlayer e:bidder ;
+    g:hasRepresentation e:matrix-description ; g:hasInformationSet e:sealed-belief ;
+    g:producesOutcome e:demand-draw ; g:hasPayoffMapping e:legacy-mapping .
+e:bidder a g:Player ; g:identifier "bidder" ; g:hasStrategy e:randomized-bid .
+e:matrix-description a g:GameRepresentation, g:NormalFormRepresentation ;
+    rdfs:comment "Strategies are real bids on the unit interval." .
+e:sealed-belief a g:ImperfectInformation ; g:hasBelief e:forecast ;
+    dct:hasPart e:sealed-signal, e:ranking .
+e:forecast a g:Belief ; g:confidence "0.75"^^xsd:double ;
+    rdfs:comment "The bidder assigns probability 0.75 to strong demand." .
+e:sealed-signal a g:Signal ; rdfs:label "Private strong-demand cue" .
+e:ranking a g:PreferenceRelation ; rdfs:comment "Accept at a positive margin is preferred to rejection." .
+e:randomized-bid a g:MixedStrategy ; rdfs:comment "Select bid 0.4 or 0.7 with equal probability." .
+e:demand-draw a g:StochasticOutcome ; g:assignsPayoff e:preference-rank .
+e:preference-rank a g:OrdinalPayoff ; rdfs:comment "Rank 1 identifies the preferred outcome." .
+e:legacy-mapping a g:GameEntity ; g:hasActionProfile e:simultaneous-check ;
+    g:payoffPlayer e:bidder ; g:payoffValue "0.25"^^xsd:double .
+
+# Separate continuous dynamics, discrete settlement and institutional rules.
+e:settlement a g:GameInstance ; g:governedByRule e:settlement-rule ;
+    dct:hasPart e:inventory-flow, e:nightly-clearing, e:clearing-event .
+e:clearing-event a g:EventTrace ; g:timestamp "2026-07-10T12:00:00Z"^^xsd:dateTime ;
+    rdfs:label "Recorded the offer settlement at midday" .
+e:inventory-flow a g:ContinuousDynamics ; rdfs:comment "Inventory falls at a constant observed withdrawal rate." .
+e:nightly-clearing a g:DiscreteDynamics ; rdfs:comment "Balances are replaced once per midnight settlement." .
+e:settlement-rule a g:Rule, g:ConstitutiveRule ; rdfs:comment "An accepted offer creates a binding trade." .
+e:exchange a g:Institution ; g:governedByNorm e:disclose-conflicts ;
+    g:governedByRule e:reporting-rule .
+e:disclose-conflicts a g:Norm ; rdfs:label "Disclose related-party bids" .
+e:reporting-rule a g:RegulativeRule ; rdfs:comment "Report existing trades to the clearinghouse before settlement." .
+e:shared-transport a g:Coalition ; dct:hasPart e:shopper, e:shop .
+e:transport-allocation a g:AllocationSolution ; dct:isPartOf e:shared-transport ;
+    rdfs:comment "The parties split the savings from a shared route." .
+e:mutual-acceptance a g:Equilibrium ; g:hasStrategyProfile e:deal-profile ;
+    rdfs:comment "Neither party improves utility by changing alone in the synthetic offer." .
+e:ruleset a owl:Ontology ; g:version "1.0.0" ;
+    g:sourceReference "https://example.org/paignia/coverage/source/settlement"^^xsd:anyURI ;
+    g:hasGovernanceRecord e:rules-review .
+e:rules-review a g:OntologyGovernanceRecord ; g:competencyQuestionReference "offer-parties" ;
+    g:governanceStatus "active" ; g:maturityLevel "curated" ;
+    g:reviewDate "2026-07-10"^^xsd:date ; g:sourceEvidenceReference "settlement-example-v1" ;
+    g:steward "Rules curator" .

@@ -66,3 +66,35 @@ the pinned ontology. The exported N-Triples contain the asserted graph. A bundle
 RDF, or validation failure exits nonzero before writing output. Game execution
 uses the optional Rust package. The frozen static v1 JSON records came from the
 published T19 replay on Paignia `11102e0`.
+
+## Replay term coverage
+
+```sh
+target/dev-python/bin/python -I verification/uogto_interchange/coverage.py \
+  --ontology-dir target/uogto-bundle --output target/term-coverage.json
+```
+
+The required replay uses the pinned upstream examples, the static game and
+synthetic graphs in `scenarios/`. A class witness is an instance with
+scenario context beyond its type assertion. A property witness records its
+actual subject and value. Each witness points to the upstream definition and
+a successful SHACL-validated graph round trip. The locked upstream JSON-LD
+examples are converted using local contexts before replay. Sources, outputs
+and the ontology lock have separate SHA-256 digests in the report.
+
+The full gate requires 322 class witnesses and 212 property witnesses on the
+pinned revision. These are vocabulary interoperability results. Numerical
+methods have their own profiles and acceptance evidence.
+
+The property witness gate checks declared domains and ranges against explicit
+fixture types and the pinned superclass hierarchy. Prose-defined roles fill
+the gaps for properties without a declared domain or range. The receipt
+includes the selected witness roles. It retains the asserted datatype, including cases where an example originally used a different numeric
+datatype. The pinned `hasTransactionCost` declaration refers to an undeclared
+extensions `GameInstance`. The receipt records the declared and checked domains and
+checks the trade against the canonical core `GameInstance` and the ordinary
+upstream shape. The remaining declared type checks use the source IRIs directly.
+
+For an upstream revision update, regenerate the lock and inventory from the whole
+source edition. Review additions, removals, role changes and modified shapes
+against the previous receipt, then run the complete witness gate with the new pin.
