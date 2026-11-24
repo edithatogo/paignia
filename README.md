@@ -43,6 +43,8 @@ information-set profile. [UOGTO acceptance](https://github.com/edithatogo/UOGTO/
 [Binary commitment](docs/validation/leader-follower.md)
 and [Nash payoff hull bounds](docs/validation/credal-nash.md) specify the
 supported two-player families, projections and diagnostics.
+The adaptive segment method reports exact joint-weight witnesses and exclusions
+for two paired payoff vertices.
 
 The [mixed-Nash contract](docs/validation/mixed-nash.md) limits enumeration to
 verified finite witnesses from equal-cardinality nonsingular supports, and
