@@ -126,6 +126,8 @@ jobs:
             --input verification/uogto_interchange/game.ttl --output target/uogto-interchange/game-validated.nt
           python3 -I verification/uogto_interchange/interchange.py roundtrip --ontology-dir "$UOGTO_BUNDLE" \
             --input target/uogto-interchange/result.nt --output target/uogto-interchange/result-validated.nt
+          python3 -I verification/uogto_interchange/coverage.py --ontology-dir "$UOGTO_BUNDLE" \
+            --output target/uogto-interchange/term-coverage.json
           REPLAY
       - name: Cargo artifacts with provider source unavailable
         run: python3 scripts/validate_game_packages.py --receipt target/cargo-artifact-qualification.json --artifact-dir target/qualified-packages

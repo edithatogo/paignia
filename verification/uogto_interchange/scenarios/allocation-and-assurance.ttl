@@ -1,5 +1,6 @@
 @prefix g: <https://w3id.org/uogto/core#> .
 @prefix x: <https://w3id.org/uogto/extensions#> .
+@prefix genomic: <https://w3id.org/uogto/packs/genomic-policy#> .
 @prefix dct: <http://purl.org/dc/terms/> .
 @prefix prov: <http://www.w3.org/ns/prov#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -97,3 +98,11 @@ e:marking-errors a x:ConstraintViolation ; prov:wasDerivedFrom e:marking-shape ;
     rdfs:label "The simulated source place had a count of minus one" .
 e:marking-query a x:SPARQLExecutionQuery ;
     x:queryText "ASK { <urn:demo:place> <urn:demo:tokenCount> ?n FILTER (?n < 0) }" .
+
+
+# Classify an aggregate cohort summary within a synthetic consent scope.
+e:aggregate-summary-scope a genomic:ConsentScope ; dct:hasPart e:aggregate-count-category ;
+    rdfs:label "Consent covers release of an aggregate cohort summary" .
+e:aggregate-count-category a genomic:GenomicDataCategory ;
+    rdfs:label "Aggregate cohort genotype counts" ;
+    rdfs:comment "This consent category records the data type and contains no individual sequences or results." .
