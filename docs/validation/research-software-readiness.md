@@ -12,9 +12,22 @@ distribution or a software paper.
 | rOpenSci and pyOpenSci | Their independent testing, examples and support practices inform the contributor guide. | Apply ecosystem packaging and review tools in a maintained R or Python wrapper repository when a consumer needs one. Paignia ships Rust libraries. |
 
 Use the hosted run summary for each check's result and the exact commits and
-archive hashes in the receipts when reproducing results. The FAIR metadata preflight verifies specific evidence.
-Archive retrievability and interoperability require their own checks. JOSS, rOpenSci and pyOpenSci review decisions belong to
-their respective review processes.
+archive hashes in the receipts when reproducing results. The metadata preflight
+verifies citation evidence. Archive retrieval and interoperability have their
+own checks. JOSS, rOpenSci and pyOpenSci review decisions belong to their
+respective review processes.
+
+## UOGTO integration
+
+The [upstream conformance fixture](https://github.com/edithatogo/UOGTO/tree/3000c231b2c102e18bf7c3294bec498f00f1976c/tests/fixtures/paignia-information-set-native)
+was replayed with CPython 3.15.2 and Rust 1.75.0 on its original provider and
+then with Paignia at [f5ec19c](https://github.com/edithatogo/paignia/commit/f5ec19cfeb817f60a9332f22f8daacd37d2fe174).
+Both runs returned identical output. They admitted two distinct full-IRI
+members in one information set, preserved the controller and native action
+order, and rejected invalid ownership, missing membership, reordered actions
+and imperfect recall. The second run changed only the provider binding in a
+disposable copy. The example's paired Rust fixture supplies the topology and
+payoffs. The ontology projection supplies the declarative information structure.
 
 ## References
 

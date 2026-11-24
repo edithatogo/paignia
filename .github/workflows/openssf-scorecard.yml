@@ -31,7 +31,7 @@ jobs:
         shell: bash
         env:
           SCORECARD_VERSION: '5.7.0'
-          SCORECARD_SHA256: 3b08ec0a8681806c3e744ec9210742a502c7d66f25523b70f7128738235d3
+          SCORECARD_SHA256: 3b08ec0a8681806c3e744ec9210742a502c7d66f06f25523b70f7128738235d3
         run: |
           tool_dir="$RUNNER_TEMP/scorecard"
           mkdir "$tool_dir"
