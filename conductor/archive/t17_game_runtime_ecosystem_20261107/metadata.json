@@ -2,9 +2,9 @@
   "track_id": "t17_game_runtime_ecosystem_20261107",
   "registry_id": "T17",
   "type": "refactor",
-  "status": "in_progress",
+  "status": "completed",
   "created_at": "2026-11-07T00:00:00Z",
-  "updated_at": "2026-11-21T14:32:04Z",
+  "updated_at": "2026-11-24T08:33:38Z",
   "description": "Paignia native provider, scientific completion and explicit external consumer handoffs",
   "bootstrap_revision": "0e28f1bf33ed8c7be5fa1d63b8cc40517b61d22c",
   "incubator_main_revision": "f6c1c87b6b00875b33c1e19401c1de09481913ce",
@@ -34,7 +34,7 @@
       "scope": "real application case and immutable artifact receipt"
     },
     "T17.10": {
-      "owner": "selected second application; Innovate G01-G04 candidate",
+      "owner": "edithatogo/innovate",
       "scope": "distinct real consumer with matching artifact/profile"
     },
     "T17.11": {
@@ -193,9 +193,9 @@
     "T17.07": "accepted_bounded_CFR_and_CFR_plus_with_independent_checkpoints_and_Kairos_source_retirement",
     "T17.08": "accepted_bounded_native_game_execution",
     "T17.09": "accepted_reimbursement_Chapter_8_application_artifact_receipt",
-    "T17.10": "external_second_application_receipt_pending",
+    "T17.10": "accepted_innovate_sequential_pricing_application_artifact_receipt",
     "T17.11": "accepted_reimbursement_valued_payoff_port_and_synthetic_comparison",
-    "T17.12": "guard_admits_first_consumer; second_distinct_consumer_receipt_missing",
+    "T17.12": "two_matching_application_receipts_admitted_for_bounded_release_eligibility",
     "T17.13": "completed_for_declared_bounded_provider_capability",
     "T17.14": "completed_for_declared_bounded_provider_capability",
     "T17.15": "accepted_bounded_policy_and_chance_stream_isolation",
@@ -241,10 +241,8 @@
     "kairos_pull_request": "https://github.com/edithatogo/kairos/pull/406",
     "kairos_native_ci": "https://github.com/edithatogo/kairos/actions/runs/44792232351"
   },
-  "archive_eligible": false,
-  "archive_blockers": [
-    "T17.10 needs a second matching-artifact receipt before T17.12 can report eligibility."
-  ],
+  "archive_eligible": true,
+  "archive_blockers": [],
   "historical_accepted_checkpoint_20261117": {
     "status": "bounded_native_contract_and_local_artifact_qualification_accepted",
     "provider_revision": "60cbebf4a540a65f259747f5216beaf41820d8a1",
@@ -265,8 +263,8 @@
     "offline_security": "queued for central self-hosted runner; unexecuted, not passed",
     "limits": "No registry publication or two real application receipts; subsequent capability increments require their own integrated acceptance."
   },
-  "completed_leaf_count": 15,
-  "remaining_leaf_count": 2,
+  "completed_leaf_count": 17,
+  "remaining_leaf_count": 0,
   "valued_payoff_acceptance_20261122": {
     "application_pull_request": "https://github.com/edithatogo/new-drug-reimbursement-game/pull/118",
     "application_merge": "f23ece4f1409b71496b60912023c5a800452e18b",
@@ -275,5 +273,16 @@
     "native_policy_report_sha256": "380efb2eed3d8ca5849aa32884efee485409cce69a757ac7a1172757708a7696",
     "installed_pilot_report_sha256": "d6a15a9ff4b922d0021b79da26630737115b4f2cd39984363be0efe9e20b82ab",
     "scope": "synthetic precommitted reimbursement offer, matched disclosure regimes"
+  },
+  "second_application_acceptance_20261124": {
+    "application_pull_request": "https://github.com/edithatogo/innovate/pull/696",
+    "application_receipt_revision": "7999fddec28fea30e93c67c4e15857c42c884616",
+    "reviewed_revision": "a13a8d2ab682f2a940a9fa7322104d7c1882f222",
+    "provider_revision": "bd880dd756d2ba56cc5f479bc078cea31b53c1d1",
+    "receipt": "docs/validation/receipts/t17-innovate-price-commitment-linux-x64.json",
+    "receipt_sha256": "b3a12204c21b436a9b519ebbd2fa3539fcdbfcb5ac1b45df9b12d313c85573ff",
+    "tests_passed": 5,
+    "eligible_for_declared_profile": true,
+    "scope": "Graph backward induction with exact archived packages and synthetic pricing inputs"
   }
 }

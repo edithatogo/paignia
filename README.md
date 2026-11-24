@@ -227,7 +227,7 @@ and revisions. Apache-2.0 attribution is retained in root and package-local
 
 ## Maturity work and ownership
 
-[Conductor T17](conductor/tracks/t17_game_runtime_ecosystem_20261107/index.md)
+[Conductor T17](conductor/archive/t17_game_runtime_ecosystem_20261107/index.md)
 keeps the existing seventeen identifiers. Paignia owns provider leaves
 T17.01–T17.08 and T17.12–T17.17. T17.09 and T17.11 are external handoffs to the
 reimbursement application; T17.10 is the second application's receipt. These

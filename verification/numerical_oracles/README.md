@@ -27,8 +27,8 @@ This lane owns exactly five new paths in this directory: `README.md`,
 production paths. Reviewer `6af956e9-2d90-83ec-9bd9-5697990c506f` retains
 PR14's specialist review. New intersecting claims stop writes until reconciled.
 
-The parent [T17 plan](../../conductor/tracks/t17_game_runtime_ecosystem_20261107/plan.md)
-and [specification](../../conductor/tracks/t17_game_runtime_ecosystem_20261107/spec.md)
+The parent [T17 plan](../../conductor/archive/t17_game_runtime_ecosystem_20261107/plan.md)
+and [specification](../../conductor/archive/t17_game_runtime_ecosystem_20261107/spec.md)
 remain authoritative; their shared status files are coordinator-owned.
 
 | Local fixture slice | One reference behavior | Changed files | Status |

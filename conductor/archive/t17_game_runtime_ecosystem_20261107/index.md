@@ -1,7 +1,7 @@
 # T17 Paignia native library and ecosystem handoff
 
-T17 is active. Thirteen provider leaves are complete (T17.01–.08 and
-.13–.17). The native static contract, package boundary/artifacts, RK4/Euler,
+T17 is complete with seventeen accepted leaves. The native static contract,
+package boundary and archives, RK4/Euler,
 mixed Nash, optional correlated equilibrium, CFR/CFR+, static conversion
 and owned observations have accepted independent review and integrated compiler/package
 checks. The [17 November receipt](../../../docs/validation/t17-review-20261117.md)
@@ -12,8 +12,9 @@ Chapter 8 model. UOGTO accepted the executable information-set profile.
 Kairos accepted the bounded adapter, random-stream isolation and checkpoint
 replay. The independent Leduc comparison and Kairos's legacy CFR retirement
 complete T17.07. T17.11 has an accepted valued-payoff port and synthetic
-application comparison. T17.10 and T17.12 remain open for the second application
-receipt and bounded release eligibility.
+application comparison. T17.10 accepts Innovate's reviewed price commitment
+case, and T17.12 admits both application receipts for graph backward induction.
+[Innovate T17.10 acceptance](https://github.com/edithatogo/innovate/pull/696) ·
 [Reimbursement T17.11 acceptance](https://github.com/edithatogo/new-drug-reimbursement-game/pull/118) ·
 [CFR validation](../../../docs/validation/cfr.md) ·
 [Kairos S04 retirement](https://github.com/edithatogo/kairos/pull/406) ·
@@ -26,7 +27,7 @@ receipt and bounded release eligibility.
 - [Identity and promotion record](paignia-identity-and-promotion.md)
 - [Metadata](metadata.json)
 - [20 November provider review](../../../docs/validation/provider-review-20261120.md)
-- [T18 inspection/interdiction game contracts for tobac](../t18_illicit_enforcement_inspection_games_20261110/index.md)
+- [T18 inspection/interdiction game contracts for tobac](../../tracks/t18_illicit_enforcement_inspection_games_20261110/index.md)
 - [Source transfer and retention map](../../../docs/architecture/paignia-transfer-map.md)
 
 Paignia now owns T17.01–T17.08 and T17.12–T17.17. The reimbursement application

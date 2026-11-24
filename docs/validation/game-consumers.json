@@ -19,6 +19,10 @@
     {
       "path": "docs/validation/receipts/t17-reimbursement-chapter8.json",
       "sha256": "f9d0d6f79b3864f6c790fab3e139adf3a55dab11f0ca5a81278ba1268fe027d3"
+    },
+    {
+      "path": "docs/validation/receipts/t17-innovate-price-commitment-linux-x64.json",
+      "sha256": "b3a12204c21b436a9b519ebbd2fa3539fcdbfcb5ac1b45df9b12d313c85573ff"
     }
   ],
   "capabilities": [

@@ -139,7 +139,7 @@ or merge is claimed by this document.
 Dylan authorised the **Paignia — Ownership and static-contract integration**
 coordinator to reconcile ownership and implement one unowned T17.01 slice.
 This update is the single current ownership map, extending the existing record.
-Task status stays in the [T17 plan](../../conductor/tracks/t17_game_runtime_ecosystem_20261107/plan.md).
+Task status stays in the [T17 plan](../../conductor/archive/t17_game_runtime_ecosystem_20261107/plan.md).
 It does not reassign other repositories or turn their planning into execution.
 No new workers are authorised by this claim.
 

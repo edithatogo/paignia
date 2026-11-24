@@ -1,9 +1,9 @@
-# T17 implementation plan — static profile qualified, full track active
+# T17 implementation plan — complete
 
-T17.10 and T17.12 are open. Obtain an accepted second application receipt for
-the [same qualified artifacts and semantic profile](../../../docs/validation/receipts/t17-bd880dd-handoff.json),
-then run the existing bounded release eligibility check. Paignia owns the
-provider leaves. The applications own their model, valuation and acceptance.
+All seventeen leaves have recorded acceptance. The reimbursement and Innovate
+applications exercised the [same qualified archives and semantic profile](../../../docs/validation/receipts/t17-bd880dd-handoff.json).
+The unchanged admission guard reported bounded package release eligibility.
+Registry publication is disabled.
 
 The [specification](spec.md) defines the capability and evidence boundaries.
 The [22 November plan archive](plan-history-20261122.md)
@@ -102,18 +102,23 @@ its hosted execution supplement the independent reviews below.
 The reimbursement application qualified its Chapter 8 game against the
 independent equation 8.2 benchmark. [Application #114](https://github.com/edithatogo/new-drug-reimbursement-game/pull/114) · [Receipt](../../../docs/validation/receipts/t17-reimbursement-chapter8.json) · [Execution log](../../../docs/validation/receipts/t17-reimbursement-chapter8.log)
 
-### [ ] T17.10 — external second-application qualification
+### [x] T17.10 — external second-application qualification
 
-The selected second application owns this gate. The
-[Innovate candidate](https://github.com/edithatogo/innovate/pull/696) ran five
-pricing controls on the same `bd880dd` archives and profile as T17.09 and awaits
-application acceptance. Its RustSec and release-readiness checks still fail.
-Another distinct real application, such as CareOps, can supply a matching receipt.
+The [Innovate application review](https://github.com/edithatogo/innovate/pull/696)
+accepted the sequential pricing case for T17.10. In network-disabled Apple
+Container Linux x64, Rust 1.100.0 ran five controls on Innovate revision
+`7999fddec28fea30e93c67c4e15857c42c884616` with the exact `bd880dd` archives.
+Locked resolution bound both packages to the unpacked archives and contained
+zero Kairos packages. Both standalone locks passed Cargo Deny.
 
-Use the [application handoff](../../../docs/validation/game-consumer-handoff.md).
-The owner runs its real model with independent expected results and records
-nonzero tests, exact revisions and artifact/profile hashes. T17.03 and the
-capabilities exercised by that case determine its prerequisites.
+An independent specialist reviewed the same case source at `a13a8d2a`. Exact
+arithmetic reproduced all four baseline payoff vectors, the premium
+commitment and the switch to value when the premium fixed cost increased to
+20. The controls cover duplicate actions, menu ordering and the solver's
+tolerance policy. The case uses synthetic economic inputs. Innovate's wider
+integration and release remain pending on its repository-wide checks.
+[Receipt](../../../docs/validation/receipts/t17-innovate-price-commitment-linux-x64.json) ·
+[Execution log](../../../docs/validation/receipts/t17-innovate-price-commitment-linux-x64.log)
 
 ### [x] T17.11 — external reimbursement valued-payoff port
 
@@ -122,18 +127,17 @@ The reimbursement owner accepted valued inputs and a synthetic comparison.
 
 ## Phase E — bounded evidence and release eligibility
 
-### [ ] T17.12 — require two real consumers for bounded release eligibility
+### [x] T17.12 — require two real consumers for bounded release eligibility
 
-Paignia owns the eligibility check. After T17.03, T17.09 and T17.10, record both
-accepted receipts in [the consumer manifest](../../../docs/validation/game-consumers.json)
-and run `target/dev-python/bin/python scripts/validate_game_consumer_evidence.py`.
-The guard currently admits the first receipt and reports ineligible.
+The [consumer manifest](../../../docs/validation/game-consumers.json) binds
+both accepted receipts to the same provider revision, archive hashes and
+semantic profile. The 30 admission regression tests passed on Python 3.15.2.
+Running `target/dev-python/bin/python scripts/validate_game_consumer_evidence.py`
+on the retained receipts returned `eligible: true` with zero errors.
 
-Both applications must use the same qualified bytes and semantic profile.
-The guard requires the evidence for advertised methods and explicit S01–S04
-dispositions. Its current scope is graph backward induction. Optional native
-execution, separate numerical claims and T17.11 have their own acceptance.
-Bounded eligibility and registry publication are separate decisions.
+This eligibility covers graph backward induction. The manifest retains
+separate S01–S04 dispositions, and the other T17 leaves retain their own
+acceptance evidence.
 
 #### [x] T17.12.guard — validate received evidence without inventing acceptance
 
