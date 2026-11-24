@@ -1,6 +1,7 @@
 # T18 Implementation Plan — Illicit-supply border-enforcement and retail-inspection game contracts for tobac
 
-Status: in progress (`[~]`). All tasks preserve `T17` provider ownership and the neutral extraction vocabulary guard.
+Paignia completed T18.01 and T18.02. The provider work preserves T17 ownership
+and the neutral vocabulary guard. T18.03 remains pending in the application repository.
 
 ## Phase 1 — Neutral leader-follower inspection primitives (`paignia`)
 
@@ -17,14 +18,16 @@ Status: in progress (`[~]`). All tasks preserve `T17` provider ownership and the
   independent controls and specialist review passed.
   [Credal Nash contract](../../../docs/validation/credal-nash.md)
 
-## Phase 2 — `tobac` and `voiage` consumer handoff (external consumer-owned)
+## Pending downstream handoff
 
-- [ ] **T18.03** *(consumer-owned in `edithatogo/tobac`)*: Bind `tobac` border-seizure and retail-inspection evasion scenarios (`M2a`, `src/tobac/partial_identification.py`) to `paignia`'s neutral inspection game contract, preserving `dapane` enforcement resource cost provenance and `voiage` paired-draw / credal dominance compatibility.
+**T18.03** remains with `edithatogo/tobac`. The application owner will bind `tobac` border-seizure and retail-inspection evasion scenarios (`M2a`, `src/tobac/partial_identification.py`) to `paignia`'s neutral inspection game contract, preserving `dapane` enforcement resource cost provenance and `voiage` paired-draw / credal dominance compatibility.
 
 ## Provider acceptance and application handoff
 
 [The 20 November review](../../../docs/validation/provider-review-20261120.md)
 records the reviewed provider revisions, checks and owner boundaries.
+Paignia main at `6d4eaf2` passed both native CI and Offline AI Security.
+[Native CI](https://github.com/edithatogo/paignia/actions/runs/45358436354) · [Offline AI Security](https://github.com/edithatogo/paignia/actions/runs/45358437141)
 
 The Tobac draft exercised both inspection channels with synthetic Dapane costs
 and preserved the paired-draw identity through the installed Voiage comparison.
