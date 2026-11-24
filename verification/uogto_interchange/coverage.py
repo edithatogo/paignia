@@ -13,9 +13,9 @@ from rdflib import Literal, Namespace, OWL, RDF, RDFS, XSD
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from interchange import Bundle, FORMATS, HERE, SOURCE, digest, parse_graph
 
+from term_roles import CORE, EXTENSIONS, PROSE_ROLES
+
 SKOS = Namespace("http://www.w3.org/2004/02/skos/core#")
-CORE = Namespace("https://w3id.org/uogto/core#")
-EXTENSIONS = Namespace("https://w3id.org/uogto/extensions#")
 
 
 def inline_context(bundle, value, directory):
@@ -78,12 +78,23 @@ def property_expectations(bundle, graph, triple):
         value_types = asserted_types(graph, schema, value) | {RDFS.Resource, OWL.Thing}
     if not ranges <= value_types:
         return None
+    prose_subjects, prose_values = PROSE_ROLES.get(predicate, ((), ()))
+    if not domains and subject_types.isdisjoint(prose_subjects):
+        return None
+    if not ranges and value_types.isdisjoint(prose_values):
+        return None
+    if predicate == CORE.hasPayoffMapping and not all(
+        (value, path, None) in graph for path in (CORE.hasActionProfile, CORE.payoffPlayer, CORE.payoffValue)
+    ):
+        return None
     return {
         "domain": sorted(map(str, domains)),
         "checked_domain": sorted(map(str, checked_domains)),
         "range": sorted(map(str, ranges)),
         "subject_type_evidence": sorted(map(str, subject_types)),
         "value_type_evidence": sorted(map(str, value_types)),
+        "definition_subject_roles": sorted(map(str, prose_subjects)) if not domains else [],
+        "definition_value_roles": sorted(map(str, prose_values)) if not ranges else [],
     }
 
 

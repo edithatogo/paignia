@@ -87,8 +87,9 @@ pinned revision. These are vocabulary interoperability results. Numerical
 methods have their own profiles and acceptance evidence.
 
 The property witness gate checks declared domains and ranges against explicit
-fixture types and the pinned superclass hierarchy. It retains the asserted
-datatype, including cases where an example originally used a different numeric
+fixture types and the pinned superclass hierarchy. Prose-defined roles fill
+the gaps for properties without a declared domain or range. The receipt
+includes the selected witness roles. It retains the asserted datatype, including cases where an example originally used a different numeric
 datatype. The pinned `hasTransactionCost` declaration refers to an undeclared
 extensions `GameInstance`. The receipt records the declared and checked domains and
 checks the trade against the canonical core `GameInstance` and the ordinary

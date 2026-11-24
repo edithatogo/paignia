@@ -41,3 +41,16 @@ class TermEvidenceTests(unittest.TestCase):
         accepted = [str(triple[0]) for triple in graph.triples((None, EXT.hasTransactionCost, None))
                     if property_expectations(self.bundle, graph, triple) is not None]
         self.assertEqual(accepted, ["urn:trade"])
+
+
+    def test_prose_only_profile_link_needs_equilibrium_subject(self):
+        graph = parse_graph(b"""
+            @prefix g: <https://w3id.org/uogto/core#> .
+            <urn:game> a g:DynamicGame ; g:hasStrategyProfile <urn:profile> .
+            <urn:equilibrium> a g:Equilibrium ; g:hasStrategyProfile <urn:profile> .
+            <urn:profile> a g:StrategyProfile .
+        """, "turtle")
+        core = Namespace("https://w3id.org/uogto/core#")
+        accepted = [str(triple[0]) for triple in graph.triples((None, core.hasStrategyProfile, None))
+                    if property_expectations(self.bundle, graph, triple) is not None]
+        self.assertEqual(accepted, ["urn:equilibrium"])

@@ -1,4 +1,5 @@
 @prefix g: <https://w3id.org/uogto/core#> .
+@prefix x: <https://w3id.org/uogto/extensions#> .
 @prefix dct: <http://purl.org/dc/terms/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -8,7 +9,9 @@
 # In a finite two-move offer, a shopper proposes a price and a shop accepts.
 e:offer a g:FiniteGame ; g:hasPlayer e:shopper, e:shop ;
     g:hasRepresentation e:tree ; g:hasTerminalState e:accepted ;
-    g:hasSolutionConcept e:subgame-perfection ; g:hasActionProfile e:simultaneous-check .
+    g:hasSolutionConcept e:subgame-perfection ; g:hasActionProfile e:simultaneous-check ;
+    g:hasActionSpace e:offer-space .
+e:offer-space a x:ActionSpace ; g:hasAction e:post-six ; g:belongsToPlayer e:shopper .
 e:shopper a g:HumanPlayer ; g:identifier "shopper" ; g:hasRole e:proposer ;
     g:participatesIn e:offer ; g:hasStrategy e:offer-six .
 e:shop a g:Player, g:ArtificialAgent ; g:identifier "shop" ; g:hasStrategy e:accept-six .
@@ -17,9 +20,10 @@ e:proposer a g:Role ; rdfs:label "Posts the first offer" ;
 e:shopper-surplus a g:UtilityFunction ; rdfs:comment "Reservation value less agreed price." .
 e:tree a g:GameRepresentation, g:ExtensiveFormRepresentation ; g:hasState e:reply .
 e:reply a g:GameNode, g:DecisionNode ; g:belongsToInformationSet e:observed ;
-    g:hasAvailableAction e:accept .
+    g:hasAvailableAction e:accept ; g:hasInformationSet e:observed .
 e:observed a g:PerfectInformation ; rdfs:comment "The shop observes the posted price before replying." .
-e:accept a g:SequentialAction ; rdfs:label "Accept at the reply node" .
+e:accept a g:SequentialAction ; rdfs:label "Accept at the reply node" ;
+    g:producesOutcome e:accepted .
 e:accepted a g:TerminalState, g:DeterministicOutcome ;
     g:assignsPayoff e:buy-surplus ; g:utilityValue "2"^^xsd:double .
 e:buy-surplus a g:CardinalPayoff ; rdfs:label "Two utility units on acceptance" .
@@ -58,8 +62,9 @@ e:legacy-mapping a g:GameEntity ; g:hasActionProfile e:simultaneous-check ;
 
 # Separate continuous dynamics, discrete settlement and institutional rules.
 e:settlement a g:GameInstance ; g:governedByRule e:settlement-rule ;
-    dct:hasPart e:inventory-flow, e:nightly-clearing ;
-    g:timestamp "2026-07-10T12:00:00Z"^^xsd:dateTime .
+    dct:hasPart e:inventory-flow, e:nightly-clearing, e:clearing-event .
+e:clearing-event a g:EventTrace ; g:timestamp "2026-07-10T12:00:00Z"^^xsd:dateTime ;
+    rdfs:label "Recorded the offer settlement at midday" .
 e:inventory-flow a g:ContinuousDynamics ; rdfs:comment "Inventory falls at a constant observed withdrawal rate." .
 e:nightly-clearing a g:DiscreteDynamics ; rdfs:comment "Balances are replaced once per midnight settlement." .
 e:settlement-rule a g:Rule, g:ConstitutiveRule ; rdfs:comment "An accepted offer creates a binding trade." .
