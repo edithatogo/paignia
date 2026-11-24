@@ -17,7 +17,7 @@ and [native provider review](docs/validation/provider-review-20261120.md) record
 exact sources, checks and limits. Registry publication remains disabled.
 The reimbursement Chapter 8 and Innovate sequential pricing cases satisfy the
 two-application receipt requirement for the same qualified artifacts and static
-profile. [Consumer evidence](docs/validation/game-consumer-handoff.md)
+profile. [Consumer evidence](docs/validation/game-consumer-handoff.md) · [Changelog](CHANGELOG.md)
 
 The initial source transfer is merged in [PR #2](https://github.com/edithatogo/paignia/pull/2)
 at `12b22ce7571b9c590405bf53c2c1c5862b49cd64`.
