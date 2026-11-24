@@ -61,8 +61,12 @@ def perfect_recall_request(graph, source, bundle, method, iterations, projector)
 
 def normal_request(graph, source, bundle, method):
     specification = exactly_one(graph.subjects(RDF.type, GT.GameSpecification), "game")
-    representation = typed(graph, exactly_one(graph.objects(specification, GT.hasRepresentation), "representation"),
-                           GT.NormalFormRepresentation)
+    representation = exactly_one(
+        (candidate for candidate in graph.objects(specification, GT.hasRepresentation)
+         if (candidate, RDF.type, GT.NormalFormRepresentation) in graph),
+        "normal-form representation",
+    )
+    iri(representation)
     players = sorted(typed(graph, player, GT.Player) for player in graph.objects(specification, GT.hasPlayer))
     require(len(players) == 2, "The normal-form profile requires two players")
     strategies = [
@@ -153,6 +157,8 @@ def result_graph(response, source):
         graph.add((run, BRIDGE.nashConv, Literal(result["nash_conv"])))
         graph.add((run, BRIDGE.iterations, Literal(result["iterations"])))
     elif "profiles" in result:
+        if result["profiles"]:
+            graph.add((solution, RDF.type, GT.Equilibrium))
         for index, profile in enumerate(result["profiles"]):
             member = URIRef(f"{solution}:joint:{index}")
             graph.add((solution, GT.hasStrategyProfile, member))

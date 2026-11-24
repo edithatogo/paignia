@@ -88,6 +88,9 @@ def normal_graph(case, actions, cells):
     graph.add((ns.game, RDF.type, GT.GameSpecification))
     graph.add((ns.game, GT.hasRepresentation, ns.matrix))
     graph.add((ns.matrix, RDF.type, GT.NormalFormRepresentation))
+    if case == "matching-pennies":
+        graph.add((ns.game, GT.hasRepresentation, ns.extensive))
+        graph.add((ns.extensive, RDF.type, GT.ExtensiveFormRepresentation))
     players = (ns.row, ns.column)
     strategies = []
     for player, seat in zip(players, ("row", "column"), strict=True):
