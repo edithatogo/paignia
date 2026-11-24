@@ -38,7 +38,8 @@ are [described in the wire contract](../../crates/paignia-io/README.md).
 
 The [pinned UOGTO edition](https://github.com/edithatogo/UOGTO/tree/cc0c84201929996580bb4af98774cf2145b224ae)
 provides the canonical classes and property declarations used in the input and
-output. The verifier checks those declarations and the selected assertions.
+output. The verifier checks those declarations and the selected assertions, including
+the original numeric literal spellings before RDFLib normalization.
 Paignia's mapping terms live in its repository IRI namespace. Their
 [upstream review and wider compatibility](../../conductor/tracks/t19_uogto_interchange_20261124/plan.md)
 remain tracked.

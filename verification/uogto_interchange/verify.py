@@ -6,12 +6,14 @@ import hashlib
 import json
 import math
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
 import urllib.request
 from urllib.parse import urlsplit
 
+import rdflib
 from rdflib import Graph, Literal, Namespace, RDF, URIRef, XSD
 from rdflib.namespace import OWL, PROV
 
@@ -27,6 +29,15 @@ MODULES = {
     "temporality.ttl": "0d09f73a87b59cf1ac199b72a20e46c41238a4ce92364636418e310da67fd23a",
 }
 NODE_KIND = {GT.DecisionNode: "decision", GT.ChanceNode: "chance", GT.TerminalNode: "terminal"}
+
+# Finite lexical forms from https://www.w3.org/TR/xmlschema11-2/.
+XSD_DECIMAL = r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)"
+NUMERIC_FORMS = {
+    XSD.integer: re.compile(r"[+-]?[0-9]+"),
+    XSD.decimal: re.compile(XSD_DECIMAL),
+    XSD.double: re.compile(XSD_DECIMAL + r"(?:[eE][+-]?[0-9]+)?"),
+}
+
 
 
 def require(condition, message):
@@ -55,22 +66,28 @@ def typed(graph, resource, role):
     return resource
 
 
-def number(value):
+def numeric_literal(value):
+    form = NUMERIC_FORMS.get(value.datatype) if isinstance(value, Literal) else None
     require(
-        isinstance(value, Literal)
-        and value.datatype in {XSD.decimal, XSD.double, XSD.integer}
-        and value.ill_typed is False,
+        form is not None and form.fullmatch(str(value).strip(" \t\r\n")) and value.ill_typed is False,
         f"expected numeric literal: {value}",
     )
-    result = float(value.value)
+    return value.value
+
+
+def number(value):
+    try:
+        result = float(numeric_literal(value))
+    except OverflowError as error:
+        raise ValueError(f"nonfinite numeric literal: {value}") from error
     require(math.isfinite(result), f"nonfinite numeric literal: {value}")
     return result
 
 
 def position(value):
-    require(isinstance(value, Literal) and value.datatype == XSD.integer, f"invalid position: {value}")
-    require(type(value.value) is int and value.value >= 0, f"invalid position: {value}")
-    return value.value
+    result = numeric_literal(value)
+    require(type(result) is int and result >= 0, f"invalid position: {value}")
+    return result
 
 
 def transitions(graph, state, states):
@@ -219,21 +236,32 @@ def run_solver(solver, payload):
     return subprocess.run([solver], input=payload, capture_output=True, timeout=30, check=False)
 
 
-def check_rejections(solver, graph, request, exact_bytes):
+def check_rejections(solver, graph, fixture, request, exact_bytes):
     rdf_negatives = [
-        ((CASE["safe-edge"], BRIDGE.position, Literal(0)), "invalid order"),
+        ((CASE["safe-edge"], BRIDGE.position, Literal("0", datatype=XSD.integer)), "invalid order"),
         ((CASE.respond, GT.belongsToInformationSet, CASE["start-set"]), "non-singleton"),
-        ((CASE.ha, GT.payoffValue, Literal("3.5", datatype=XSD.integer)), "expected numeric literal"),
     ]
+    invalid_graphs = []
     for triple, expected_error in rdf_negatives:
-        invalid_graph = Graph().parse(data=graph.serialize(format="nt"), format="nt")
-        invalid_graph.set(triple)
+        invalid = Graph().parse(data=graph.serialize(format="nt"), format="nt")
+        invalid.set(triple)
+        invalid_graphs.append((invalid, expected_error, expected_error))
+    for lexical_form, label in [
+        (b'"3.5"^^xsd:integer', "fractional integer literal"),
+        (b'"1_0"^^xsd:integer', "underscore in integer literal"),
+        (b'"1e2"^^xsd:decimal', "exponent in decimal literal"),
+    ]:
+        marker = b'"8"^^xsd:double'
+        require(fixture.count(marker) == 1, "numeric rejection fixture marker changed")
+        invalid = Graph().parse(data=fixture.replace(marker, lexical_form), format="turtle")
+        invalid_graphs.append((invalid, "expected numeric literal", label))
+    for invalid, expected_error, label in invalid_graphs:
         try:
-            project(invalid_graph, request["source"]["rdf_sha256"])
+            project(invalid, request["source"]["rdf_sha256"])
         except ValueError as error:
             require(expected_error in str(error), f"wrong RDF rejection: {error}")
         else:
-            raise ValueError(f"RDF failed to reject {expected_error}")
+            raise ValueError(f"RDF failed to reject {label}")
 
     duplicate = copy.deepcopy(request)
     duplicate["nodes"].append(duplicate["nodes"][0])
@@ -264,7 +292,7 @@ def check_rejections(solver, graph, request, exact_bytes):
     for payload, error in cases:
         result = run_solver(solver, payload)
         require(result.returncode and not result.stdout and error in result.stderr.decode(), f"expected rejection: {error}")
-    return [error for _, error in rdf_negatives + cases]
+    return [label for _, _, label in invalid_graphs] + [error for _, error in cases]
 
 
 def source_state():
@@ -320,6 +348,8 @@ def main():
     revision = source_state()
     solver = build_solver()
     binary_digest = sha256(solver.read_bytes())
+    # Preserve lexical forms before RDFLib converts numeric values.
+    rdflib.NORMALIZE_LITERALS = False
     fixture = (HERE / "game.ttl").read_bytes()
     graph = Graph().parse(data=fixture, format="turtle")
     ontology = load_ontology(args.ontology_dir)
@@ -342,7 +372,7 @@ def main():
     evidence = result_graph(result, used, request)
     verify_vocabulary(evidence, ontology)
     check_shared_profile(solver, graph, expected)
-    rejections = check_rejections(solver, graph, request, exact_bytes)
+    rejections = check_rejections(solver, graph, fixture, request, exact_bytes)
     triples = ("\n".join(sorted(evidence.serialize(format="nt").splitlines())) + "\n").encode()
     restored = Graph().parse(data=triples, format="nt")
     require(set(restored) == set(evidence), "result RDF changed on reload")
