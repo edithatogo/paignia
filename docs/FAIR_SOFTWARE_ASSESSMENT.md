@@ -1,5 +1,7 @@
 # FAIR research software assessment
 
+This note records the original preflight proposal. See the [current hosted assessment](validation/research-software-readiness.md) for verified results.
+
 Status: **provisional, not accepted**. This record documents review obligations; it is not a FAIR certification or a claim that checks passed.
 
 ## Automated evidence

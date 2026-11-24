@@ -111,6 +111,7 @@ jobs:
         shell: bash
         run: |
           cargo fmt --manifest-path crates/paignia-io/Cargo.toml -- --check
+          cargo test --locked --manifest-path crates/paignia-io/Cargo.toml --all-targets
           cargo clippy --locked --manifest-path crates/paignia-io/Cargo.toml --all-targets -- -D warnings
           python3 -m pip install --require-hashes --only-binary :all: -r verification/uogto_interchange/requirements.txt
           python3 -I verification/uogto_interchange/interchange.py stage --ontology-dir target/uogto-bundle
@@ -152,6 +153,105 @@ jobs:
             target/independent-review-logs/*.log
           if-no-files-found: error
           retention-days: 30
+
+  release-hardening:
+    name: Release API and wire fuzz
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+        with:
+          toolchain: "1.100.0"
+      - name: Compare both package APIs with the T19 checkpoint
+        shell: bash
+        env:
+          T19_BASELINE_COMMIT: 0389af46db4557494f465db2c584c80080e9f588
+        run: |
+          tools=$(mktemp -d "$RUNNER_TEMP/semver.XXXXXX")
+          curl --fail --silent --show-error --location --retry 3 --max-time 90 \
+            --output "$tools/semver.tar.gz" \
+            https://github.com/obi1kenobi/cargo-semver-checks/releases/download/v0.51.0/cargo-semver-checks-x86_64-unknown-linux-gnu.tar.gz
+          printf '%s  %s\n' cacadafaa5cd27ae6d05a74a103266917ebab4c5e43c898360e177d4fbf06a65 "$tools/semver.tar.gz" \
+            | sha256sum --check --strict
+          tar -xzf "$tools/semver.tar.gz" -C "$tools" cargo-semver-checks
+          mkdir "$tools/baseline"
+          git archive "$T19_BASELINE_COMMIT" | tar -xf - -C "$tools/baseline"
+          cargo fetch --locked
+          export PATH="$tools:$PATH"
+          rustc --version
+          cargo semver-checks --version
+          for feature_set in --default-features --all-features; do
+            CARGO_NET_OFFLINE=true cargo semver-checks \
+              --package paignia-core --package paignia-solve \
+              --baseline-root "$tools/baseline" "$feature_set"
+          done
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+        with:
+          toolchain: nightly-2026-11-14
+      - name: Fuzz both public JSON entry points
+        shell: bash
+        run: |
+          tools=$(mktemp -d "$RUNNER_TEMP/wire-fuzz.XXXXXX")
+          curl --fail --silent --show-error --location --retry 3 --max-time 90 \
+            --output "$tools/fuzz.tar.gz" \
+            https://github.com/rust-fuzz/cargo-fuzz/releases/download/0.13.2/cargo-fuzz-0.13.2-x86_64-unknown-linux-musl.tar.gz
+          printf '%s  %s\n' b5b704018b63e0f151c17a057ac53b5111e1db545d1b9f72fee79f08a545931c "$tools/fuzz.tar.gz" \
+            | sha256sum --check --strict
+          tar -xzf "$tools/fuzz.tar.gz" -C "$tools" cargo-fuzz
+          mkdir "$tools/corpus"
+          cp verification/uogto_interchange/frozen-static-v1/request.json "$tools/corpus/static-v1.json"
+          export PATH="$tools:$PATH"
+          rustc --version
+          cargo fuzz --version
+          cargo fetch --locked --manifest-path fuzz/Cargo.toml
+          CARGO_NET_OFFLINE=true cargo fuzz run wire_admission "$tools/corpus" \
+            --target-dir target/wire-fuzz -- \
+            -runs=20000 -max_len=16384 -timeout=10 -rss_limit_mb=2048 -seed=1 -print_final_stats=1
+          git diff --exit-code -- fuzz/Cargo.lock
+
+  attest-candidate:
+    name: Attest qualified candidate archives
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [rust, rust-coverage, release-hardening]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
+        with:
+          egress-policy: audit
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: native-package-qualification-1.75.0
+          path: ${{ runner.temp }}/release-candidate
+      - name: Verify the candidate revision and archive digests
+        working-directory: ${{ runner.temp }}/release-candidate
+        shell: bash
+        run: |
+          receipt=cargo-artifact-qualification.json
+          jq -e --arg sha "$GITHUB_SHA" '
+            .provider_revision == $sha and .provider_worktree_dirty == false and
+            .package_inputs_match_revision == true and
+            (.artifacts | keys == ["paignia-core", "paignia-solve"])
+          ' "$receipt"
+          jq -r '.artifacts | to_entries[] |
+            "\(.value.archive_sha256)  qualified-packages/\(.key)-\(.value.version).crate"
+          ' "$receipt" | sha256sum --check --strict
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: |
+            ${{ runner.temp }}/release-candidate/qualified-packages/*.crate
+            ${{ runner.temp }}/release-candidate/cargo-artifact-qualification.json
 
   rust-coverage:
     name: Rust workspace coverage (stable)
