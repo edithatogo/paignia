@@ -212,7 +212,7 @@ jobs:
           cargo fuzz --version
           cargo fetch --locked --manifest-path fuzz/Cargo.toml
           CARGO_NET_OFFLINE=true cargo fuzz run wire_admission "$tools/corpus" \
-            --target-dir target/wire-fuzz -- \
+            --target x86_64-unknown-linux-gnu --target-dir target/wire-fuzz -- \
             -runs=20000 -max_len=16384 -timeout=10 -rss_limit_mb=2048 -seed=1 -print_final_stats=1
           git diff --exit-code -- fuzz/Cargo.lock
 
