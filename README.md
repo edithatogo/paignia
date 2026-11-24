@@ -243,7 +243,7 @@ review; there is no repeated human approval loop.
 
 ## Security
 
-Follow the [security policy](https://github.com/edithatogo/.github/blob/main/SECURITY.md) to report vulnerabilities
+Follow [Paignia's security policy](SECURITY.md) to report vulnerabilities
 privately. Keep credentials and sensitive data out of public issues and pull requests.
 
 ## License
