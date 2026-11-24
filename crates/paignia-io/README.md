@@ -22,6 +22,7 @@ and native result versions, method and version, completed status, tolerance,
 contingent choices and expected payoffs. The request and result together retain
 the ordered decision and chance identities and the original payoff links. A
 request over 1 MiB, unknown fields or versions, duplicate records and invalid
-native games produce an error. This edition qualifies the reference case and
+native games produce an error. A named payoff link can be reused across
+terminal nodes when its recipient and numeric value match exactly. This edition qualifies the reference case and
 the request-to-result direction. Additional interchange directions, semantics
 and consumers have separate compatibility cases in T19.

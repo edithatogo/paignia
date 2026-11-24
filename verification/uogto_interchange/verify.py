@@ -8,6 +8,7 @@ import math
 import os
 from pathlib import Path
 import subprocess
+import sys
 import urllib.request
 from urllib.parse import urlsplit
 
@@ -56,10 +57,12 @@ def typed(graph, resource, role):
 
 def number(value):
     require(
-        isinstance(value, Literal) and value.datatype in {XSD.decimal, XSD.double, XSD.integer},
+        isinstance(value, Literal)
+        and value.datatype in {XSD.decimal, XSD.double, XSD.integer}
+        and value.ill_typed is False,
         f"expected numeric literal: {value}",
     )
-    result = float(value)
+    result = float(value.value)
     require(math.isfinite(result), f"nonfinite numeric literal: {value}")
     return result
 
@@ -174,7 +177,11 @@ def verify_vocabulary(graph, ontology):
             require((predicate, RDF.type, role) in ontology, f"unknown UOGTO {role}: {predicate} at {subject}")
 
 
-def result_graph(result, used):
+def result_graph(result, used, request):
+    actors = {
+        record["id"]: record["node"]["player"]
+        for record in request["nodes"] if record["node"]["kind"] == "decision"
+    }
     graph = Graph()
     run = URIRef(result["run"])
     policy = URIRef(f"{run}/policy")
@@ -193,7 +200,8 @@ def result_graph(result, used):
         choice = URIRef(f"{policy}/choice/{index}")
         graph.add((policy, BRIDGE.choice, choice))
         graph.add((choice, BRIDGE.state, URIRef(state)))
-        graph.add((choice, GT.selectsAction, URIRef(action)))
+        graph.add((choice, BRIDGE.action, URIRef(action)))
+        graph.add((choice, BRIDGE.player, URIRef(actors[state])))
     for index, (player, payoff) in enumerate(sorted(result["expected_payoffs"].items())):
         link = URIRef(f"{policy}/payoff/{index}")
         graph.add((policy, BRIDGE.expectedPayoff, link))
@@ -215,6 +223,7 @@ def check_rejections(solver, graph, request, exact_bytes):
     rdf_negatives = [
         ((CASE["safe-edge"], BRIDGE.position, Literal(0)), "invalid order"),
         ((CASE.respond, GT.belongsToInformationSet, CASE["start-set"]), "non-singleton"),
+        ((CASE.ha, GT.payoffValue, Literal("3.5", datatype=XSD.integer)), "expected numeric literal"),
     ]
     for triple, expected_error in rdf_negatives:
         invalid_graph = Graph().parse(data=graph.serialize(format="nt"), format="nt")
@@ -236,6 +245,10 @@ def check_rejections(solver, graph, request, exact_bytes):
     terminal = next(node["node"] for node in bad_payoff["nodes"] if node["node"]["kind"] == "terminal")
     repeated = dict(terminal["payoffs"][0], id=iri(CASE.repeated))
     terminal["payoffs"].append(repeated)
+    conflict = copy.deepcopy(request)
+    payouts = [item["node"]["payoffs"] for item in conflict["nodes"] if item["node"]["kind"] == "terminal"]
+    payouts[0][0]["id"] = payouts[1][0]["id"]
+    require(payouts[0][0]["value"] != payouts[1][0]["value"], "conflict fixture needs different utilities")
     unknown = copy.deepcopy(request)
     unknown["nodes"][0]["node"]["unrecognised"] = "extra"
     duplicate_wire_key = exact_bytes.replace(b'"version": "1.0.0"', b'"version": "1.0.0", "version": "1.0.0"')
@@ -244,6 +257,7 @@ def check_rejections(solver, graph, request, exact_bytes):
         (encode(wrong_version), "Version"),
         (encode(invalid_mass), "ProbabilityMass"),
         (encode(bad_payoff), "DuplicatePayoff"),
+        (encode(conflict), "SourceIdentity"),
         (encode(unknown), "unknown field"),
         (duplicate_wire_key, "duplicate field"),
     ]
@@ -253,19 +267,66 @@ def check_rejections(solver, graph, request, exact_bytes):
     return [error for _, error in rdf_negatives + cases]
 
 
+def source_state():
+    git = ["git", "-c", "core.fsmonitor=false", "-C", str(ROOT)]
+    head = subprocess.check_output(git + ["rev-parse", "HEAD"], text=True).strip()
+    dirty = bool(subprocess.check_output(git + ["status", "--porcelain"]).strip())
+    require(not dirty, "commit the replay sources before recording a receipt")
+    expected_revision = os.environ.get("GITHUB_SHA")
+    require(not expected_revision or expected_revision == head, "CI replay source differs from its checked revision")
+    return head
+
+
+def build_solver():
+    manifest = ROOT / "crates" / "paignia-io" / "Cargo.toml"
+    target = ROOT / "target" / "uogto-build"
+    command = [
+        "cargo", "build", "--release", "--locked", "--manifest-path", str(manifest),
+        "--target-dir", str(target), "--example", "solve", "--message-format=json",
+    ]
+    build = subprocess.run(command, cwd=ROOT, text=True, stdout=subprocess.PIPE, timeout=900, check=True)
+    artifacts = [json.loads(line) for line in build.stdout.splitlines()]
+    for item in artifacts:
+        if item.get("reason") == "compiler-message" and item["message"].get("rendered"):
+            print(item["message"]["rendered"], file=sys.stderr, end="")
+    executables = [
+        Path(item["executable"]).resolve()
+        for item in artifacts
+        if item.get("reason") == "compiler-artifact" and item.get("executable")
+        and item["target"]["name"] == "solve" and item["target"]["kind"] == ["example"]
+    ]
+    solver = exactly_one(executables, "built native solver")
+    require(solver.is_relative_to(target.resolve()), "Cargo reported a solver outside the build target")
+    return solver
+
+
+def check_shared_profile(solver, graph, expected):
+    shared = Graph().parse(data=graph.serialize(format="nt"), format="nt")
+    shared.set((CASE.decline, BRIDGE.payoffProfile, CASE["safe-payoffs"]))
+    data = shared.serialize(format="nt").encode()
+    request, _ = project(shared, sha256(data))
+    run = run_solver(solver, encode(request))
+    require(run.returncode == 0, run.stderr.decode())
+    result = json.loads(run.stdout)
+    require({field: result[field] for field in expected} == expected, "shared payoff profile changed the oracle")
+
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--solver", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--ontology-dir", type=Path, help="use local immutable ontology module bytes")
     args = parser.parse_args()
+    revision = source_state()
+    solver = build_solver()
+    binary_digest = sha256(solver.read_bytes())
     fixture = (HERE / "game.ttl").read_bytes()
     graph = Graph().parse(data=fixture, format="turtle")
     ontology = load_ontology(args.ontology_dir)
     verify_vocabulary(graph, ontology)
     request, used = project(graph, sha256(fixture))
     exact_bytes = encode(request)
-    run = run_solver(args.solver.resolve(), exact_bytes)
+    run = run_solver(solver, exact_bytes)
     require(run.returncode == 0, run.stderr.decode())
     result = json.loads(run.stdout)
     for field in ("version", "semantic_profile", "source", "specification", "instance", "run"):
@@ -278,16 +339,17 @@ def main():
         == ["https://example.org/paignia/lottery#choice", "https://example.org/paignia/safe#choice"],
         "full action identities or declared input order changed",
     )
-    evidence = result_graph(result, used)
+    evidence = result_graph(result, used, request)
     verify_vocabulary(evidence, ontology)
-    rejections = check_rejections(args.solver.resolve(), graph, request, exact_bytes)
+    check_shared_profile(solver, graph, expected)
+    rejections = check_rejections(solver, graph, request, exact_bytes)
     triples = ("\n".join(sorted(evidence.serialize(format="nt").splitlines())) + "\n").encode()
     restored = Graph().parse(data=triples, format="nt")
     require(set(restored) == set(evidence), "result RDF changed on reload")
     policy = exactly_one(restored.subjects(RDF.type, GT.GameSolution), "RDF result")
     choices = {
         iri(exactly_one(restored.objects(choice, BRIDGE.state), "policy node")):
-        iri(exactly_one(restored.objects(choice, GT.selectsAction), "policy action"))
+        iri(exactly_one(restored.objects(choice, BRIDGE.action), "policy action"))
         for choice in restored.objects(policy, BRIDGE.choice)
     }
     payoffs = {
@@ -301,14 +363,13 @@ def main():
     outputs = {"request.json": exact_bytes, "result.json": run.stdout + b"\n", "result.nt": triples}
     for name, payload in outputs.items():
         (args.output / name).write_bytes(payload)
-    revision = subprocess.check_output(["git", "-c", "core.fsmonitor=false", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
-    dirty = bool(subprocess.check_output(["git", "-c", "core.fsmonitor=false", "status", "--porcelain"], cwd=ROOT).strip())
-    expected_revision = os.environ.get("GITHUB_SHA")
-    if expected_revision:
-        require(revision == expected_revision and not dirty, "CI replay source differs from its checked revision")
+    require(source_state() == revision and sha256(solver.read_bytes()) == binary_digest, "source or binary changed during replay")
     receipt = {
         "provider_revision": revision,
-        "provider_worktree_dirty": dirty,
+        "provider_worktree_dirty": False,
+        "cargo": subprocess.check_output(["cargo", "--version"], cwd=ROOT, text=True).strip(),
+        "solver_sha256": binary_digest,
+        "shared_payoff_profile": "passed",
         "ontology_revision": ONTOLOGY,
         "source_sha256": sha256(fixture),
         "outputs": {name: sha256(payload) for name, payload in outputs.items()},

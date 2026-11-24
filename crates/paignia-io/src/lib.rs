@@ -3,7 +3,7 @@
 //! The request carries declared source identities. The caller checks those
 //! bindings against its source. The solver and graph validation are native.
 
-use std::collections::{btree_map::Entry, BTreeMap, BTreeSet};
+use std::collections::{btree_map::Entry, BTreeMap};
 
 use paignia_core::{
     ActionEdge, ActionId, ChanceEdge, Game, GameInstanceId, GameSpecification, GameSpecificationId,
@@ -28,7 +28,7 @@ pub enum Error {
     Provenance,
     #[error("duplicate node identifier {0}")]
     DuplicateNode(String),
-    #[error("duplicate or empty transition or payoff-link identifier {0}")]
+    #[error("conflicting, repeated transition, or empty source identifier {0}")]
     SourceIdentity(String),
     #[error("duplicate payoff for player {player} at {node}")]
     DuplicatePayoff { player: String, node: String },
@@ -206,17 +206,37 @@ fn is_hex(value: &str, length: usize) -> bool {
             .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
 }
 
-fn admit_source_id(seen: &mut BTreeSet<String>, id: String) -> Result<(), Error> {
-    if id.trim().is_empty() || seen.contains(&id) {
+#[derive(PartialEq)]
+enum NamedSource {
+    Transition,
+    Payoff { player: String, value_bits: u64 },
+}
+
+fn admit_source_id(
+    seen: &mut BTreeMap<String, NamedSource>,
+    id: String,
+    role: NamedSource,
+) -> Result<(), Error> {
+    if id.trim().is_empty() {
         return Err(Error::SourceIdentity(id));
     }
-    seen.insert(id);
-    Ok(())
+    match seen.entry(id) {
+        Entry::Vacant(slot) => {
+            slot.insert(role);
+            Ok(())
+        }
+        Entry::Occupied(slot)
+            if matches!(role, NamedSource::Payoff { .. }) && slot.get() == &role =>
+        {
+            Ok(())
+        }
+        Entry::Occupied(slot) => Err(Error::SourceIdentity(slot.key().clone())),
+    }
 }
 
 fn build_nodes(records: Vec<NodeRecord>) -> Result<BTreeMap<NodeId, Node>, Error> {
     let mut nodes = BTreeMap::new();
-    let mut source_ids = BTreeSet::new();
+    let mut source_ids = BTreeMap::new();
     for NodeRecord { id, node } in records {
         let slot = match nodes.entry(NodeId(id)) {
             Entry::Vacant(slot) => slot,
@@ -226,7 +246,7 @@ fn build_nodes(records: Vec<NodeRecord>) -> Result<BTreeMap<NodeId, Node>, Error
             NodeRecordKind::Decision { player, actions } => {
                 let mut edges = Vec::with_capacity(actions.len());
                 for edge in actions {
-                    admit_source_id(&mut source_ids, edge.id)?;
+                    admit_source_id(&mut source_ids, edge.id, NamedSource::Transition)?;
                     edges.push(ActionEdge {
                         action: ActionId(edge.action),
                         target: NodeId(edge.target),
@@ -240,7 +260,7 @@ fn build_nodes(records: Vec<NodeRecord>) -> Result<BTreeMap<NodeId, Node>, Error
             NodeRecordKind::Chance { outcomes } => {
                 let mut edges = Vec::with_capacity(outcomes.len());
                 for outcome in outcomes {
-                    admit_source_id(&mut source_ids, outcome.id)?;
+                    admit_source_id(&mut source_ids, outcome.id, NamedSource::Transition)?;
                     edges.push(ChanceEdge {
                         probability: outcome.probability,
                         target: NodeId(outcome.target),
@@ -251,7 +271,14 @@ fn build_nodes(records: Vec<NodeRecord>) -> Result<BTreeMap<NodeId, Node>, Error
             NodeRecordKind::Terminal { payoffs } => {
                 let mut values = BTreeMap::new();
                 for payoff in payoffs {
-                    admit_source_id(&mut source_ids, payoff.id)?;
+                    admit_source_id(
+                        &mut source_ids,
+                        payoff.id,
+                        NamedSource::Payoff {
+                            player: payoff.player.clone(),
+                            value_bits: payoff.value.to_bits(),
+                        },
+                    )?;
                     if values
                         .insert(PlayerId(payoff.player.clone()), payoff.value)
                         .is_some()

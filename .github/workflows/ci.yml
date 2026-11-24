@@ -105,15 +105,15 @@ jobs:
               except ValueError as error:
                   raise SystemExit(f"{target}: {error}") from error
           PY
+      - name: Build the reproducible segment benchmark
+        run: cargo build --release --locked --manifest-path verification/credal_segment_benchmark/Cargo.toml
       - name: Build and replay the UOGTO interchange case
         shell: bash
         run: |
           cargo fmt --manifest-path crates/paignia-io/Cargo.toml -- --check
           cargo clippy --locked --manifest-path crates/paignia-io/Cargo.toml --all-targets -- -D warnings
-          cargo build --release --locked --manifest-path crates/paignia-io/Cargo.toml --example solve
           python3 -m pip install --require-hashes --only-binary :all: -r verification/uogto_interchange/requirements.txt
           python3 -I verification/uogto_interchange/verify.py \
-            --solver crates/paignia-io/target/release/examples/solve \
             --output target/uogto-interchange
       - name: Cargo artifacts with provider source unavailable
         run: python3 scripts/validate_game_packages.py --receipt target/cargo-artifact-qualification.json --artifact-dir target/qualified-packages

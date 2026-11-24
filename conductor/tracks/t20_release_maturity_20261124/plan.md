@@ -5,7 +5,7 @@
 - [x] Task: Reconcile alint, RepoHealth, OpenSSF Scorecard and FAIR4RS with their hosted main runs and preserve the score baseline.
 - [x] Task: Assess the pinned OpenSSF Security Baseline controls against actual repository, CI and source evidence. Keep individual open controls visible.
 - [x] Task: Require up-to-date pull requests and seven checks on the [active main ruleset](https://github.com/edithatogo/paignia/rules/27976609). Preserve the isolated offline scanner and its separate receipts.
-- [x] Task: Require signature verification for alint and add a real locked release-mode build for the public interchange replay.
+- [x] Task: Require signature verification for alint and qualify locked release-mode builds for the public interchange replay and the numerical benchmark.
 - [ ] Task: Record the hosted scores and resolve remaining verified RepoHealth, alint, Scorecard and [Baseline](../../../docs/validation/security-baseline.md) findings.
 - [ ] Task: Add bounded coverage-guided fuzzing at input admission and retain deterministic regressions. Run release API checks against an immutable baseline.
 
