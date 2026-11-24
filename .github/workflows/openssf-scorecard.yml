@@ -48,8 +48,13 @@ jobs:
           GITHUB_AUTH_TOKEN: ${{ github.token }}
         run: |
           result="$RUNNER_TEMP/scorecard.json"
+          commit="$GITHUB_SHA"
+          # Scorecard runs its full host-backed suite only in HEAD mode.
+          if [[ "$GITHUB_REF" == refs/heads/main ]]; then
+            commit=HEAD
+          fi
           "$RUNNER_TEMP/scorecard/scorecard" --repo="github.com/$GITHUB_REPOSITORY" \
-            --commit="$GITHUB_SHA" --format=json > "$result"
+            --commit="$commit" --format=json > "$result"
           jq -e --arg sha "$GITHUB_SHA" \
             '.repo.commit == $sha and (.score | type == "number") and (.checks | length > 0)' \
             "$result" >/dev/null

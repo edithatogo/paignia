@@ -82,6 +82,8 @@ together in `.github/workflows/repository-health.yml`.
 ### Research software and supply-chain checks
 
 OpenSSF Scorecard reports supply-chain practices for the selected revision.
+Main runs the full suite. Pull requests that change the workflow report the
+checks that support a specific commit.
 Read the check-level report alongside Native CI and Offline AI Security.
 Unknown checks retain their unknown status in the report. The
 [research software readiness guide](docs/validation/research-software-readiness.md)
