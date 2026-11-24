@@ -1,13 +1,21 @@
 cff-version: 1.2.0
-message: If you use this repository, please cite it using the metadata in this file.
+message: If you use Paignia, please cite the archived software version.
+type: software
 title: Paignia
 authors:
-- name: Paignia project
+  - given-names: Dylan A
+    family-names: Mordaunt
+    orcid: https://orcid.org/0000-0002-9775-0603
+    affiliation: The University of Melbourne; Flinders University; Victoria University of Wellington
+version: "0.1.0"
+date-released: "2026-11-25"
+doi: 10.5281/zenodo.24515285
 repository-code: https://github.com/edithatogo/paignia
+url: https://github.com/edithatogo/paignia/releases/tag/v0.1.0
 license: Apache-2.0
 abstract: Rust libraries for finite game representations, bounded solvers, and reproducible numerical diagnostics.
 keywords:
-- game theory
-- equilibrium computation
-- Rust
-- research software
+  - game theory
+  - equilibrium computation
+  - Rust
+  - research software

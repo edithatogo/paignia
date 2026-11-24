@@ -13,9 +13,9 @@ The [hosted assessment and release checks](../../../docs/validation/research-sof
 
 ## Phase 2 Research software and paper
 
-- [ ] Task: Link the FAIR4RS evidence to the T19 public reproduction and validate version, installed archives and archive DOI for the selected release.
+- [x] Task: Link the FAIR4RS evidence to the T19 public reproduction and validate version, installed archives and archive DOI for the selected release. [Distribution verification](../../../docs/validation/receipts/t20-candidate/release-v0.1.0.md)
 - [x] Task: Map the [JOSS checklist](../../../docs/validation/paper-reproducibility.md) to repository evidence and qualify Inara using its upstream example.
-- [ ] Task: Apply Inara to the selected paper draft. Retain exact draft hashes, output and review findings.
+- [x] Task: Apply Inara to the selected paper draft. Retain exact draft hashes, output and review findings in the private review workspace.
 - [x] Task: Document the CODECHECK execution packet with commands, expected values and output hashes.
 - [ ] Task: Freeze the draft's computational edition and record independent CODECHECK execution and the resulting certificate.
 - [ ] Task: When a maintained R or Python wrapper is admitted, record package installation and behavior against the same provider pin. Apply rOpenSci pkgcheck or pyOpenSci guidance in that wrapper's repository.
@@ -23,9 +23,9 @@ The [hosted assessment and release checks](../../../docs/validation/research-sof
 ## Phase 3 Release qualification
 
 - [x] Task: Requalify both existing application cases against the same candidate archives. Record exact consuming revisions, feature scope, expected results and archive hashes.
-- [ ] Task: Verify signed version tag, signed or attested archive provenance, installability from archived bytes and DOI resolution before closing the release leaf.
+- [x] Task: Verify signed version tag, signed or attested archive provenance, installability from archived bytes and DOI resolution before closing the release leaf. [Distribution verification](../../../docs/validation/receipts/t20-candidate/release-v0.1.0.md)
 
-The [0.1.0 candidate record](../../../docs/validation/receipts/t20-candidate/README.md) binds the two replays, the verified archive attestations and the exact main CI and security runs. The signed version tag and resolving archive DOI remain open.
+The [0.1.0 candidate record](../../../docs/validation/receipts/t20-candidate/README.md) binds the two replays, the verified archive attestations and the exact main CI and security runs. The [signed release and version archive verification](../../../docs/validation/receipts/t20-candidate/release-v0.1.0.md) confirms that both public channels carry the same qualified bytes.
 
 ## Phase 4 Numerical research
 

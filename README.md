@@ -8,7 +8,7 @@ native seed was transferred from
 Paignia is now the implementation home; domain applications consume it as a
 dependency. Static solving has no Kairos or host-language runtime dependency.
 
-**Status: pre-release native libraries.** The bounded native static contract,
+**Version 0.1.0 is available.** The bounded native static contract,
 resolved dependency boundary and local Cargo artifact consumption are qualified
 on Rust 1.75 and stable. Independent review accepts bounded RK4/Euler, mixed-Nash
 support enumeration, optional correlated equilibrium, static identity conversion
@@ -18,6 +18,10 @@ exact sources, checks and limits. Registry publication remains disabled.
 The reimbursement Chapter 8 and Innovate sequential pricing cases satisfy the
 two-application receipt requirement for the same qualified artifacts and static
 profile. [Consumer evidence](docs/validation/game-consumer-handoff.md) · [Changelog](CHANGELOG.md)
+
+[Signed release and downloads](https://github.com/edithatogo/paignia/releases/tag/v0.1.0) ·
+[Verified version DOI](https://doi.org/10.5281/zenodo.24515285) ·
+[Release verification](docs/validation/receipts/t20-candidate/release-v0.1.0.md)
 
 The initial source transfer is merged in [PR #2](https://github.com/edithatogo/paignia/pull/2)
 at `12b22ce7571b9c590405bf53c2c1c5862b49cd64`.
@@ -245,6 +249,18 @@ qualification, hardening, research software evidence and the paper workflow.
 A bounded static release requires an explicit contract, isolated dependencies,
 qualified package artifacts and two real application cases against the same
 archive set. Each advertised numerical method has its own independent controls.
+
+## Research roadmap
+
+[T21](conductor/tracks/t21_research_validation_20261125/index.md) tracks the
+[comparison with Gambit and OpenSpiel](docs/architecture/game-theory-tool-comparison.md),
+core and model evaluation, model interchange, diagram generation, downstream
+adoption, and documentation.
+
+## Citation
+
+Mordaunt, D. A. (2026). *Paignia* (Version 0.1.0). Zenodo.
+[DOI](https://doi.org/10.5281/zenodo.24515285) · [Citation metadata](CITATION.cff)
 
 ## Security
 
