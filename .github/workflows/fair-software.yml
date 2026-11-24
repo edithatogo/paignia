@@ -89,7 +89,8 @@ jobs:
           | RDA F1 DOI in citation metadata | {"Declared" if persistent_identifier else "Pending"} |
 
           A declared DOI needs archive readback. The research software readiness guide
-          links the separate interoperability, installation and reproducibility evidence.
+          links the [executed interoperability case](https://github.com/edithatogo/paignia/blob/{sha}/verification/uogto_interchange/README.md)
+          and separate installation, archive and reproducibility evidence.
           """
           with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a") as summary:
               summary.write(report)

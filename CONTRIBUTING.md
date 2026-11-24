@@ -66,13 +66,15 @@ The **Repository Health** workflow runs on pull requests, pushes to `main`
 and merge groups. It can also run on demand from the Actions tab.
 
 - Run `alint check` at the repository root. The workflow reads `.alint.yml`,
-  annotates findings and fails on errors. [alint v0.22.1](https://github.com/asamarts/alint/releases/tag/v0.22.1)
+  verifies the release's Sigstore signature, annotates findings and fails on errors. [alint v0.22.1](https://github.com/asamarts/alint/releases/tag/v0.22.1)
 - Run `repohealth . --format markdown` in a full Git checkout. The workflow
   publishes its informational score and recommendations in the run summary.
   The report detects test tools, coverage configuration, and build commands
   using checkout heuristics. Native CI compiles the workspace, runs the Cargo
   tests, and publishes measured Rust line coverage. GitHub displays the
   inherited community policies and the effective rules for `main`.
+  alint's informational CODEOWNERS and local conduct-file suggestions reflect
+  the solo maintainer and inherited conduct policy.
   [Main branch rules](https://github.com/edithatogo/paignia/rules/27976609)
   [RepoHealth v0.5.3](https://github.com/spbuilds/repohealth/releases/tag/v0.5.3)
 
@@ -87,7 +89,10 @@ checks that support a specific commit.
 Read the check-level report alongside Native CI and Offline AI Security.
 Unknown checks retain their unknown status in the report. The
 [research software readiness guide](docs/validation/research-software-readiness.md)
-maps FAIR and applicable software-review criteria to Paignia evidence.
+maps FAIR and applicable software-review criteria to Paignia evidence. See the
+[security baseline assessment](docs/validation/security-baseline.md) and
+[paper and reproduction procedure](docs/validation/paper-reproducibility.md)
+when preparing a release or draft.
 
 ## Pull requests
 

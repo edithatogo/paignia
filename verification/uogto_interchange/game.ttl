@@ -1,0 +1,69 @@
+@prefix gt: <https://w3id.org/uogto/core#> .
+@prefix p: <https://github.com/edithatogo/paignia#> .
+@prefix g: <https://example.org/paignia/offer#> .
+@prefix safe: <https://example.org/paignia/safe#> .
+@prefix lottery: <https://example.org/paignia/lottery#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+g:offer a gt:GameSpecification ;
+    gt:hasRepresentation g:tree ;
+    gt:hasPlayer g:acheteur, g:décideur ;
+    gt:hasInitialState g:start ;
+    gt:hasState g:start, g:draw, g:respond, g:guarantee, g:high, g:accept, g:decline .
+g:tree a gt:ExtensiveFormRepresentation .
+g:acheteur a gt:Player ; gt:controlsNode g:start .
+g:décideur a gt:Player ; gt:controlsNode g:respond .
+
+g:start a gt:DecisionNode ;
+    gt:belongsToInformationSet g:start-set ;
+    gt:hasAvailableAction safe:choice, lottery:choice ;
+    gt:hasTransition g:safe-edge, g:lottery-edge .
+g:start-set a gt:InformationSet .
+safe:choice a gt:Action .
+lottery:choice a gt:Action .
+g:safe-edge a gt:Transition ;
+    gt:transitionsFrom g:start ; gt:transitionsTo g:guarantee ;
+    p:position 1 ; p:action safe:choice .
+g:lottery-edge a gt:Transition ;
+    gt:transitionsFrom g:start ; gt:transitionsTo g:draw ;
+    p:position 0 ; p:action lottery:choice .
+
+g:draw a gt:ChanceNode ; gt:hasTransition g:high-edge, g:respond-edge .
+g:high-edge a gt:Transition ;
+    gt:transitionsFrom g:draw ; gt:transitionsTo g:high ;
+    p:position 0 ; gt:probability 0.25 .
+g:respond-edge a gt:Transition ;
+    gt:transitionsFrom g:draw ; gt:transitionsTo g:respond ;
+    p:position 1 ; gt:probability 0.75 .
+
+g:respond a gt:DecisionNode ;
+    gt:belongsToInformationSet g:response-set ;
+    gt:hasAvailableAction g:take, g:pass ;
+    gt:hasTransition g:take-edge, g:pass-edge .
+g:response-set a gt:InformationSet .
+g:take a gt:Action .
+g:pass a gt:Action .
+g:take-edge a gt:Transition ;
+    gt:transitionsFrom g:respond ; gt:transitionsTo g:accept ;
+    p:position 0 ; p:action g:take .
+g:pass-edge a gt:Transition ;
+    gt:transitionsFrom g:respond ; gt:transitionsTo g:decline ;
+    p:position 1 ; p:action g:pass .
+
+g:guarantee a gt:TerminalNode ; p:payoffProfile g:safe-payoffs .
+g:high a gt:TerminalNode ; p:payoffProfile g:high-payoffs .
+g:accept a gt:TerminalNode ; p:payoffProfile g:accept-payoffs .
+g:decline a gt:TerminalNode ; p:payoffProfile g:decline-payoffs .
+
+g:safe-payoffs a gt:PayoffProfile ; gt:hasPayoffForPlayer g:sa, g:sd .
+g:high-payoffs a gt:PayoffProfile ; gt:hasPayoffForPlayer g:ha, g:hd .
+g:accept-payoffs a gt:PayoffProfile ; gt:hasPayoffForPlayer g:aa, g:ad .
+g:decline-payoffs a gt:PayoffProfile ; gt:hasPayoffForPlayer g:da, g:dd .
+g:sa a gt:PlayerPayoffLink ; gt:payoffPlayer g:acheteur ; gt:payoffValue "1"^^xsd:double .
+g:sd a gt:PlayerPayoffLink ; gt:payoffPlayer g:décideur ; gt:payoffValue "0"^^xsd:double .
+g:ha a gt:PlayerPayoffLink ; gt:payoffPlayer g:acheteur ; gt:payoffValue "8"^^xsd:double .
+g:hd a gt:PlayerPayoffLink ; gt:payoffPlayer g:décideur ; gt:payoffValue "-2"^^xsd:double .
+g:aa a gt:PlayerPayoffLink ; gt:payoffPlayer g:acheteur ; gt:payoffValue "0"^^xsd:double .
+g:ad a gt:PlayerPayoffLink ; gt:payoffPlayer g:décideur ; gt:payoffValue "6"^^xsd:double .
+g:da a gt:PlayerPayoffLink ; gt:payoffPlayer g:acheteur ; gt:payoffValue "1"^^xsd:double .
+g:dd a gt:PlayerPayoffLink ; gt:payoffPlayer g:décideur ; gt:payoffValue "3"^^xsd:double .

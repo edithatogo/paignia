@@ -105,6 +105,16 @@ jobs:
               except ValueError as error:
                   raise SystemExit(f"{target}: {error}") from error
           PY
+      - name: Build and replay the UOGTO interchange case
+        shell: bash
+        run: |
+          cargo fmt --manifest-path crates/paignia-io/Cargo.toml -- --check
+          cargo clippy --locked --manifest-path crates/paignia-io/Cargo.toml --all-targets -- -D warnings
+          cargo build --release --locked --manifest-path crates/paignia-io/Cargo.toml --example solve
+          python3 -m pip install --require-hashes --only-binary :all: -r verification/uogto_interchange/requirements.txt
+          python3 -I verification/uogto_interchange/verify.py \
+            --solver crates/paignia-io/target/release/examples/solve \
+            --output target/uogto-interchange
       - name: Cargo artifacts with provider source unavailable
         run: python3 scripts/validate_game_packages.py --receipt target/cargo-artifact-qualification.json --artifact-dir target/qualified-packages
       - name: Native API documentation
@@ -118,6 +128,7 @@ jobs:
             target/static-dependency-boundary.json
             target/cargo-artifact-qualification.json
             target/qualified-packages/*.crate
+            target/uogto-interchange/
             target/all-features.log
             target/solver-doctests.log
             target/independent-review-logs/*.log

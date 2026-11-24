@@ -16,3 +16,8 @@ jobs:
     with:
       manifest-path: ./Cargo.toml
       rust-version: stable
+  optional-interchange-dependency-policy:
+    uses: edithatogo/repository-standards/.github/workflows/rust-dependency-policy.yml@3fa29fff49268393e427ca3043fb6e1f0e49f877 # immutable pilot
+    with:
+      manifest-path: ./crates/paignia-io/Cargo.toml
+      rust-version: stable

@@ -1,0 +1,25 @@
+[package]
+name = "paignia-io"
+version = "0.1.0"
+description = "Optional versioned JSON interchange for Paignia's finite static solver"
+edition = "2021"
+rust-version = "1.75"
+license = "Apache-2.0"
+repository = "https://github.com/edithatogo/paignia"
+publish = false
+
+[workspace]
+
+[dependencies]
+paignia-core = { path = "../paignia-core", version = "=0.1.0" }
+paignia-solve = { path = "../paignia-solve", version = "=0.1.0" }
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = { version = "=1.0.154", features = ["float_roundtrip"] }
+thiserror = "=1.0.69"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = "warn"
+pedantic = "warn"
