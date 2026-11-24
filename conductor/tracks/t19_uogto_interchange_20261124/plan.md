@@ -17,3 +17,9 @@ replay.
 
 - [ ] Task: Qualify a separate downstream consumer against frozen game and result wire records before expanding the public compatibility promise.
 - [ ] Task: Review local mapping terms against upstream UOGTO and qualify an additional executable profile with its own oracle.
+
+## Phase 3 Full UOGTO vocabulary interchange
+
+- [ ] Generate the 322-class and 212-property inventory from the complete pinned ontology. Qualify an offline asserted-RDF command with the upstream shapes and the existing static v1 replay.
+- [ ] Prove every declaration in a meaningful graph with a definition-based assertion or upstream shape and retain the term evidence in CI.
+- [ ] Qualify perfect-recall CFR and finite two-player Nash interchange with independent numerical oracles. Report the qualified native profiles separately from vocabulary coverage.

@@ -43,3 +43,26 @@ the original numeric literal spellings before RDFLib normalization.
 Paignia's mapping terms live in its repository IRI namespace. Their
 [upstream review and wider compatibility](../../conductor/tracks/t19_uogto_interchange_20261124/plan.md)
 remain tracked.
+
+## Validate and round-trip asserted RDF
+
+Stage the immutable ontology, SHACL shapes, examples and contexts once. The
+inventory and round-trip commands operate on the local hash-verified files.
+
+```sh
+target/dev-python/bin/python -I verification/uogto_interchange/interchange.py stage \
+  --ontology-dir target/uogto-bundle
+target/dev-python/bin/python -I verification/uogto_interchange/interchange.py inventory \
+  --ontology-dir target/uogto-bundle
+target/dev-python/bin/python -I verification/uogto_interchange/interchange.py roundtrip \
+  --ontology-dir target/uogto-bundle --input verification/uogto_interchange/game.ttl \
+  --output target/game.nt
+```
+
+The command accepts a single Turtle or N-Triples graph. Oxigraph preserves
+lexical RDF terms, including Turtle numeric shorthand. RDFLib and PySHACL
+check UOGTO declaration roles and the pinned shapes with RDFS inference from
+the pinned ontology. The exported N-Triples contain the asserted graph. A bundle hash,
+RDF, or validation failure exits nonzero before writing output. Game execution
+uses the optional Rust package. The frozen static v1 JSON records came from the
+published T19 replay on Paignia `11102e0`.

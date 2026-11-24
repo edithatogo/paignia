@@ -194,7 +194,7 @@ def verify_vocabulary(graph, ontology):
             require((predicate, RDF.type, role) in ontology, f"unknown UOGTO {role}: {predicate} at {subject}")
 
 
-def result_graph(result, used, request):
+def result_graph(result, used, request, source):
     actors = {
         record["id"]: record["node"]["player"]
         for record in request["nodes"] if record["node"]["kind"] == "decision"
@@ -224,6 +224,8 @@ def result_graph(result, used, request):
         graph.add((policy, BRIDGE.expectedPayoff, link))
         graph.add((link, RDF.type, GT.PlayerPayoffLink))
         graph.add((link, GT.payoffPlayer, URIRef(player)))
+        for identifier in source.objects(URIRef(player), GT.identifier):
+            graph.add((URIRef(player), GT.identifier, identifier))
         graph.add((link, GT.payoffValue, Literal(payoff, datatype=XSD.double)))
     return graph
 
@@ -356,6 +358,11 @@ def main():
     verify_vocabulary(graph, ontology)
     request, used = project(graph, sha256(fixture))
     exact_bytes = encode(request)
+    frozen = HERE / "frozen-static-v1"
+    frozen_run = run_solver(solver, (frozen / "request.json").read_bytes())
+    require(frozen_run.returncode == 0, frozen_run.stderr.decode())
+    require(frozen_run.stdout + b"\n" == (frozen / "result.json").read_bytes(),
+            "frozen v1 wire output changed")
     run = run_solver(solver, exact_bytes)
     require(run.returncode == 0, run.stderr.decode())
     result = json.loads(run.stdout)
@@ -369,7 +376,7 @@ def main():
         == ["https://example.org/paignia/lottery#choice", "https://example.org/paignia/safe#choice"],
         "full action identities or declared input order changed",
     )
-    evidence = result_graph(result, used, request)
+    evidence = result_graph(result, used, request, graph)
     verify_vocabulary(evidence, ontology)
     check_shared_profile(solver, graph, expected)
     rejections = check_rejections(solver, graph, fixture, request, exact_bytes)
@@ -400,6 +407,8 @@ def main():
         "cargo": subprocess.check_output(["cargo", "--version"], cwd=ROOT, text=True).strip(),
         "solver_sha256": binary_digest,
         "shared_payoff_profile": "passed",
+        "frozen_static_v1": {name: sha256((frozen / name).read_bytes())
+                             for name in ("request.json", "result.json")},
         "ontology_revision": ONTOLOGY,
         "source_sha256": sha256(fixture),
         "outputs": {name: sha256(payload) for name, payload in outputs.items()},

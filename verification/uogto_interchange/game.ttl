@@ -11,8 +11,8 @@ g:offer a gt:GameSpecification ;
     gt:hasInitialState g:start ;
     gt:hasState g:start, g:draw, g:respond, g:guarantee, g:high, g:accept, g:decline .
 g:tree a gt:ExtensiveFormRepresentation .
-g:acheteur a gt:Player ; gt:controlsNode g:start .
-g:décideur a gt:Player ; gt:controlsNode g:respond .
+g:acheteur a gt:Player ; gt:identifier "buyer" ; gt:controlsNode g:start .
+g:décideur a gt:Player ; gt:identifier "seller" ; gt:controlsNode g:respond .
 
 g:start a gt:DecisionNode ;
     gt:belongsToInformationSet g:start-set ;
