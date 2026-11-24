@@ -104,9 +104,12 @@ def transitions(graph, state, states):
     return [(edge, record) for _, edge, record in ordered]
 
 
-def project(graph, source_hash):
+def project(graph, source_hash, *, require_singleton=True, representation=None):
     spec = typed(graph, exactly_one(graph.subjects(RDF.type, GT.GameSpecification), "game"), GT.GameSpecification)
-    rep = typed(graph, exactly_one(graph.objects(spec, GT.hasRepresentation), "representation"), GT.ExtensiveFormRepresentation)
+    representations = set(graph.objects(spec, GT.hasRepresentation))
+    chosen = representation if representation is not None else exactly_one(representations, "representation")
+    require(chosen in representations, "Selected representation is outside the declared game")
+    rep = typed(graph, chosen, GT.ExtensiveFormRepresentation)
     players = {typed(graph, value, GT.Player) for value in graph.objects(spec, GT.hasPlayer)}
     require(players, "missing declared players")
     states = set(graph.objects(spec, GT.hasState))
@@ -125,7 +128,8 @@ def project(graph, source_hash):
             group = typed(graph, exactly_one(graph.objects(state, GT.belongsToInformationSet), "information set"), GT.InformationSet)
             members = set(graph.subjects(GT.belongsToInformationSet, group)) | set(graph.subjects(GT.hasInformationSet, group))
             alias = set(graph.objects(state, GT.hasInformationSet))
-            require(members == {state} and alias <= {group}, f"non-singleton or conflicting information set: {group}")
+            if require_singleton:
+                require(members == {state} and alias <= {group}, f"non-singleton or conflicting information set: {group}")
             actions = []
             for edge, record in edges:
                 action = typed(graph, exactly_one(graph.objects(edge, BRIDGE.action), "decision action"), GT.Action)
@@ -307,12 +311,12 @@ def source_state():
     return head
 
 
-def build_solver():
+def build_solver(example="solve"):
     manifest = ROOT / "crates" / "paignia-io" / "Cargo.toml"
     target = ROOT / "target" / "uogto-build"
     command = [
         "cargo", "build", "--release", "--locked", "--manifest-path", str(manifest),
-        "--target-dir", str(target), "--example", "solve", "--message-format=json",
+        "--target-dir", str(target), "--example", example, "--message-format=json",
     ]
     build = subprocess.run(command, cwd=ROOT, text=True, stdout=subprocess.PIPE, timeout=900, check=True)
     artifacts = [json.loads(line) for line in build.stdout.splitlines()]
@@ -323,7 +327,7 @@ def build_solver():
         Path(item["executable"]).resolve()
         for item in artifacts
         if item.get("reason") == "compiler-artifact" and item.get("executable")
-        and item["target"]["name"] == "solve" and item["target"]["kind"] == ["example"]
+        and item["target"]["name"] == example and item["target"]["kind"] == ["example"]
     ]
     solver = exactly_one(executables, "built native solver")
     require(solver.is_relative_to(target.resolve()), "Cargo reported a solver outside the build target")

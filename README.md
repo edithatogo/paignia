@@ -235,11 +235,11 @@ records all seventeen accepted leaves and their external application receipts.
 [T18](conductor/archive/t18_illicit_enforcement_inspection_games_20261110/index.md)
 records the accepted provider methods and the application-owned T18.03 handoff.
 
-[T19](conductor/tracks/t19_uogto_interchange_20261124/index.md) qualifies optional
-[`paignia-io`](crates/paignia-io/README.md) with a
-[public UOGTO replay](verification/uogto_interchange/README.md). Its separate
-Cargo workspace keeps serialization outside the static packages' dependency
-graphs. [T20](conductor/tracks/t20_release_maturity_20261124/index.md) owns release
+[T19](conductor/tracks/t19_uogto_interchange_20261124/index.md) qualifies
+[UOGTO interchange](verification/uogto_interchange/README.md) for 322 classes
+and 212 properties from the pinned source. Optional
+[`paignia-io`](crates/paignia-io/README.md) replays backward induction, CFR,
+CFR+ and bounded pure and mixed Nash in a separate Cargo workspace. [T20](conductor/tracks/t20_release_maturity_20261124/index.md) owns release
 qualification, hardening, research software evidence and the paper workflow.
 
 A bounded static release requires an explicit contract, isolated dependencies,

@@ -19,3 +19,16 @@ compatibility cases.
 UOGTO owns changes to canonical terms and profile publication. Paignia owns its
 projection and executable reproduction case. A fit-for-purpose local bridge term
 needs an explicit mapping and a review disposition before any upstream promotion.
+
+
+The scoped vocabulary target covers 322 named classes and 212 named properties
+from the pinned UOGTO source and applied packs. Derive this denominator from
+the verified module declarations. Every term needs a contextual assertion in a
+round-tripped graph and a definition or shape from the same ontology edition.
+Deliver the term rows and hashes in CI.
+
+The additional executable profiles admit a finite extensive-form perfect-recall
+partition for CFR or CFR+ and a complete two-player normal-form table for
+pure or bounded mixed Nash. Replay the frozen static v1 contract with a
+standalone installed consumer. Record the native methods and checks alongside
+the vocabulary report.

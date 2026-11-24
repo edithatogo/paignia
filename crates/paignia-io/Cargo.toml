@@ -1,7 +1,7 @@
 [package]
 name = "paignia-io"
 version = "0.1.0"
-description = "Optional versioned JSON interchange for Paignia's finite static solver"
+description = "Optional versioned JSON interchange for bounded Paignia game profiles"
 edition = "2021"
 rust-version = "1.75"
 license = "Apache-2.0"

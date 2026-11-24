@@ -16,16 +16,24 @@ replay.
 ## Phase 2 Compatibility and ontology coverage
 
 - [ ] Task: Qualify a separate downstream consumer against frozen game and result wire records before expanding the public compatibility promise.
-- [ ] Task: Review local mapping terms against upstream UOGTO and qualify an additional executable profile with its own oracle.
+- [x] Task: Review local mapping terms against upstream UOGTO and qualify an additional executable profile with its own oracle.
 
 ## Phase 3 Full UOGTO vocabulary interchange
 
 - [x] Generate the 322-class and 212-property inventory from the complete pinned ontology. Qualify an offline asserted-RDF command with the upstream shapes and the existing static v1 replay.
 - [x] Prove every declaration in a meaningful graph with a definition-based assertion or upstream shape and retain the term evidence in CI.
-- [ ] Qualify perfect-recall CFR and finite two-player Nash interchange with independent numerical oracles. Report the qualified native profiles separately from vocabulary coverage.
+- [x] Qualify perfect-recall CFR and finite two-player Nash interchange with independent numerical oracles. Report the qualified native profiles separately from vocabulary coverage.
 
 
 The [coverage replay](../../../verification/uogto_interchange/README.md#replay-term-coverage)
 binds one asserted witness per class and property to its upstream definition
 and a verified input/output graph. The four applied packs are in the same
 denominator. Native execution qualification has its own evidence.
+
+
+The native evidence includes Kuhn poker for CFR and CFR+, Prisoner's Dilemma
+for pure Nash and matching pennies for mixed Nash. The installed consumer
+replays the original static v1 records outside the provider checkout. Its receipt
+qualifies installation and wire compatibility in a standalone consumer fixture.
+The separate downstream acceptance task requires a receipt owned by a downstream
+application.

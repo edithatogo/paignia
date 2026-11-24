@@ -386,6 +386,26 @@
     {
       "path": "shapes/temporality.shacl.ttl",
       "sha256": "e922980a39a84f4a230795bf5bba49152da8893ef370c748d9295e15b2645468"
+    },
+    {
+      "path": "uogto/__init__.py",
+      "sha256": "7fecd2d01c47341bf41f16d64fb2f03a3b7014e2ad013bce7902d0c9b5aa7001"
+    },
+    {
+      "path": "uogto/interchange/__init__.py",
+      "sha256": "2ac9e81dd33b678bb9e8d3dbff9c0269af7b09f298fa05ff9d34dc0653b94220"
+    },
+    {
+      "path": "uogto/interchange/game_contract.py",
+      "sha256": "9f78262531c58407e3db0e4efe4ba72578e9780295e1feb820597010f702d03f"
+    },
+    {
+      "path": "uogto/interchange/information_sets.py",
+      "sha256": "3987fb51b6ed15cdd26bbb026a23423e71254d02a8610d180abe6d3f9980c802"
+    },
+    {
+      "path": "uogto/interchange/information-set-profile-v1.ttl",
+      "sha256": "6af878dc016947369700b3c1db21655e73f1e86718d30a0fa553e8ba5e6481bf"
     }
   ]
 }
