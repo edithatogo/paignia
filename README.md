@@ -231,22 +231,27 @@ and revisions. Apache-2.0 attribution is retained in root and package-local
 ## Maturity work and ownership
 
 [Conductor T17](conductor/archive/t17_game_runtime_ecosystem_20261107/index.md)
-keeps the existing seventeen identifiers. Paignia owns provider leaves
-T17.01–T17.08 and T17.12–T17.17. T17.09 and T17.11 are external handoffs to the
-reimbursement application; T17.10 is the second application's receipt. These
-are ownership links, not duplicated active plans or completed integrations.
+records all seventeen accepted leaves and their external application receipts.
+[T18](conductor/archive/t18_illicit_enforcement_inspection_games_20261110/index.md)
+records the accepted provider methods and the application-owned T18.03 handoff.
+
+[T19](conductor/tracks/t19_uogto_interchange_20261124/index.md) qualifies optional
+[`paignia-io`](crates/paignia-io/README.md) with a
+[public UOGTO replay](verification/uogto_interchange/README.md). Its separate
+Cargo workspace keeps serialization outside the static packages' dependency
+graphs. [T20](conductor/tracks/t20_release_maturity_20261124/index.md) owns release
+qualification, hardening, research software evidence and the paper workflow.
 
 A bounded static release requires an explicit contract, isolated dependencies,
 qualified package artifacts and two real application cases against the same
-profile. Optional simulation and unrelated future algorithms do not gate that
-bounded release. Each advertised numerical method must satisfy its own
-independent controls. Routine work uses focused checks and coherent agent
-review; there is no repeated human approval loop.
+archive set. Each advertised numerical method has its own independent controls.
 
 ## Security
 
 Follow [Paignia's security policy](SECURITY.md) to report vulnerabilities
 privately. Keep credentials and sensitive data out of public issues and pull requests.
+The [OpenSSF Baseline assessment](docs/validation/security-baseline.md) links
+the native main ruleset and the remaining evidence for release.
 
 ## License
 

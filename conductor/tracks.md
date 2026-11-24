@@ -8,3 +8,9 @@
 
 - [x] **Exact Nash feasibility on a paired payoff segment**
   [Implementation and benchmark](tracks/credal_segment_20261124.md).
+
+- [ ] **Track: T19 UOGTO and optional interchange**
+  [Specification, implementation and acceptance](tracks/t19_uogto_interchange_20261124/index.md).
+
+- [ ] **Track: T20 Reproducible and hardened release**
+  [Security, research software and release milestones](tracks/t20_release_maturity_20261124/index.md).

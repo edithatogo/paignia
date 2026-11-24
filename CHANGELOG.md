@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add opt-in `paignia-io` JSON interchange and a checked public UOGTO game-to-result example.
+- Require alint signature verification and record the security baseline, paper readiness and release plan.
+
 - Added adaptive Nash enclosure across a two-vertex payoff segment with shared
   rational weights and exact equilibrium witnesses. [Segment contract](docs/validation/credal-nash.md#adaptive-enclosure-for-two-payoff-vertices)
 

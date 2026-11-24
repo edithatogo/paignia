@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = ["crates/paignia-core", "crates/paignia-solve"]
-exclude = ["crates/paignia-kairos"]
+exclude = ["crates/paignia-kairos", "crates/paignia-io"]
 
 [workspace.package]
 version = "0.1.0"

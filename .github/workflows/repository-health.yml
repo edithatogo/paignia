@@ -31,8 +31,13 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Install Cosign for release verification
+        uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
+
       - name: Lint repository structure
         uses: asamarts/alint@5054852d00d47affc9ea71440240147d9999f4d3 # v0.22.1
+        env:
+          ALINT_REQUIRE_VERIFY: '1'
 
   repohealth:
     name: RepoHealth report

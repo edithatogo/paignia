@@ -6,9 +6,9 @@ distribution or a software paper.
 | Criterion | Paignia evidence | Remaining work |
 | --- | --- | --- |
 | FAIR4RS findability and access | Public Git history, citation metadata, licence and documented Git installation. The FAIR workflow validates the Citation File Format schema, repository identity and licence at the checked commit, and reports version and DOI gaps. | Archive the first qualified release and record its persistent identifier in the citation metadata. Register it in a research software directory when it has a citable release and a maintainer. |
-| FAIR4RS interoperability and reuse | [Pinned packages and application receipts](game-consumer-handoff.md), [native result semantics](../architecture/game-result-contract-v1.md), and an [executed UOGTO information-set contract](../architecture/game-information-contract-v1.md). | Map more provider profiles to full UOGTO IRIs. Qualify source-to-native transformation of the selected fixture's actions, probabilities and payoff identities. |
-| JOSS installability and functionality | [Installed artifact tests](game-consumer-handoff.md), API documentation, independent [numerical oracles](../../verification/numerical_oracles/README.md) and two scoped applications. | Prepare a versioned, reproducible example and evidence for claimed performance and research impact. A submission also needs a software paper, state-of-the-field comparison and disclosures under the current review criteria. |
-| OpenSSF and native security | The OpenSSF Scorecard workflow retains its check-level report. The Rust policy, Offline AI Security, privacy checks and [private reporting](../../SECURITY.md) address repository-specific risks. | Review real findings on the release candidate. Establish a repeatable provenance and dependency policy for any published packages, then check compatible public API changes against that baseline. |
+| FAIR4RS interoperability and reuse | [Pinned packages and application receipts](game-consumer-handoff.md), [native result semantics](../architecture/game-result-contract-v1.md), the [executed UOGTO information-set contract](../architecture/game-information-contract-v1.md), and a [public RDF-to-result replay](../../verification/uogto_interchange/README.md). | Qualify additional provider profiles and a distinct downstream wire consumer under T19. |
+| JOSS installability and functionality | [Installed artifact tests](game-consumer-handoff.md), API documentation, independent [numerical oracles](../../verification/numerical_oracles/README.md) and two scoped applications. | Apply the [JOSS, Inara and CODECHECK procedure](paper-reproducibility.md) to a named draft and frozen release. Bind claims to versioned reproducibility and impact evidence. |
+| OpenSSF and native security | The OpenSSF Scorecard workflow retains its check-level report. The [OpenSSF Baseline assessment](security-baseline.md) records the separate Level 1 controls. The Rust policy, Offline AI Security, privacy checks and [private reporting](../../SECURITY.md) address repository-specific risks. | Review real findings on the release candidate. Establish a repeatable provenance and dependency policy for any published packages, then check compatible public API changes against that baseline. |
 | rOpenSci and pyOpenSci | Their independent testing, examples and support practices inform the contributor guide. | Apply ecosystem packaging and review tools in a maintained R or Python wrapper repository when a consumer needs one. Paignia ships Rust libraries. |
 
 Use the hosted run summary for each check's result and the exact commits and
@@ -28,6 +28,12 @@ order, and rejected invalid ownership, missing membership, reordered actions
 and imperfect recall. The second run changed only the provider binding in a
 disposable copy. The example's paired Rust fixture supplies the topology and
 payoffs. The ontology projection supplies the declarative information structure.
+
+The additional [T19 public case](../../verification/uogto_interchange/README.md)
+starts with an asserted fully observed graph. Its checked mapping projects the
+topology, payoff links and chance weights, executes the optional Rust
+interchange, and writes a provenance-bound RDF result with the selected actions.
+It has a separate profile and oracle from the upstream information-set check.
 
 ## References
 

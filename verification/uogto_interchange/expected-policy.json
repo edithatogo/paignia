@@ -1,0 +1,13 @@
+{
+  "method": "backward_induction",
+  "method_version": "1.0.1",
+  "status": "completed",
+  "choices": {
+    "https://example.org/paignia/offer#respond": "https://example.org/paignia/offer#take",
+    "https://example.org/paignia/offer#start": "https://example.org/paignia/lottery#choice"
+  },
+  "expected_payoffs": {
+    "https://example.org/paignia/offer#acheteur": 2.0,
+    "https://example.org/paignia/offer#décideur": 4.0
+  }
+}
