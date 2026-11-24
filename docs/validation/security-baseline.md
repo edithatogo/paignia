@@ -38,3 +38,21 @@ and retain their receipts under [T20](../../conductor/tracks/t20_release_maturit
 [Scorecard](../../.github/workflows/openssf-scorecard.yml) measures automated
 signals from a specific revision. This assessment also tracks controls that
 need release artifacts, reviewer evidence or native settings.
+
+## T20 follow-up on the pre-candidate revision
+
+The review at `0389af46db4557494f465db2c584c80080e9f588` found zero open
+Dependabot and secret scanning alerts. Five CodeQL alerts (#1, #3, #4, #5
+and #6) all flag assertion messages in the correlated-equilibrium tests.
+The arguments come from literal synthetic payoff matrices, a fixed set of
+action permutations and their certificates. The test paths load no release,
+customer or user data. The diagnostic messages provide context for numerical
+failures. The five alerts are assessed as false positives on this source
+edition. [CodeQL run](https://github.com/edithatogo/paignia/actions/runs/45431956077)
+
+The native diagnostics confirmed active secret scanning, push protection and
+Dependabot security updates. The authenticated API still returned no account
+MFA state for OSPS-AC-01.01. The release-bound user guidance, signed version
+tag, public archive licence and versioned DOI still require release readback.
+The candidate workflow attests the package receipt and both verified archive
+digests to their main revision. [Active main ruleset](https://github.com/edithatogo/paignia/rules/27976609)

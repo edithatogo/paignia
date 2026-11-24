@@ -1,0 +1,22 @@
+[package]
+name = "paignia-fuzz"
+version = "0.0.0"
+edition = "2021"
+license = "Apache-2.0"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[workspace]
+
+[dependencies]
+libfuzzer-sys = "=0.4.13"
+paignia-io = { path = "../crates/paignia-io" }
+
+[[bin]]
+name = "wire_admission"
+path = "fuzz_targets/wire_admission.rs"
+test = false
+doc = false
+bench = false
