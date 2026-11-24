@@ -1,0 +1,99 @@
+@prefix g: <https://w3id.org/uogto/core#> .
+@prefix x: <https://w3id.org/uogto/extensions#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix e: <https://example.org/paignia/coverage/assurance#> .
+
+e:first a g:Player ; g:identifier "first" .
+e:second a g:Player ; g:identifier "second" .
+
+# Evaluate a room allocation and a mutually preferred pair in the initial match.
+e:selection-session a g:PlaySession ; g:hasState e:initial-assignment ;
+    x:hasMatchingMarket e:room-market .
+e:initial-assignment a g:State ; rdfs:label "Room assignments before swaps" .
+e:room-market a x:MatchingMarket ; x:hasAllocation e:fair-rooms ;
+    dct:hasPart e:initial-match, e:evaluate-envy .
+e:fair-rooms a x:Allocation, x:EnvyFreeAllocation, x:ProportionalAllocation ;
+    x:valuationValue "10"^^xsd:double ;
+    rdfs:comment "The two participants each receive their preferred room and half the budget." .
+e:initial-match a x:Matching ; x:hasBlockingPair e:mutually-preferred .
+e:mutually-preferred a x:BlockingPair ; dct:hasPart e:first, e:north-room ;
+    rdfs:comment "First prefers the north room and its priority list prefers first." .
+e:evaluate-envy a x:FairnessCriterion ; rdfs:label "Neither participant prefers the other bundle" .
+
+e:reported-value-sale a x:Mechanism, x:DirectMechanism ;
+    x:hasAllocationRule e:highest-report ; x:hasPaymentRule e:second-report ;
+    x:hasParticipationConstraint e:voluntary-entry ; x:revenueValue "8"^^xsd:double .
+e:highest-report a x:AllocationRule ; rdfs:label "Give the lot to the highest reported value" .
+e:second-report a x:PaymentRule ; rdfs:label "Charge the second reported value" .
+e:voluntary-entry a x:IndividualRationalityConstraint ;
+    rdfs:comment "The participants can decline and obtain zero utility." .
+
+# Execute a synthetic queue model in discrete steps.
+e:transfer-queue a x:PetriNetGame ; g:hasPlayer e:first ;
+    x:hasPetriNet e:transfer-model ; x:hasPlace e:source-place, e:destination-place ;
+    x:hasTransitionNode e:transfer-token .
+e:transfer-model a x:PetriNet ; x:hasMarking e:initial-tokens ; dct:hasPart e:sender-receiver ;
+    rdfs:comment "A token moves from source to destination when there is capacity." .
+e:initial-tokens a x:Marking ; dct:hasPart e:one-waiting-token .
+e:one-waiting-token a x:Token ; dct:isPartOf e:source-place .
+e:source-place a x:Place ; x:tokenCount 1 .
+e:destination-place a x:Place ; x:tokenCount 0 .
+e:transfer-token a x:TransitionNode ; rdfs:label "Move one token to the destination" .
+e:sender-receiver a x:DEVSCoupledModel ; dct:hasPart e:sender, e:receiver, e:transfer-interface .
+e:sender a x:DEVSAtomicModel, x:Federate ; rdfs:label "Queue participant sending a token event" .
+e:receiver a x:DEVSAtomicModel, x:Federate ; rdfs:label "Queue participant receiving a token event" .
+e:transfer-interface a x:FederationObjectModel ; rdfs:label "Shared token-count event contract" .
+
+# Keep private date fields separate from a permitted synthetic count release.
+e:first x:hasPrivateAttribute e:private-date .
+e:private-date a x:PrivateAttribute ; rdfs:label "Internal date field, value withheld" .
+e:count-release a x:DisclosureAction ; x:hasConsentPolicy e:summary-only ;
+    x:hasDPMechanism e:count-noise ; dct:hasPart e:remaining-information .
+e:summary-only a x:ConsentPolicy ; rdfs:label "Only publish an approved count aggregate" .
+e:count-noise a x:DifferentialPrivacyMechanism ; rdfs:label "Synthetic count mechanism with bounded sensitivity" .
+e:remaining-information a x:InformationLeakage ; rdfs:label "Residual disclosure measured for the count release" .
+
+# A tabletop availability exercise compares resource coverage plans.
+e:tabletop a x:SecurityGame, x:CyberSecurityGame, x:StackelbergSecurityGame ;
+    g:hasPlayer e:first, e:second ; x:hasDefender e:service-owner ;
+    x:hasAttacker e:tabletop-challenger ; x:hasTarget e:demo-service ;
+    dct:hasPart e:scope-of-exercise .
+e:service-owner a x:Defender ; x:hasCoverageSchedule e:rotation .
+e:tabletop-challenger a x:Attacker ; dct:hasPart e:test-event .
+e:test-event a x:AttackVector ; rdfs:label "Abstract simulated unavailable-service event" .
+e:demo-service a x:Target ; x:threatScore "0.2"^^xsd:double ;
+    rdfs:label "Synthetic availability resource" .
+e:rotation a x:CoverageSchedule ; rdfs:comment "Reserve more demonstration capacity for the busier time slot." .
+e:scope-of-exercise a x:ThreatModel ; rdfs:comment "The synthetic challenger chooses one of two test time slots." .
+
+e:first x:hasCredential e:demo-authorization .
+e:demo-authorization a x:Credential ; rdfs:label "Synthetic credential record without credential bytes" .
+e:logged-choice a x:ActionAttribution ; prov:wasAttributedTo e:first ;
+    dct:hasPart e:permission-review, e:source-trust .
+e:permission-review a x:AuditEvent ; rdfs:label "Review confirmed the declared role for the synthetic choice" .
+e:source-trust a x:TrustRelation ; dct:hasPart e:first, e:second ;
+    rdfs:comment "The reviewer uses the source report only after confirming its authorization." .
+
+# A queue model checks that accepted submissions eventually receive a response.
+e:queue-check a x:VerificationGame ; g:hasPlayer e:first, e:second ;
+    dct:hasPart e:response-task, e:response-goal, e:capacity-invariant, e:completion-target .
+e:response-goal a x:TemporalProperty, x:LivenessProperty ;
+    rdfs:label "Every accepted submission eventually receives a response" .
+e:capacity-invariant a x:SafetyProperty ; rdfs:label "A queue never contains more than two accepted items" .
+e:completion-target a x:ReachabilityProperty ; rdfs:label "A state with a response can be reached" .
+e:response-task a x:ModelCheckingTask ; x:isVerified false ; x:hasFormula e:eventually-reply ;
+    x:hasCounterexample e:unserved-trace ; x:hasWitnessStrategy e:serve-first .
+e:eventually-reply a x:StrategicFormula ; x:formulaString "G(accepted -> F replied)" .
+e:unserved-trace a x:CounterexampleTrace ; rdfs:label "An accepted item remains queued on every subsequent step" .
+e:serve-first a x:WitnessStrategy ; rdfs:label "Give the oldest accepted item the next available service slot" .
+
+# A graph validator reports an invalid queue marking and proposes an update.
+e:queue-check dct:hasPart e:marking-shape, e:marking-errors, e:marking-query .
+e:marking-shape a x:ValidationShape ; rdfs:label "Every place must have a nonnegative token count" .
+e:marking-errors a x:ConstraintViolation ; prov:wasDerivedFrom e:marking-shape ;
+    rdfs:label "The simulated source place had a count of minus one" .
+e:marking-query a x:SPARQLExecutionQuery ;
+    x:queryText "ASK { <urn:demo:place> <urn:demo:tokenCount> ?n FILTER (?n < 0) }" .
