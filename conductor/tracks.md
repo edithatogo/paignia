@@ -14,3 +14,6 @@
 
 - [ ] **Track: T20 Reproducible and hardened release**
   [Security, research software and release milestones](tracks/t20_release_maturity_20261124/index.md).
+
+- [ ] **Track: T21 Research validation and downstream adoption**
+  [Comparison, interchange, diagrams, validation, adoption and documentation](tracks/t21_research_validation_20261125/index.md).

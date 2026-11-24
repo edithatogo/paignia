@@ -52,7 +52,8 @@ edition. [CodeQL run](https://github.com/edithatogo/paignia/actions/runs/4543195
 
 The native diagnostics confirmed active secret scanning, push protection and
 Dependabot security updates. The authenticated API still returned no account
-MFA state for OSPS-AC-01.01. The release-bound user guidance, signed version
-tag, public archive licence and versioned DOI still require release readback.
-The candidate workflow attests the package receipt and both verified archive
-digests to their main revision. [Active main ruleset](https://github.com/edithatogo/paignia/rules/27976609)
+MFA state for OSPS-AC-01.01. The [0.1.0 release readback](receipts/t20-candidate/release-v0.1.0.md)
+records the signed version tag, signed checksum manifest and public archive
+licence and DOI. The candidate workflow attests the package receipt and both
+verified archive digests to their main revision.
+[Active main ruleset](https://github.com/edithatogo/paignia/rules/27976609)

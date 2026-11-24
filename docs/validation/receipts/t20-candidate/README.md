@@ -33,8 +33,6 @@ target/dev-python/bin/python -I scripts/validate_game_consumer_evidence.py \
 
 ## Citable release
 
-The package version and draft citation metadata have been verified for
-0.1.0. The public release still needs a verified signed `v0.1.0` tag for
-the candidate commit and a versioned DOI that resolves to a deposit carrying
-the verified archive bytes. Version and identifier checks must use the
-published record and the downloaded files. [Zenodo DOI workflow](https://help.zenodo.org/docs/deposit/describe-records/reserve-doi/)
+The [distribution verification](release-v0.1.0.md) records the signed
+`v0.1.0` tag and the SHA-256 readback of the files on GitHub and Zenodo.
+The archive version resolves at [10.5281/zenodo.24515285](https://doi.org/10.5281/zenodo.24515285).

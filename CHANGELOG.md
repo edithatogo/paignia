@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.1.0 · 25 November 2026
+
+- Published the signed source tag, attested Rust archives and versioned
+  software deposit. [Release](https://github.com/edithatogo/paignia/releases/tag/v0.1.0)
+  · [Archive](https://doi.org/10.5281/zenodo.24515285)
+
 - Added validated RDF interchange for every class and property in the pinned
   UOGTO edition, with versioned backward-induction, CFR, CFR+ and bounded
   Nash replays. [Interchange guide](verification/uogto_interchange/README.md)
