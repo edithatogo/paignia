@@ -269,10 +269,11 @@ fn chance_cancellation_preserves_the_better_action_for_every_outcome_order() {
     let node = |id: &str| NodeId(id.into());
     let player = PlayerId("p".into());
     let mut source = specification();
+    let large = 2_f64.powi(55);
     let outcomes = [
-        ("high", 0.25, 2_f64.powi(55)),
+        ("high", 0.25, large),
         ("middle", 0.5, 1.0),
-        ("low", 0.25, -2_f64.powi(55)),
+        ("low", 0.25, -large),
     ];
 
     for (id, _, payoff) in outcomes {
