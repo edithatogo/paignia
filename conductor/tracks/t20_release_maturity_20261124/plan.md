@@ -6,7 +6,7 @@
 - [x] Task: Assess the pinned OpenSSF Security Baseline controls against actual repository, CI and source evidence. Keep individual open controls visible.
 - [x] Task: Require up-to-date pull requests and seven checks on the [active main ruleset](https://github.com/edithatogo/paignia/rules/27976609). Preserve the isolated offline scanner and its separate receipts.
 - [x] Task: Require signature verification for alint and qualify locked release-mode builds for the public interchange replay and the numerical benchmark.
-- [ ] Task: Record the hosted scores and resolve remaining verified RepoHealth, alint, Scorecard and [Baseline](../../../docs/validation/security-baseline.md) findings.
+- [x] Task: Record the hosted scores and resolve remaining verified RepoHealth, alint, Scorecard and [Baseline](../../../docs/validation/security-baseline.md) findings.
 - [x] Task: Add bounded coverage-guided fuzzing at input admission and retain deterministic regressions. Run release API checks against an immutable baseline.
 
 The [hosted assessment and release checks](../../../docs/validation/research-software-readiness.md#t20-hosted-baseline) record the starting scores and the two wire and API checks. Release-bound controls remain open pending the signed version and archive.
@@ -22,8 +22,10 @@ The [hosted assessment and release checks](../../../docs/validation/research-sof
 
 ## Phase 3 Release qualification
 
-- [ ] Task: Requalify both existing application cases against the same candidate archives. Record exact consuming revisions, feature scope, expected results and archive hashes.
+- [x] Task: Requalify both existing application cases against the same candidate archives. Record exact consuming revisions, feature scope, expected results and archive hashes.
 - [ ] Task: Verify signed version tag, signed or attested archive provenance, installability from archived bytes and DOI resolution before closing the release leaf.
+
+The [0.1.0 candidate record](../../../docs/validation/receipts/t20-candidate/README.md) binds the two replays, the verified archive attestations and the exact main CI and security runs. The signed version tag and resolving archive DOI remain open.
 
 ## Phase 4 Numerical research
 

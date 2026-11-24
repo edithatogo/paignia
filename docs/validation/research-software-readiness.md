@@ -34,6 +34,14 @@ The pre-candidate assessment evaluated Paignia at
 · [FAIR4RS preflight](https://github.com/edithatogo/paignia/actions/runs/45431955548)
 · [Native CI coverage](https://github.com/edithatogo/paignia/actions/runs/45431955799)
 
+The candidate at `a04a19da06cc50e310a172574ed66f62000b891a` scored
+81/100 on RepoHealth and passed alint with the same two informational notices.
+OpenSSF Scorecard increased to 7.4/10, with fuzzing at 10/10. FAIR4RS passed the
+metadata preflight and still reports the version tag, citation version and DOI
+as open. [Repository Health](https://github.com/edithatogo/paignia/actions/runs/45438493092)
+· [Scorecard](https://github.com/edithatogo/paignia/actions/runs/45438493038)
+· [FAIR4RS](https://github.com/edithatogo/paignia/actions/runs/45438493053)
+
 ## Release checks
 
 Native CI compares both library APIs with the immutable T19 checkpoint using

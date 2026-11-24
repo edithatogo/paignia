@@ -1,0 +1,36 @@
+{
+  "application_tree": "e112620848b8d81ea3fc8d48238caf49353b3667",
+  "artifacts": {
+    "paignia-core": "e917b650bc7d008d4d0968dc6b0a4e04b1d9f6e0ae1c79818563fba111fac973",
+    "paignia-solve": "638fb6c971e11750cee3b2c68cbc4f9ffa7a7d710b149dbbc58c8bde627fa7fc"
+  },
+  "case_kind": "application-model",
+  "case_name": "Innovate sequential price commitment with structural demand",
+  "commands": [
+    "container run --platform linux/amd64 --rosetta --network none --no-dns --read-only --cap-drop ALL with the qualified Rust 1.100.0 image and read-only replay bundle",
+    "sha256sum --check --strict SHA256SUMS",
+    "cargo metadata --offline --locked --format-version 1",
+    "cargo test --offline --locked --test price_commitment"
+  ],
+  "dependency_overlay_sha256": {
+    "rust/crates/innovate-games/Cargo.lock": "ce27b8af38314f4d513eea2707d3fcde2aed56a68d7c29beb3d806ef701221c6",
+    "rust/crates/innovate-games/Cargo.toml": "396f5c328c8540dd89737dd08f32b213647f129176b0022260e927c5c6334281"
+  },
+  "execution_evidence": {
+    "path": "docs/validation/receipts/t20-candidate/innovate.log",
+    "sha256": "a011acb7f2dd239e6c47bfd6a98750fb29ba0471761e67577c852402111dc259"
+  },
+  "expected_result_basis": "Independent rational multinomial-logit shares with an outside option. See the T17.10 static price commitment section in conductor/tracks/kairos_runtime_boundary_20261107/strategic-information-integration.md at the application revision.",
+  "profile_sha256": "8c20e1969e3e33bf1a8ac6b3ba6073775e06782348b733da73603441a068f59e",
+  "provider_revision": "a04a19da06cc50e310a172574ed66f62000b891a",
+  "repository": "https://github.com/edithatogo/innovate",
+  "result": "passed",
+  "revision": "7999fddec28fea30e93c67c4e15857c42c884616",
+  "schema_version": 1,
+  "scope": "real-application-artifact-consumer",
+  "semantic_profile": "paignia/static-finite-perfect-information-sparse-zero/1.0.0",
+  "source_tar_sha256": "9fd6d78becb48a8722a28f34f5461393c7befbf394c95fd9673c2d5c46a33aaf",
+  "tests_failed": 0,
+  "tests_passed": 5,
+  "tests_skipped": 0
+}

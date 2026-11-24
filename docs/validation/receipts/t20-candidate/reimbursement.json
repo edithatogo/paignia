@@ -1,0 +1,37 @@
+{
+  "application_tree": "b70cae008806c579d4c317d17c07d7ace985124c",
+  "artifacts": {
+    "paignia-core": "e917b650bc7d008d4d0968dc6b0a4e04b1d9f6e0ae1c79818563fba111fac973",
+    "paignia-solve": "638fb6c971e11750cee3b2c68cbc4f9ffa7a7d710b149dbbc58c8bde627fa7fc"
+  },
+  "case_kind": "application-model",
+  "case_name": "Chapter 8 Game 1 finite reimbursement offers",
+  "commands": [
+    "container run --platform linux/amd64 --rosetta --network none --no-dns --read-only --cap-drop ALL with the qualified Rust 1.100.0 image and read-only replay bundle",
+    "sha256sum --check --strict SHA256SUMS",
+    "cargo metadata --offline --locked --format-version 1",
+    "cargo test --offline --locked --test paignia_chapter8_application"
+  ],
+  "dependency_overlay_sha256": {
+    "Cargo.lock": "68c2a45e7634b469017e91ce4c93864f7146d17d95ec2e5186d31d30ca1ed5a6",
+    "Cargo.toml": "9250fdc4d86160b946da4d4201aed3677a44849262f62e8eea40dac9e44de688",
+    "crates/new-drug-reimbursement-game/Cargo.toml": "640bcf4e159b71f1fbbb7caec235dc3b93756bffe9bb863031bbfcd660ab6163"
+  },
+  "execution_evidence": {
+    "path": "docs/validation/receipts/t20-candidate/reimbursement.log",
+    "sha256": "61c1a04d2a7b1bee4fbf5c68a75abb54aa686420c6fbbc82a613e621bb07d3e8"
+  },
+  "expected_result_basis": "Pekarsky (2015), equation 8.2. See docs/architecture/paignia-chapter8-application.md at the application revision.",
+  "profile_sha256": "8c20e1969e3e33bf1a8ac6b3ba6073775e06782348b733da73603441a068f59e",
+  "provider_revision": "a04a19da06cc50e310a172574ed66f62000b891a",
+  "repository": "https://github.com/edithatogo/new-drug-reimbursement-game",
+  "result": "passed",
+  "revision": "8e7b0674b234521e97abd7e65b655892fb646636",
+  "schema_version": 1,
+  "scope": "real-application-artifact-consumer",
+  "semantic_profile": "paignia/static-finite-perfect-information-sparse-zero/1.0.0",
+  "source_tar_sha256": "c6926e4d18e454f0dfbec379dcc6a41eb2ff11e5520ebc2f98e4562dfebc61f0",
+  "tests_failed": 0,
+  "tests_passed": 6,
+  "tests_skipped": 0
+}

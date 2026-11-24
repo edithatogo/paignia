@@ -1,0 +1,59 @@
+{
+  "artifacts": {
+    "paignia-core": "e917b650bc7d008d4d0968dc6b0a4e04b1d9f6e0ae1c79818563fba111fac973",
+    "paignia-solve": "638fb6c971e11750cee3b2c68cbc4f9ffa7a7d710b149dbbc58c8bde627fa7fc"
+  },
+  "capabilities": [
+    "backward_induction"
+  ],
+  "consumer_receipts": [
+    {
+      "path": "docs/validation/receipts/t20-candidate/reimbursement.json",
+      "sha256": "81545d1497ed9912110e91e9a08a09c408a568e605d197db46087e2a057cc3e0"
+    },
+    {
+      "path": "docs/validation/receipts/t20-candidate/innovate.json",
+      "sha256": "163b24f806d06961a6c2c907b21cf56187b01468e29f5847119de0d58c548f95"
+    }
+  ],
+  "limitations": [
+    "These receipts qualify the bounded backward-induction profile with default-feature-free archives.",
+    "The Innovate replay uses the previously admitted immutable case revision from PR 696.",
+    "Version tagging, DOI deposit and distribution require release evidence."
+  ],
+  "package_receipt": {
+    "path": "docs/validation/receipts/t20-candidate/package.json",
+    "sha256": "c47e1d1f7c0ce8f69daf3544301c22bff97fd4109c1aab499a8d64bd8a86cdb0"
+  },
+  "profile_contract": {
+    "path": "docs/architecture/game-runtime-contract-v1.md",
+    "sha256": "8c20e1969e3e33bf1a8ac6b3ba6073775e06782348b733da73603441a068f59e"
+  },
+  "profile_sha256": "8c20e1969e3e33bf1a8ac6b3ba6073775e06782348b733da73603441a068f59e",
+  "provider_revision": "a04a19da06cc50e310a172574ed66f62000b891a",
+  "release_scope": "Candidate release of the declared finite perfect-information graph profile. Separately qualified normal-form and ODE APIs are not input representations admitted by this graph profile.",
+  "schema_version": 1,
+  "scientific_obligations": {
+    "S01": {
+      "owner": "edithatogo/kairos Track 110",
+      "replacement_plan": "The candidate release scope is backward induction. Bounded Paignia RK4/Euler is separately qualified in T17.04. Kairos retired the former RK4 export in PR 407.",
+      "status": "unsupported"
+    },
+    "S02": {
+      "owner": "edithatogo/kairos Track 110",
+      "replacement_plan": "The candidate release scope is backward induction. The finite Paignia mixed-Nash witness scope is separately qualified in T17.05. Kairos PR 409 retired the five legacy exports at 9f51775.",
+      "status": "unsupported"
+    },
+    "S03": {
+      "owner": "edithatogo/kairos Track 110",
+      "replacement_plan": "The candidate release scope is backward induction. Optional Paignia CE is separately qualified in T17.06, with migrated legacy oracle cases in Paignia PR 64 and Kairos source retirement in PR 408.",
+      "status": "unsupported"
+    },
+    "S04": {
+      "owner": "edithatogo/paignia",
+      "replacement_plan": "The candidate release scope is perfect-information backward induction. Paignia PR 63 separately accepts the bounded information-set CFR/CFR+ methods and Kairos PR 406 retires the historical public API.",
+      "status": "unsupported"
+    }
+  },
+  "semantic_profile": "paignia/static-finite-perfect-information-sparse-zero/1.0.0"
+}
