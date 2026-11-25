@@ -37,7 +37,7 @@ the two released profile example entry points and the existing
    deterministic policy in every continuation. Require payoff agreement
    within `1e-9` at the root, and the chosen action to maximize its seat's
    continuation value at every decision, using Paignia's lexicographic tie
-   rule within `1e-12`. The original hand result is `(2, 4)`; the variant
+   rule within `1e-12`. The original hand result is `(2, 4)`. The variant
    has root payoff `(3, 0)` and selects the seller's lexicographically
    first action off path. The runnable check is a full policy and
    subgame-optimality check using OpenSpiel's evaluation of each child.
@@ -59,3 +59,40 @@ out after 30 seconds and any omitted case or discrepancy fails this replay.
 This is a correctness protocol for the named games. Comparative timings,
 other profiles, and application-specific acceptance have separate gates in
 the [T21 evaluation plan](../../docs/validation/evaluation-plan.md).
+
+## Reproduce
+
+Use a clean checkout containing this harness. Use the repository's Python
+version, create its local development environment, and install the existing
+[hash-locked verification dependencies](../uogto_interchange/requirements.txt).
+The two comparators are verification tools outside Paignia's packages.
+
+1. Verify the archive hashes above and extract each source distribution.
+   Build Gambit with `./configure --disable-gui` and
+   `make GAMBIT_VERSION=16.7.0 gambit-enumpure gambit-enummixed`. The version
+   argument supplies the banner string absent from the source tarball.
+   Configure OpenSpiel's `open_spiel` source directory with CMake. Set
+   `CMAKE_BUILD_TYPE=Release`, `Python3_EXECUTABLE` to the same repository
+   interpreter and `CMAKE_LIBRARY_OUTPUT_DIRECTORY` to a fresh directory.
+   Build the `pyspiel` target and use that output directory in `PYTHONPATH`.
+2. Stage the [pinned UOGTO files](../uogto_interchange/ontology-lock.json)
+   using the existing `interchange.py stage` command. Build Paignia's
+   shipped examples with locked dependencies and its MSRV:
+
+   ```sh
+   CARGO_TARGET_DIR="$PWD/target" rustup run 1.75.0 cargo build --release --locked \
+     --manifest-path crates/paignia-io/Cargo.toml --examples
+   ```
+
+3. Replay from the repository root. Choose fresh evidence directories for two runs:
+
+   ```sh
+   PYTHONPATH="$OPEN_SPIEL_LIBRARY_DIR" target/dev-python/bin/python verification/comparators/compare.py \
+     --paignia-bin target/release/examples --gambit-bin "$GAMBIT_BIN_DIR" \
+     --ontology-dir target/uogto-bundle --output "$EVIDENCE_DIR"
+   ```
+
+   Compare both runs' `receipt.json` files byte for byte. The receipt pins
+   the harness commit, five built executables/modules, UOGTO lock and the
+   SHA-256 digest of each input and output. Preserve the build log with the
+   compiler, runtime and platform versions.
