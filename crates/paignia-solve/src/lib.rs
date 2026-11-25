@@ -540,17 +540,38 @@ impl PureNashComparison {
 /// Enumerate pure equilibria with an explicit floating-point comparison per
 /// player. Players absent from the map use the ordinary incumbent-plus rule.
 /// The subtraction variants preserve applications that calculate an inclusive
-/// best-response threshold as maximum payoff minus tolerance.
+/// best-response threshold as maximum payoff minus tolerance. The binary32
+/// option rounds the payoffs and tolerance to binary32 before comparison.
 ///
 /// # Errors
 ///
 /// Returns a validation error for incomplete payoff tables or invalid solver
-/// tolerances.
+/// tolerances. Binary32 comparison requires finite payoffs and a tolerance
+/// within the finite binary32 range.
 pub fn pure_nash_equilibria_with_comparisons(
     game: &NormalFormGame,
     config: SolverConfig,
     comparisons: &BTreeMap<PlayerId, PureNashComparison>,
 ) -> Result<Vec<StrategyProfile>, SolveError> {
+    let binary32_max = f64::from(f32::MAX);
+    for player in game.players.iter().filter(|player| {
+        comparisons.get(*player) == Some(&PureNashComparison::AlternativeMinusBinary32)
+    }) {
+        if config.tolerance > binary32_max {
+            return Err(SolveError::InvalidTolerance(config.tolerance));
+        }
+        for (profile, payoffs) in &game.payoffs {
+            if payoffs
+                .get(player)
+                .is_some_and(|payoff| payoff.abs() > binary32_max)
+            {
+                return Err(SolveError::InvalidNormalFormPayoff {
+                    profile: profile.clone(),
+                    player: player.clone(),
+                });
+            }
+        }
+    }
     enumerate_pure_nash(game, config, |player, incumbent, alternative| {
         comparisons
             .get(player)
