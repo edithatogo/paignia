@@ -1,12 +1,15 @@
 """Measure the checked normal-form and Kuhn workloads on a Darwin host."""
 
 import argparse
+from contextlib import contextmanager
 from hashlib import sha256
 import json
+import os
 from pathlib import Path
 import platform
 from random import Random
 import re
+import signal
 from statistics import median
 import subprocess
 import sys
@@ -24,6 +27,7 @@ FIXTURES = (
 )
 REPEATS = 9
 ORDER_SEED = 211
+PROCESS_TIMEOUT_SECONDS = 30
 KUHN_RUNNER = """
 import json
 import sys
@@ -31,7 +35,9 @@ import pyspiel
 
 request = json.load(sys.stdin)
 game = pyspiel.load_game(request["game"])
-trainer = pyspiel.CFRPlusSolver(game)
+solver = {"cfr": pyspiel.CFRSolver, "cfr_plus": pyspiel.CFRPlusSolver}
+variant = sys.argv[1] if len(sys.argv) > 1 else "cfr_plus"
+trainer = solver[variant](game)
 for _ in range(request["iterations"]):
     trainer.evaluate_and_update_policy()
 policy = trainer.tabular_average_policy()
@@ -74,9 +80,11 @@ def measure(name, inputs, expected, bundle, binaries, method, tool):
         input_bytes = emit_nfg(name, request)
         invocation = [binaries[method], "-q"]
     converted = time.perf_counter_ns()
+    if input_bytes != expected[0]:
+        raise ValueError(f"{name}/{tool}: input SHA-256 changed to {sha256(input_bytes).hexdigest()}")
     observed, solve_ns, rss = timed_process(invocation, input_bytes)
-    if (input_bytes, observed) != expected:
-        raise ValueError(f"{name}/{tool} did not reproduce its checked input and output")
+    if observed != expected[1]:
+        raise ValueError(f"{name}/{tool}: output SHA-256 changed to {sha256(observed).hexdigest()}")
     return {
         "tool": tool, "conversion_ns": converted - started,
         "solve_process_ns": solve_ns, "total_ns": solve_ns + converted - started,
@@ -85,16 +93,58 @@ def measure(name, inputs, expected, bundle, binaries, method, tool):
 
 
 def timed_process(invocation, input_bytes):
+    system = platform.system()
+    if system == "Darwin":
+        arguments = ["-l"]
+        pattern = rb"^\s*(\d+)\s+maximum resident set size$"
+        bytes_per_unit = 1
+    elif system == "Linux":
+        arguments = ["-f", "peak_rss_kib %M"]
+        pattern = rb"^peak_rss_kib (\d+)$"
+        bytes_per_unit = 1024
+    else:
+        raise ValueError(f"unqualified peak RSS reporter for {system}")
+    command = ["/usr/bin/time", *arguments, *invocation]
     started = time.perf_counter_ns()
-    completed = subprocess.run(
-        ["/usr/bin/time", "-l", *invocation], input=input_bytes,
-        capture_output=True, timeout=30, check=True,
-    )
+    with subprocess.Popen(
+        command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        start_new_session=True,
+    ) as process:
+        try:
+            stdout, stderr = process.communicate(input_bytes, timeout=PROCESS_TIMEOUT_SECONDS)
+        except subprocess.TimeoutExpired as error:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            error.output, error.stderr = process.communicate()
+            raise
     finished = time.perf_counter_ns()
-    rss = re.search(rb"^\s*(\d+)\s+maximum resident set size$", completed.stderr, re.MULTILINE)
-    if rss is None:
-        raise ValueError(f"no Darwin process peak RSS for {invocation[0]}")
-    return completed.stdout, finished - started, int(rss[1])
+    if process.returncode:
+        raise subprocess.CalledProcessError(process.returncode, command, stdout, stderr)
+    rss = re.search(pattern, stderr, re.MULTILINE)
+    if rss is None or int(rss[1]) == 0:
+        raise ValueError(f"no process peak RSS for {invocation[0]}")
+    return stdout, finished - started, bytes_per_unit * int(rss[1])
+
+
+@contextmanager
+def record_trial(case, trial, tool):
+    """Save the completed prefix and the failing trial even without a summary."""
+    row = {"trial": trial, "tool": tool}
+    try:
+        yield row
+    except Exception as error:
+        row["failure"] = {"type": type(error).__name__, "message": str(error)}
+        if isinstance(error, (subprocess.CalledProcessError, subprocess.TimeoutExpired)):
+            for stream in ("stdout", "stderr"):
+                content = getattr(error, stream)
+                if content:
+                    row["failure"][f"{stream}_tail"] = content[-8192:].decode(errors="replace")
+        raise
+    finally:
+        with (case / "trials.jsonl").open("a", encoding="utf-8") as journal:
+            journal.write(json.dumps(row, sort_keys=True, allow_nan=False) + "\n")
 
 
 def kuhn_trials(directory, hashes, profile_binary, order):

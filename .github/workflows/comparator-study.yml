@@ -1,0 +1,60 @@
+name: T21 comparator study
+
+on:
+  pull_request:
+    paths:
+      - verification/comparators/**
+      - verification/uogto_interchange/**
+      - fixtures/conformance/cfr-reference-v1.json
+      - .python-version
+      - .github/actions/project-python/action.yml
+      - .github/workflows/comparator-study.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: comparator-study-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  linux-x64:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: ./.github/actions/project-python
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable action
+        with:
+          toolchain: 1.75.0
+      - name: Select native Linux x64 and build pinned comparators
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = x86_64
+          sudo apt-get update
+          sudo apt-get install --yes libgmp-dev time
+          bash verification/comparators/build-study-tools.sh target/comparator-build
+      - name: Run the same frozen workload with the recorded builds
+        run: |
+          set -euo pipefail
+          build="$PWD/target/comparator-build"
+          python="$PWD/target/dev-python/bin/python"
+          "$python" -m pip install --require-hashes --only-binary :all: -r verification/uogto_interchange/requirements.txt
+          "$python" -I verification/uogto_interchange/interchange.py stage --ontology-dir "$build/uogto"
+          PYTHONPATH="$build/open-spiel-library" "$python" -B verification/comparators/study.py \
+            --build "$build" --ontology-dir "$build/uogto" --output target/comparator-linux
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: native-linux-x64-comparator-evidence
+          path: |
+            target/comparator-linux/
+            target/comparator-build/build.log
+            target/comparator-build/environment.txt
