@@ -9,11 +9,24 @@ from random import Random
 import subprocess
 import sys
 
-from benchmark import KUHN_RUNNER, measure, summarise, timed_process
-from compare import RELEASE, Bundle, compare_kuhn, digest, encode, gambit_case, pyspiel
+from benchmark import KUHN_RUNNER, measure, record_trial, summarise, timed_process
+from compare import RELEASE, ROOT, Bundle, compare_kuhn, digest, encode, gambit_case, pyspiel
 from static_study import static_study
 
 HERE = Path(__file__).resolve().parent
+HARNESS_PATHS = (
+    "verification/comparators", "verification/uogto_interchange", ".python-version",
+    "fixtures/conformance/cfr-reference-v1.json", ".github/actions/project-python/action.yml",
+    ".github/workflows/comparator-study.yml",
+)
+TOOL_PATHS = {
+    "static": "paignia-build/release/examples/solve",
+    "profile": "paignia-build/release/examples/solve_profile",
+    "pure": "gambit-16.7.0/gambit-enumpure",
+    "mixed": "gambit-16.7.0/gambit-enummixed",
+    "pyspiel": "open-spiel-library/pyspiel.so",
+}
+BUILD_RECORDS = ("environment.txt", "recipe.sha256", "build.log")
 SEED = 271
 REPEATS = 9
 SCALES = {"pure": (2, 4, 8), "mixed": (2, 4, 6)}
@@ -55,10 +68,9 @@ def normal_study(bundle, binaries, destination):
                 order = list(expected)
                 trial_order.shuffle(order)
                 for name_of_tool in order:
-                    rows.append({
-                        "trial": trial,
-                        **measure(name, asserted, expected[name_of_tool], bundle, binaries, method, name_of_tool),
-                    })
+                    with record_trial(case, trial, name_of_tool) as row:
+                        row.update(measure(name, asserted, expected[name_of_tool], bundle, binaries, method, name_of_tool))
+                        rows.append(row)
             workloads[name] = {
                 "method": method, "actions_per_player": size, "matrix": matrix,
                 "correctness": oracle, "samples": rows,
@@ -98,14 +110,14 @@ def accuracy_study(bundle, profile_binary, destination):
             order = list(cases)
             trial_order.shuffle(order)
             for tool in order:
-                output, elapsed, rss = timed_process(*cases[tool])
-                if tool == "open_spiel":
-                    matches = json.loads(output) == oracle
-                else:
-                    matches = output == native_expected
-                if not matches:
-                    raise ValueError(f"{variant} {tool}: timed output differs from verified output")
-                samples.append({"trial": trial, "tool": tool, "process_ns": elapsed, "peak_rss_bytes": rss})
+                with record_trial(case, trial, tool) as row:
+                    output, elapsed, rss = timed_process(*cases[tool])
+                    row.update(process_ns=elapsed, peak_rss_bytes=rss)
+                    matches = json.loads(output) == oracle if tool == "open_spiel" else output == native_expected
+                    if not matches:
+                        (case / "unmatched-output").write_bytes(output)
+                        raise ValueError(f"{variant} {tool}: timed output differs from verified output")
+                    samples.append(row)
         report[variant] = {
             "checkpoints": observations, "first_admitted_checkpoint": first,
             "open_spiel_input_sha256": digest(open_input), "samples": samples,
@@ -118,40 +130,58 @@ def command(*args):
     return subprocess.check_output(args, text=True, timeout=20).strip()
 
 
+def verified_build(build):
+    recorded = {}
+    for line in (build / "build.sha256").read_text().splitlines():
+        checksum, filename = line.split(maxsplit=1)
+        recorded[filename] = checksum
+    files = (*BUILD_RECORDS, "gambit.tar.gz", "open-spiel.tar.gz", "provider/Cargo.lock", *TOOL_PATHS.values())
+    for filename in files:
+        if digest((build / filename).read_bytes()) != recorded[filename]:
+            raise ValueError(f"build input, record or output changed: {filename}")
+    if digest((HERE / "build-study-tools.sh").read_bytes()) != (build / "recipe.sha256").read_text().strip():
+        raise ValueError("build recipe changed since the tools were built")
+    if Path(pyspiel.__file__).resolve() != (build / TOOL_PATHS["pyspiel"]).resolve():
+        raise ValueError("loaded OpenSpiel differs from the recorded build")
+    return recorded
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--provider", type=Path, required=True)
-    parser.add_argument("--paignia-bin", type=Path, required=True)
-    parser.add_argument("--gambit-bin", type=Path, required=True)
+    parser.add_argument("--build", type=Path, required=True)
     parser.add_argument("--ontology-dir", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    if command("git", "-C", args.provider, "rev-parse", "HEAD") != RELEASE:
+    build = args.build.resolve()
+    provider = build / "provider"
+    if command("git", "-C", provider, "rev-parse", "HEAD") != RELEASE:
         parser.error("build the provider examples from the signed release")
-    if command("git", "-C", args.provider, "status", "--porcelain=v1"):
+    if command("git", "-C", provider, "status", "--porcelain=v1"):
         parser.error("the provider source checkout must be clean")
-    if platform.python_version() != (HERE.parents[1] / ".python-version").read_text().strip():
-        parser.error("use the exact repository Python patch release")
-    args.output.mkdir()
-    binaries = {
-        "static": args.paignia_bin.resolve() / "solve",
-        "profile": args.paignia_bin.resolve() / "solve_profile",
-        "pure": args.gambit_bin.resolve() / "gambit-enumpure",
-        "mixed": args.gambit_bin.resolve() / "gambit-enummixed",
-    }
+    if (platform.python_implementation() != "CPython"
+            or platform.python_version() != (ROOT / ".python-version").read_text().strip()
+            or Path(sys.prefix).resolve() != (ROOT / "target/dev-python").resolve()):
+        parser.error("use the exact repository-local CPython")
+    if command("git", "-C", ROOT, "status", "--porcelain=v1", "--", *HARNESS_PATHS):
+        parser.error("commit the benchmark harness and its inputs before measuring")
+    tracked = command("git", "-C", ROOT, "ls-files", "--", *HARNESS_PATHS).splitlines()
+    recorded = verified_build(build)
     bundle = Bundle(args.ontology_dir)
-    tools = {**binaries, "pyspiel": Path(pyspiel.__file__).resolve()}
+    binaries = {name: build / path for name, path in TOOL_PATHS.items()}
     metadata = {
         "system": platform.platform(), "machine": platform.machine(),
         "logical_cpus": os.cpu_count(), "python": platform.python_version(),
-        "provider": RELEASE, "provider_tree": command("git", "-C", args.provider, "rev-parse", "HEAD^{tree}"),
-        "tools_sha256": {name: digest(path.read_bytes()) for name, path in tools.items()},
+        "provider": RELEASE, "provider_tree": command("git", "-C", provider, "rev-parse", "HEAD^{tree}"),
+        "tools_sha256": {name: recorded[path] for name, path in TOOL_PATHS.items()},
         "ontology_commit": bundle.revision, "ontology_lock_sha256": bundle.lock_sha256,
         "protocol_sha256": digest((HERE / "study.md").read_bytes()),
-        "harness_sha256": {name: digest((HERE / name).read_bytes())
-                           for name in ("study.py", "static_study.py", "compare.py", "benchmark.py")},
+        "harness_revision": command("git", "-C", ROOT, "rev-parse", "HEAD"),
+        "harness_sha256": {name: digest((ROOT / name).read_bytes()) for name in tracked},
         "seed": SEED, "nash_conv_target": NASH_CONV_TARGET, "kuhn_value_error": KUHN_VALUE_ERROR,
     }
+    args.output.mkdir()
+    for name in (*BUILD_RECORDS, "build.sha256"):
+        (args.output / name).write_bytes((build / name).read_bytes())
     (args.output / "environment.json").write_bytes(encode(metadata))
     normal = normal_study(bundle, binaries, args.output)
     static = static_study(binaries["static"], args.output, SEED, REPEATS)

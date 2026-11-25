@@ -7,8 +7,8 @@ from time import perf_counter_ns
 
 from rdflib import Graph, Literal, Namespace, RDF
 
-from benchmark import summarise, timed_process
-from compare import BRIDGE, CASE, GT, digest, emit_efg, encode, parse_graph, project, static_case
+from benchmark import record_trial, summarise, timed_process
+from compare import BRIDGE, CASE, GT, emit_efg, encode, static_case, static_request
 from profile_scenarios import named_payoffs
 
 WORKLOADS = (
@@ -95,12 +95,9 @@ def layered_graph(name, width, depth, shared):
     return graph
 
 
-def measure_static(asserted, expected, executable, tool):
+def measure_static(name, asserted, expected, executable, tool):
     start = perf_counter_ns()
-    request, _ = project(parse_graph(asserted, "nt"), digest(asserted))
-    # Match the identifiers used by the retained static oracle.
-    for key in ("instance", "run"):
-        request[key] += "-shared"
+    request = static_request(asserted, name)
     if tool == "paignia":
         wire, invocation = encode(request), [executable]
     else:
@@ -137,11 +134,14 @@ def static_study(executable, destination, seed, repeats):
             order = list(expected)
             shuffle.shuffle(order)
             for tool in order:
-                output, row = measure_static(asserted, expected[tool], executable, tool)
-                matches = output == native_response if tool == "paignia" else json.loads(output) == reference
-                if not matches:
-                    raise ValueError(f"{name} {tool}: backward induction differs from the checked outcome")
-                samples.append({"trial": trial, **row})
+                with record_trial(case, trial, tool) as row:
+                    output, timing = measure_static(name, asserted, expected[tool], executable, tool)
+                    row.update(timing)
+                    matches = output == native_response if tool == "paignia" else json.loads(output) == reference
+                    if not matches:
+                        (case / "unmatched-output").write_bytes(output)
+                        raise ValueError(f"{name} {tool}: backward induction differs from the checked outcome")
+                    samples.append(row)
         cases[name] = {
             "depth": depth, "branching": width, "shared": shared, "correctness": oracle, "samples": samples,
             "repeated": summarise(samples, ("conversion_ns", "solve_process_ns", "total_ns", "peak_rss_bytes")),

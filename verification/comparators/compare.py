@@ -218,15 +218,21 @@ def emit_efg(request, seats):
     return "\n".join(lines) + "\n"
 
 
+def static_request(asserted, name):
+    request, _ = project(parse_graph(asserted, "nt"), digest(asserted))
+    # Preserve the identities in the original correctness receipt.
+    suffix = {"buyer-seller": "", "buyer-seller-shared": "-shared"}.get(name, f"-{name}")
+    for key in ("instance", "run"):
+        request[key] += suffix
+    return request
+
+
 def static_case(executable, evidence, name, graph, expected_payoffs):
     directory = evidence / name
     directory.mkdir()
     asserted = asserted_bytes(graph)
     (directory / "asserted.nt").write_bytes(asserted)
-    request, _ = project(parse_graph(asserted, "nt"), digest(asserted))
-    if name != "buyer-seller":
-        for key in ("instance", "run"):
-            request[key] += "-shared"
+    request = static_request(asserted, name)
     response = native(executable, request, directory)
     require(response["method"] == "backward_induction" and response["status"] == "completed"
             and response["tolerance"] == TIE_TOLERANCE, f"{name}: backward induction contract changed")
