@@ -6,9 +6,9 @@ distribution or a software paper.
 | Criterion | Paignia evidence | Remaining work |
 | --- | --- | --- |
 | FAIR4RS findability and access | Public Git history, citation metadata, licence and documented Git installation. The signed 0.1.0 release has a [verified version DOI and archive](receipts/t20-candidate/release-v0.1.0.md). The FAIR workflow checks the citation format and repository identity. | Assess registration in a research software directory. |
-| FAIR4RS interoperability and reuse | [Pinned packages and application receipts](game-consumer-handoff.md), [native result semantics](../architecture/game-result-contract-v1.md), the [executed UOGTO information-set contract](../architecture/game-information-contract-v1.md), and a [public RDF-to-result replay](../../verification/uogto_interchange/README.md). The [T20 receipts](receipts/t20-candidate/README.md) qualify both static application cases against the 0.1.0 archives. | Publish the normative mapping and broader consumer evaluations through [T21](../../conductor/tracks/t21_research_validation_20261125/index.md). |
-| JOSS installability and functionality | [Installed artifact tests](game-consumer-handoff.md), API documentation, independent [numerical oracles](../../verification/numerical_oracles/README.md) and two scoped applications. | Apply the [JOSS, Inara and CODECHECK procedure](paper-reproducibility.md) to a named draft and frozen release. Bind claims to versioned reproducibility and impact evidence. |
-| OpenSSF and native security | The OpenSSF Scorecard workflow retains its check-level report. The [OpenSSF Baseline assessment](security-baseline.md) records the separate Level 1 controls. The Rust policy, Offline AI Security, privacy checks and [private reporting](../../SECURITY.md) address repository-specific risks. | Review real findings on the release candidate. Establish a repeatable provenance and dependency policy for any published packages, then check compatible public API changes against that baseline. |
+| FAIR4RS interoperability and reuse | [Pinned packages and application receipts](game-consumer-handoff.md), [native result semantics](../architecture/game-result-contract-v1.md), the [normative UOGTO profile map and public replay](../../verification/uogto_interchange/README.md), and [T20 static application receipts](receipts/t20-candidate/README.md). | Complete caller-level adoption in [T21](../../conductor/tracks/t21_research_validation_20261125/index.md). Qualify exchange and consumption of discounted games in [T22](../../conductor/tracks/t22_dynamic_game_simulation_20261125/index.md). |
+| JOSS installability and functionality | [Installed artifact tests](game-consumer-handoff.md), API documentation, independent [numerical oracles](../../verification/numerical_oracles/README.md) and two scoped applications. T20 records Inara execution for the private draft under review. | Bind the final review edition to exact code and archive hashes, publish the permitted reproducibility evidence and obtain the [independent CODECHECK certificate](paper-reproducibility.md). |
+| OpenSSF and native security | The OpenSSF Scorecard workflow retains its check-level report. The [OpenSSF Baseline assessment](security-baseline.md) records the separate Level 1 controls. The Rust policy, Offline AI Security, privacy checks, wire fuzzing, API compatibility checks and [private reporting](../../SECURITY.md) address repository-specific risks. | Resolve material findings on each candidate. Qualify any new packages and entry points under the same dependency, provenance, fuzz and API policy. |
 | rOpenSci and pyOpenSci | Their independent testing, examples and support practices inform the contributor guide. | Apply ecosystem packaging and review tools in a maintained R or Python wrapper repository when a consumer needs one. Paignia ships Rust libraries. |
 
 Use the hosted run summary for each check's result and the exact commits and
@@ -16,6 +16,38 @@ archive hashes in the receipts when reproducing results. The metadata preflight
 verifies citation evidence. Archive retrieval and interoperability have their
 own checks. JOSS, rOpenSci and pyOpenSci review decisions belong to their
 respective review processes.
+
+## From 0.1.0 to a stable release
+
+The verified 0.1.0 edition establishes a signed, citable starting point for
+the bounded methods in its release contract. Its [version DOI and archive
+attestations](receipts/t20-candidate/release-v0.1.0.md) identify the shipped
+bytes. Treat the version number and the following acceptance evidence as
+separate release decisions.
+
+1. **Stabilise the public surface.** Declare the supported Rust API,
+   feature flags, compiler and platform range, UOGTO revisions and wire
+   profile versions. Publish compatibility and deprecation rules and replay
+   older inputs, including rejection cases. Keep experimental methods and
+   new semantic profiles explicitly scoped until their contracts settle.
+2. **Prove the numerical claims that ship.** Freeze independent oracles,
+   admitted inputs, error and stopping criteria, and performance evidence
+   for each method and representative application. Reuse the two-host
+   Gambit and OpenSpiel evidence and add matched checks for new profiles.
+   Record unsupported model families and the conditions under which a
+   method exhausts its numerical or workload budget.
+3. **Prove installation, operational use and recovery.** Build signed,
+   attested archives from the exact release commit. Test clean installs and
+   representative downstream calls on the declared targets, check output
+   parity and retain a qualified rollback pin. Recheck the version DOI
+   against the exact distributed files. A registry or new wrapper needs
+   its own installation and support evidence before release.
+4. **Maintain security and operability.** Run the locked compiler matrix,
+   API checks, bounded fuzzing and dependency, secret, privacy and static
+   security checks on the release candidate. Review individual OpenSSF,
+   RepoHealth and alint findings, retain the vulnerability reporting route
+   and exercise the documented CI runner and release recovery procedures.
+   Keep versioned tutorials, change notes and a readable support policy.
 
 ## T20 hosted baseline
 

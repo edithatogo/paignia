@@ -4,7 +4,7 @@
 //! bindings against its source. The solver and graph validation are native.
 
 mod profiles;
-pub use profiles::{solve_profile_json, ProfileError, NORMAL_FORM_PROFILE};
+pub use profiles::{solve_profile_json, ProfileError, DISCOUNTED_PROFILE, NORMAL_FORM_PROFILE};
 
 use std::collections::{btree_map::Entry, BTreeMap};
 

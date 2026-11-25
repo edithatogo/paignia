@@ -80,12 +80,7 @@ pub enum Termination {
     CallbackTerminated,
 }
 
-/// Finite bounds enclosing real arithmetic on the supplied binary64 inputs.
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Interval {
-    pub lower: f64,
-    pub upper: f64,
-}
+pub use crate::interval::Interval;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Incentive {
@@ -373,125 +368,9 @@ fn validate_vector(input: &'static str, values: &[f64], expected: usize) -> Resu
     Ok(())
 }
 
-// One representable neighbour outwards encloses a correctly rounded operation,
-// including gradual underflow. An unbounded endpoint causes an explicit error.
-fn neighbour(value: f64, upward: bool) -> Result<f64, Error> {
-    if !value.is_finite() {
-        return Err(Error::Arithmetic {
-            context: "non-finite operation",
-        });
-    }
-    let result = if value == 0. {
-        if upward {
-            f64::from_bits(1)
-        } else {
-            -f64::from_bits(1)
-        }
-    } else if (value > 0.) == upward {
-        f64::from_bits(value.to_bits() + 1)
-    } else {
-        f64::from_bits(value.to_bits() - 1)
-    };
-    if result.is_finite() {
-        Ok(result)
-    } else {
-        Err(Error::Arithmetic {
-            context: "outward rounding overflow",
-        })
-    }
-}
-
-impl Interval {
-    fn point(value: f64) -> Self {
-        Self {
-            lower: value,
-            upper: value,
-        }
-    }
-    fn is_point(self, value: f64) -> bool {
-        self.lower == value && self.upper == value
-    }
-    fn neg(self) -> Self {
-        Self {
-            lower: -self.upper,
-            upper: -self.lower,
-        }
-    }
-    fn add(self, other: Self) -> Result<Self, Error> {
-        if self.is_point(0.) {
-            return Ok(other);
-        }
-        if other.is_point(0.) {
-            return Ok(self);
-        }
-        if self.lower == self.upper && other.is_point(-self.lower) {
-            return Ok(Self::point(0.));
-        }
-        Ok(Self {
-            lower: neighbour(self.lower + other.lower, false)?,
-            upper: neighbour(self.upper + other.upper, true)?,
-        })
-    }
-    fn sub(self, other: Self) -> Result<Self, Error> {
-        self.add(other.neg())
-    }
-    fn mul(self, other: Self) -> Result<Self, Error> {
-        if self.is_point(0.) || other.is_point(0.) {
-            return Ok(Self::point(0.));
-        }
-        if self.is_point(1.) {
-            return Ok(other);
-        }
-        if other.is_point(1.) {
-            return Ok(self);
-        }
-        if self.is_point(-1.) {
-            return Ok(other.neg());
-        }
-        if other.is_point(-1.) {
-            return Ok(self.neg());
-        }
-        Self::enclose_corners([
-            self.lower * other.lower,
-            self.lower * other.upper,
-            self.upper * other.lower,
-            self.upper * other.upper,
-        ])
-    }
-    fn div_positive(self, other: Self) -> Result<Self, Error> {
-        if other.lower <= 0. {
-            return Err(Error::Arithmetic {
-                context: "uncertain recommendation mass",
-            });
-        }
-        if self.is_point(0.) {
-            return Ok(Self::point(0.));
-        }
-        if other.is_point(1.) {
-            return Ok(self);
-        }
-        Self::enclose_corners([
-            self.lower / other.lower,
-            self.lower / other.upper,
-            self.upper / other.lower,
-            self.upper / other.upper,
-        ])
-    }
-    fn enclose_corners(values: [f64; 4]) -> Result<Self, Error> {
-        if values.iter().any(|value| !value.is_finite()) {
-            return Err(Error::Arithmetic {
-                context: "interval product or quotient",
-            });
-        }
-        let lower = values.iter().copied().fold(values[0], f64::min);
-        let upper = values.iter().copied().fold(values[0], f64::max);
-        Ok(Self {
-            lower: neighbour(lower, false)?,
-            upper: neighbour(upper, true)?,
-        })
-    }
-    fn abs_upper(self) -> f64 {
-        self.lower.abs().max(self.upper.abs())
+impl From<crate::interval::ArithmeticError> for Error {
+    fn from(error: crate::interval::ArithmeticError) -> Self {
+        Self::Arithmetic { context: error.0 }
     }
 }
 
@@ -501,6 +380,7 @@ fn sum(values: impl IntoIterator<Item = f64>) -> Result<Interval, Error> {
         .try_fold(Interval::point(0.), |total, value| {
             total.add(Interval::point(value))
         })
+        .map_err(Error::from)
 }
 
 fn moment(table: &[Vec<f64>], joint: &[f64]) -> Result<Interval, Error> {
@@ -511,6 +391,7 @@ fn moment(table: &[Vec<f64>], joint: &[f64]) -> Result<Interval, Error> {
         .try_fold(Interval::point(0.), |total, (&payoff, &weight)| {
             total.add(Interval::point(payoff).mul(Interval::point(weight))?)
         })
+        .map_err(Error::from)
 }
 
 fn incentive(

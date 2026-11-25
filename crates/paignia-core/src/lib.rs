@@ -5,6 +5,7 @@
 //! UOGTO.
 
 mod conversion;
+pub mod discounted;
 mod information_sets;
 mod observation;
 mod result;

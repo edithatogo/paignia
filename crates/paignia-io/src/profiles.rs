@@ -1,12 +1,14 @@
-//! Versioned information-set and normal-form projections.
+//! Versioned information-set, normal-form and discounted game projections.
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use paignia_core::discounted::{Game as DiscountedGame, Outcome, State, StationaryPolicy};
 use paignia_core::{
     build_information_set_graph, ActionId, Game, GameSpecification, InformationSetDeclaration,
     InformationSetDefinition, InformationSetId, NodeId, PlayerId, GAME_SPEC_SCHEMA_VERSION,
     INFORMATION_SET_PROFILE_V1,
 };
+use paignia_solve::discounted::{self, Config as DiscountedConfig, Evaluation, Status};
 use paignia_solve::{
     cfr_nash_conv, pure_nash_equilibria, solve_mixed_nash, train_counterfactual_regret, CfrConfig,
     CfrVariant, MixedNashAlgorithm, MixedNashConfig, MixedNashStatus, NormalFormGame, SolverConfig,
@@ -20,6 +22,7 @@ use crate::{
 };
 
 pub const NORMAL_FORM_PROFILE: &str = "paignia/finite-two-player-normal-form/1.0.0";
+pub const DISCOUNTED_PROFILE: &str = "paignia/discounted-zero-sum-2x2/1.0.0";
 
 #[derive(Debug, thiserror::Error)]
 pub enum ProfileError {
@@ -43,6 +46,8 @@ pub enum ProfileError {
     Cfr(String),
     #[error("Nash: {0}")]
     Nash(String),
+    #[error(transparent)]
+    Discounted(#[from] discounted::Error),
 }
 
 #[derive(Deserialize)]
@@ -72,6 +77,47 @@ enum Input {
         payoffs: Vec<Vec<NormalCell>>,
         method: NashMethod,
     },
+    Discounted(DiscountedRequest),
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct DiscountedRequest {
+    players: [DiscountedSeat; 2],
+    states: Vec<DiscountedState>,
+    initial: Vec<f64>,
+    discount: f64,
+    method: DiscountedMethod,
+    max_iterations: u32,
+    value_tolerance: f64,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct DiscountedSeat {
+    id: String,
+    actions: [String; 2],
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct DiscountedState {
+    id: String,
+    outcomes: [[DiscountedOutcome; 2]; 2],
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct DiscountedOutcome {
+    reward: f64,
+    transition: Vec<f64>,
+}
+
+#[derive(Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+enum DiscountedMethod {
+    Evaluate { policy: Vec<[[f64; 2]; 2]> },
+    Minimax,
 }
 
 #[derive(Clone, Copy, Deserialize)]
@@ -135,7 +181,7 @@ struct Response {
 
 type MethodResult = (&'static str, &'static str, &'static str, Value);
 
-/// Solve a versioned perfect-recall or two-player normal-form request.
+/// Solve a versioned perfect-recall, normal-form or discounted game request.
 ///
 /// The RDF caller is responsible for the asserted graph and its digest. This
 /// boundary checks the projected topology, partition or payoff table and
@@ -168,6 +214,7 @@ pub fn solve_profile_json(input: &[u8]) -> Result<Vec<u8>, ProfileError> {
     let expected = match &request.game {
         Input::PerfectRecall { .. } => INFORMATION_SET_PROFILE_V1,
         Input::NormalForm { .. } => NORMAL_FORM_PROFILE,
+        Input::Discounted(_) => DISCOUNTED_PROFILE,
     };
     if request.semantic_profile != expected {
         return Err(ProfileError::Profile(request.semantic_profile));
@@ -199,6 +246,7 @@ pub fn solve_profile_json(input: &[u8]) -> Result<Vec<u8>, ProfileError> {
             result["source_cells"] = json!(payoffs);
             (algorithm, version, status, result)
         }
+        Input::Discounted(game) => discounted_result(game)?,
     };
     Ok(serde_json::to_vec_pretty(&Response {
         version: WIRE_VERSION,
@@ -212,6 +260,104 @@ pub fn solve_profile_json(input: &[u8]) -> Result<Vec<u8>, ProfileError> {
         status,
         result,
     })?)
+}
+
+fn evaluation_status(status: Status) -> &'static str {
+    match status {
+        Status::ToleranceReached => "value_tolerance_reached",
+        Status::IterationLimit => "iteration_limit",
+    }
+}
+
+fn evaluation_json(evaluation: &Evaluation) -> Value {
+    let state_values: Vec<_> = evaluation
+        .state_values
+        .iter()
+        .map(|(state, value)| json!({ "state": state.0, "value": value }))
+        .collect();
+    json!({
+        "status": evaluation_status(evaluation.status),
+        "state_values": state_values,
+        "initial_value": evaluation.initial_value,
+        "iterations": evaluation.iterations,
+        "residual_bound": evaluation.residual_bound,
+        "value_error_bound": evaluation.value_error_bound,
+        "initial_error_bound": evaluation.initial_error_bound,
+    })
+}
+
+fn discounted_result(request: DiscountedRequest) -> Result<MethodResult, ProfileError> {
+    let [row, column] = request.players;
+    let game = DiscountedGame {
+        players: [PlayerId(row.id), PlayerId(column.id)],
+        actions: [row.actions.map(ActionId), column.actions.map(ActionId)],
+        states: request
+            .states
+            .into_iter()
+            .map(|state| State {
+                id: NodeId(state.id),
+                outcomes: state.outcomes.map(|actions| {
+                    actions.map(|outcome| Outcome {
+                        reward: outcome.reward,
+                        transition: outcome.transition,
+                    })
+                }),
+            })
+            .collect(),
+        initial: request.initial,
+        discount: request.discount,
+    };
+    let config = DiscountedConfig {
+        max_iterations: request.max_iterations,
+        value_tolerance: request.value_tolerance,
+    };
+    let (method, status, policy, mut result) = match request.method {
+        DiscountedMethod::Evaluate { policy } => {
+            let policy = StationaryPolicy { weights: policy };
+            let evaluation = discounted::evaluate(&game, &policy, config)?;
+            (
+                "stationary_policy_evaluation",
+                evaluation_status(evaluation.status),
+                policy,
+                json!({ "policy_values": evaluation_json(&evaluation) }),
+            )
+        }
+        DiscountedMethod::Minimax => {
+            let equilibrium = discounted::solve_zero_sum(&game, config)?;
+            let evaluations = [
+                &equilibrium.game_values,
+                &equilibrium.policy_values,
+                &equilibrium.row_best_response,
+                &equilibrium.column_best_response,
+            ];
+            let status = if evaluations
+                .iter()
+                .all(|evaluation| evaluation.status == Status::ToleranceReached)
+            {
+                Status::ToleranceReached
+            } else {
+                Status::IterationLimit
+            };
+            (
+                "discounted_zero_sum_minimax",
+                evaluation_status(status),
+                equilibrium.policy,
+                json!({
+                    "game_values": evaluation_json(evaluations[0]),
+                    "policy_values": evaluation_json(evaluations[1]),
+                    "row_best_response": evaluation_json(evaluations[2]),
+                    "column_best_response": evaluation_json(evaluations[3]),
+                    "deviation_bounds": equilibrium.deviation_bounds,
+                }),
+            )
+        }
+    };
+    result["players"] = json!([
+        { "id": game.players[0].0, "actions": [&game.actions[0][0].0, &game.actions[0][1].0] },
+        { "id": game.players[1].0, "actions": [&game.actions[1][0].0, &game.actions[1][1].0] },
+    ]);
+    result["policy"] = json!(policy.weights);
+    Ok((method, "1.0.0", status, result))
 }
 
 fn regret(
