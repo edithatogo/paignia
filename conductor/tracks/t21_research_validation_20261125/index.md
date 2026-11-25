@@ -2,6 +2,7 @@
 
 - [Specification](spec.md)
 - [Implementation plan](plan.md)
+- [Downstream adoption sequence](adoption.md)
 - [Track metadata](metadata.json)
 - [Capability comparison](../../../docs/architecture/game-theory-tool-comparison.md)
 - [Evaluation protocol](../../../docs/validation/evaluation-plan.md)

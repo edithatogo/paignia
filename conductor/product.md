@@ -43,3 +43,10 @@ The long-term goal is independently verified numerical behavior, efficient
 compact representations and reproducible package/consumer contracts. Comparative
 frontier claims require workload-specific measurement; source transfer supplies
 no benchmark or new scientific result.
+
+[T22](tracks/t22_dynamic_game_simulation_20261125/index.md) extends the
+research scope to strategic interaction over time. State, actions, observations,
+rewards, evolution rules and time horizon characterize a model. Proposed work
+includes repeated and stochastic games, continuous-time differential games and
+population or learning simulations. The first target is a discounted finite
+stochastic game with independently checked policy values.

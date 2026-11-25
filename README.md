@@ -8,6 +8,9 @@ native seed was transferred from
 Paignia is now the implementation home; domain applications consume it as a
 dependency. Static solving has no Kairos or host-language runtime dependency.
 
+[Conductor roadmap](conductor/tracks.md) ·
+[Stateful and continuous game simulation research](conductor/tracks/t22_dynamic_game_simulation_20261125/index.md)
+
 **Version 0.1.0 is available.** The bounded native static contract,
 resolved dependency boundary and local Cargo artifact consumption are qualified
 on Rust 1.75 and stable. Independent review accepts bounded RK4/Euler, mixed-Nash
