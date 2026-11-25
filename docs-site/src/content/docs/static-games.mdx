@@ -27,6 +27,10 @@ the tie lexicographically and chooses pass.
 
 ## Regenerate the source
 
+Run these commands from the current `main` branch with the
+[local verification environment](../interchange/). The signed 0.1.0
+tag from Start here contains the solver and frozen input.
+
 ```sh
 CARGO_TARGET_DIR="$PWD/target" cargo build --locked --release \
   --manifest-path crates/paignia-io/Cargo.toml --example solve
