@@ -1,0 +1,98 @@
+name: T21 comparator study
+
+on:
+  pull_request:
+    paths:
+      - verification/comparators/**
+      - .github/workflows/comparator-study.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: comparator-study-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  linux-x64:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: ./.github/actions/project-python
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable action
+        with:
+          toolchain: 1.75.0
+      - name: Select native Linux x64 and build pinned comparators
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = x86_64
+          sudo apt-get update
+          sudo apt-get install --yes libgmp-dev time
+          mkdir -p target/comparator-tools
+          tools="$PWD/target/comparator-tools"
+          curl --fail --silent --show-error --location --retry 2 \
+            --output "$tools/gambit.tar.gz" \
+            https://github.com/gambitproject/gambit/releases/download/v16.7.0/gambit-16.7.0.tar.gz
+          curl --fail --silent --show-error --location --retry 2 \
+            --output "$tools/open-spiel.tar.gz" \
+            https://files.pythonhosted.org/packages/bb/3b/9d56d511eff27e26714aa232c945bb00335f792bc1959637ee0d2639a018/open_spiel-2.0.2.tar.gz
+          (
+            cd "$tools"
+            sha256sum --check <<'SHA256'
+          35a2d7df4f8181cb216ce9a2b10ca820724768d8c69787a608a4a2725a745278  gambit.tar.gz
+          6f520dfe499b9e5e1e3a31cf77bf071abb02b98104789e7698021922a064e856  open-spiel.tar.gz
+          SHA256
+            tar -xzf gambit.tar.gz
+            tar -xzf open-spiel.tar.gz
+            cd gambit-16.7.0
+            ./configure --disable-gui
+            make -j4 GAMBIT_VERSION=16.7.0 gambit-enumpure gambit-enummixed
+          )
+          cmake -S "$tools/open_spiel-2.0.2/open_spiel" -B "$tools/open-spiel-build" \
+            -DCMAKE_BUILD_TYPE=Release -DPython3_EXECUTABLE="$PWD/target/dev-python/bin/python" \
+            -DCMAKE_LIBRARY_OUTPUT_DIRECTORY="$tools/open-spiel-library" \
+            -DOPEN_SPIEL_BUILD_WITH_PYTHON=ON -DOPEN_SPIEL_BUILD_WITH_ACPC=OFF \
+            -DOPEN_SPIEL_BUILD_WITH_HANABI=OFF -DOPEN_SPIEL_BUILD_WITH_GAMUT=OFF \
+            -DOPEN_SPIEL_BUILD_WITH_LIBNOP=OFF -DOPEN_SPIEL_BUILD_WITH_LIBTORCH=OFF \
+            -DOPEN_SPIEL_BUILD_WITH_ORTOOLS=OFF -DOPEN_SPIEL_BUILD_WITH_ROSHAMBO=OFF \
+            -DOPEN_SPIEL_BUILD_WITH_XINXIN=OFF
+          cmake --build "$tools/open-spiel-build" --target pyspiel --parallel 4
+      - name: Build signed provider and run the same frozen workload
+        run: |
+          set -euo pipefail
+          tools="$PWD/target/comparator-tools"
+          provider=a04a19da06cc50e310a172574ed66f62000b891a
+          test "$(git rev-parse 'refs/tags/v0.1.0^{}')" = "$provider"
+          git worktree add --detach "$tools/provider" "$provider"
+          CARGO_TARGET_DIR="$tools/paignia-build" cargo build --release --locked \
+            --manifest-path "$tools/provider/crates/paignia-io/Cargo.toml" --examples
+          python -m pip install --require-hashes --only-binary :all: -r verification/uogto_interchange/requirements.txt
+          python -I verification/uogto_interchange/interchange.py stage --ontology-dir "$tools/uogto"
+          {
+            uname -ms
+            lscpu
+            python --version
+            rustc --version --verbose
+            c++ --version
+            cmake --version
+            /usr/bin/time --version
+          } > target/comparator-linux-environment.txt
+          PYTHONPATH="$tools/open-spiel-library" python -B verification/comparators/study.py \
+            --provider "$tools/provider" --paignia-bin "$tools/paignia-build/release/examples" \
+            --gambit-bin "$tools/gambit-16.7.0" --ontology-dir "$tools/uogto" \
+            --output target/comparator-linux
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: native-linux-x64-comparator-evidence
+          path: |
+            target/comparator-linux/
+            target/comparator-linux-environment.txt

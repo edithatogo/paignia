@@ -31,7 +31,9 @@ import pyspiel
 
 request = json.load(sys.stdin)
 game = pyspiel.load_game(request["game"])
-trainer = pyspiel.CFRPlusSolver(game)
+solver = {"cfr": pyspiel.CFRSolver, "cfr_plus": pyspiel.CFRPlusSolver}
+variant = sys.argv[1] if len(sys.argv) > 1 else "cfr_plus"
+trainer = solver[variant](game)
 for _ in range(request["iterations"]):
     trainer.evaluate_and_update_policy()
 policy = trainer.tabular_average_policy()
@@ -85,16 +87,27 @@ def measure(name, inputs, expected, bundle, binaries, method, tool):
 
 
 def timed_process(invocation, input_bytes):
+    system = platform.system()
+    if system == "Darwin":
+        arguments = ["-l"]
+        pattern = rb"^\s*(\d+)\s+maximum resident set size$"
+        bytes_per_unit = 1
+    elif system == "Linux":
+        arguments = ["-f", "peak_rss_kib %M"]
+        pattern = rb"^peak_rss_kib (\d+)$"
+        bytes_per_unit = 1024
+    else:
+        raise ValueError(f"unqualified peak RSS reporter for {system}")
     started = time.perf_counter_ns()
     completed = subprocess.run(
-        ["/usr/bin/time", "-l", *invocation], input=input_bytes,
+        ["/usr/bin/time", *arguments, *invocation], input=input_bytes,
         capture_output=True, timeout=30, check=True,
     )
     finished = time.perf_counter_ns()
-    rss = re.search(rb"^\s*(\d+)\s+maximum resident set size$", completed.stderr, re.MULTILINE)
-    if rss is None:
-        raise ValueError(f"no Darwin process peak RSS for {invocation[0]}")
-    return completed.stdout, finished - started, int(rss[1])
+    rss = re.search(pattern, completed.stderr, re.MULTILINE)
+    if rss is None or int(rss[1]) == 0:
+        raise ValueError(f"no process peak RSS for {invocation[0]}")
+    return completed.stdout, finished - started, bytes_per_unit * int(rss[1])
 
 
 def kuhn_trials(directory, hashes, profile_binary, order):
