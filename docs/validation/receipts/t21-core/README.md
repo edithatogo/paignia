@@ -30,8 +30,8 @@ at fixed iteration budgets. Rock–paper–scissors reported three unresolved
 support pairs. The all-zero game reported one and yielded the four Gambit
 vertices of its continuum.
 
-The broader scaling and time-to-accuracy study remains tracked under the
-[T21 evaluation plan](../../evaluation-plan.md).
+The [two-host scaling and time-to-accuracy study](benchmark-study.md)
+reports the measured workloads from the [T21 evaluation plan](../../evaluation-plan.md).
 
 ## Additional signed-source checks
 

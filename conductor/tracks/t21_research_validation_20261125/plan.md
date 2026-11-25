@@ -3,6 +3,7 @@
 ## Phase 1 Game semantics and diagrams
 
 - [x] Task: Compare Paignia, Gambit and OpenSpiel, and record what the current RDF/JSON profiles cover.
+- [x] Task: Catalogue the 395 pinned Gambit and OpenSpiel definitions and examples in the ontology with representation and execution dispositions. [UOGTO #143](https://github.com/edithatogo/UOGTO/pull/143)
 - [x] Task: Publish a normative profile map, qualifying representative positive, rejection and version-compatibility fixtures. [Interchange #96](https://github.com/edithatogo/paignia/issues/96)
 - [x] Task: Assess Mermaid output for the public buyer–seller game and a shared-successor DAG. Compare diagram readability and stable IDs, then decide whether to add an optional exporter. [Diagram #95](https://github.com/edithatogo/paignia/issues/95)
 
@@ -11,7 +12,7 @@
 - [x] Task: Record the staged [evaluation protocol](../../../docs/validation/evaluation-plan.md) and its required independent oracles, admission and benchmark measures.
 - [x] Task: Freeze and replay the 0.1.0 correctness fixtures for Gambit pure and bounded mixed Nash and OpenSpiel backward induction and Kuhn CFR/CFR+. [Protocol](../../../verification/comparators/README.md) · [Two-run results](../../../docs/validation/receipts/t21-core/README.md)
 - [x] Task: Extend correctness and reproducibility to the remaining admitted profiles. [Signed-source checks](../../../docs/validation/receipts/t21-core/README.md#additional-signed-source-checks)
-- [~] Task: Execute the equivalent-game comparison and record benchmark data, unsupported cases, errors and independent review. [Reviewed one-host pilot](../../../docs/validation/receipts/t21-core/README.md#independent-pilot-review). [Scaling and common-accuracy protocol](../../../verification/comparators/study.md).
+- [x] Task: Execute the equivalent-game comparison and record benchmark data, unsupported cases, errors and independent review. [Reviewed two-host results](../../../docs/validation/receipts/t21-core/benchmark-study.md).
 - [~] Task: Freeze and run the baseline and stress tests for each downstream model using its own decision and payoff meaning. [Per-repository dispositions](https://github.com/edithatogo/paignia/issues/97)
 
 ## Phase 3 Consumer adoption
