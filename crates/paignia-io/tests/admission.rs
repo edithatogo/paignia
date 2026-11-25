@@ -109,6 +109,12 @@ fn discounted_wire_rejects_extra_fields_and_incomplete_transition_mass() {
         Err(ProfileError::Json(_))
     ));
 
+    request["game"]["method"] = json!({ "kind": "minimax", "policy": [[[1.0, 0.0], [0.0, 1.0]]] });
+    assert!(matches!(
+        solve_profile_json(&serde_json::to_vec(&request).unwrap()),
+        Err(ProfileError::Json(_))
+    ));
+
     let mut request = discounted_request();
     request["game"]["states"][0]["outcomes"][0][0]["transition"] = json!([0.75]);
     assert!(matches!(

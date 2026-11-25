@@ -117,7 +117,7 @@ struct DiscountedOutcome {
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 enum DiscountedMethod {
     Evaluate { policy: Vec<[[f64; 2]; 2]> },
-    Minimax,
+    Minimax {},
 }
 
 #[derive(Clone, Copy, Deserialize)]
@@ -322,7 +322,7 @@ fn discounted_result(request: DiscountedRequest) -> Result<MethodResult, Profile
                 json!({ "policy_values": evaluation_json(&evaluation) }),
             )
         }
-        DiscountedMethod::Minimax => {
+        DiscountedMethod::Minimax {} => {
             let equilibrium = discounted::solve_zero_sum(&game, config)?;
             let evaluations = [
                 &equilibrium.game_values,
