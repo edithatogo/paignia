@@ -82,7 +82,7 @@ def kuhn_graph():
     return graph
 
 
-def normal_graph(case, actions, cells):
+def normal_graph(case, actions, cells, *, column_actions=None):
     ns = Namespace(f"urn:paignia:coverage:{case}:")
     graph = Graph()
     graph.add((ns.game, RDF.type, GT.GameSpecification))
@@ -93,11 +93,12 @@ def normal_graph(case, actions, cells):
         graph.add((ns.extensive, RDF.type, GT.ExtensiveFormRepresentation))
     players = (ns.row, ns.column)
     strategies = []
-    for player, seat in zip(players, ("row", "column"), strict=True):
+    action_lists = (actions, actions if column_actions is None else column_actions)
+    for player, seat, seat_actions in zip(players, ("row", "column"), action_lists, strict=True):
         graph.add((ns.game, GT.hasPlayer, player))
         graph.add((player, RDF.type, GT.Player))
         graph.add((player, GT.identifier, Literal(seat)))
-        ids = tuple(ns[f"{seat}:{action}"] for action in actions)
+        ids = tuple(ns[f"{seat}:{action}"] for action in seat_actions)
         for strategy in ids:
             graph.add((player, GT.hasStrategy, strategy))
             graph.add((strategy, RDF.type, GT.Strategy))
