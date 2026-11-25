@@ -197,13 +197,53 @@ pub fn nash_conv(
     let (game, rows) = checked_profile(source, graph, strategy)?;
     let mut total = 0.0;
     for player in players_of(graph) {
-        let gain = game.best_response(&rows, player, ResponseMeasure::Gain)?;
-        if gain < 0.0 {
-            return Err(Error::NegativeGain);
-        }
-        total = finite(total + gain)?;
+        total = finite(total + deviation_gain(&game, &rows, player)?)?;
     }
     Ok(total)
+}
+
+/// Report the expected payoff and unilateral gain of each player.
+///
+/// # Errors
+/// Propagates the admission, probability and finite-arithmetic errors of
+/// the profile value and `NashConv` evaluators.
+pub fn deviation_report(
+    source: &GameSpecification,
+    graph: &InformationSetGraph,
+    strategy: &Strategy,
+) -> Result<crate::NashDeviationReport<PlayerId>, Error> {
+    let (game, rows) = checked_profile(source, graph, strategy)?;
+    let mut values = game.profile_values(&rows)?;
+    let mut players = Vec::with_capacity(values.len());
+    for player in players_of(graph) {
+        players.push(crate::PlayerDeviation {
+            player: player.clone(),
+            expected_payoff: values.remove(player).unwrap_or(0.0),
+            gain: deviation_gain(&game, &rows, player)?,
+        });
+    }
+    players.extend(
+        values
+            .into_iter()
+            .map(|(player, expected_payoff)| crate::PlayerDeviation {
+                player,
+                expected_payoff,
+                gain: 0.0,
+            }),
+    );
+    crate::NashDeviationReport::from_players(players).ok_or(Error::NonFiniteArithmetic)
+}
+
+fn deviation_gain(
+    game: &IndexedGame<'_>,
+    rows: &[Vec<f64>],
+    player: &PlayerId,
+) -> Result<f64, Error> {
+    let gain = game.best_response(rows, player, ResponseMeasure::Gain)?;
+    if gain < 0.0 {
+        return Err(Error::NegativeGain);
+    }
+    Ok(gain)
 }
 
 fn checked_profile<'a>(

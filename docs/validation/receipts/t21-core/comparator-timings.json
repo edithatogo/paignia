@@ -1,0 +1,1427 @@
+{
+  "kuhn_cfr_plus": {
+    "iterations": 12000,
+    "open_spiel_input_sha256": "cc9e72f80cf1265cf341d75bcff8ac1c48ec9c4c1b752cc75d7b50161426e38f",
+    "samples": [
+      {
+        "peak_rss_bytes": 3276800,
+        "process_ns": 123425375,
+        "tool": "paignia",
+        "trial": 0
+      },
+      {
+        "peak_rss_bytes": 25624576,
+        "process_ns": 730993250,
+        "tool": "open_spiel",
+        "trial": 0
+      },
+      {
+        "peak_rss_bytes": 3244032,
+        "process_ns": 144458375,
+        "tool": "paignia",
+        "trial": 1
+      },
+      {
+        "peak_rss_bytes": 25640960,
+        "process_ns": 686534417,
+        "tool": "open_spiel",
+        "trial": 1
+      },
+      {
+        "peak_rss_bytes": 25673728,
+        "process_ns": 652403542,
+        "tool": "open_spiel",
+        "trial": 2
+      },
+      {
+        "peak_rss_bytes": 3211264,
+        "process_ns": 114088500,
+        "tool": "paignia",
+        "trial": 2
+      },
+      {
+        "peak_rss_bytes": 3244032,
+        "process_ns": 119581708,
+        "tool": "paignia",
+        "trial": 3
+      },
+      {
+        "peak_rss_bytes": 25542656,
+        "process_ns": 748548167,
+        "tool": "open_spiel",
+        "trial": 3
+      },
+      {
+        "peak_rss_bytes": 3276800,
+        "process_ns": 168899875,
+        "tool": "paignia",
+        "trial": 4
+      },
+      {
+        "peak_rss_bytes": 25673728,
+        "process_ns": 878756167,
+        "tool": "open_spiel",
+        "trial": 4
+      },
+      {
+        "peak_rss_bytes": 25755648,
+        "process_ns": 837918125,
+        "tool": "open_spiel",
+        "trial": 5
+      },
+      {
+        "peak_rss_bytes": 3211264,
+        "process_ns": 132541834,
+        "tool": "paignia",
+        "trial": 5
+      },
+      {
+        "peak_rss_bytes": 3211264,
+        "process_ns": 129291125,
+        "tool": "paignia",
+        "trial": 6
+      },
+      {
+        "peak_rss_bytes": 25542656,
+        "process_ns": 719835583,
+        "tool": "open_spiel",
+        "trial": 6
+      },
+      {
+        "peak_rss_bytes": 25591808,
+        "process_ns": 788352958,
+        "tool": "open_spiel",
+        "trial": 7
+      },
+      {
+        "peak_rss_bytes": 3244032,
+        "process_ns": 139442375,
+        "tool": "paignia",
+        "trial": 7
+      },
+      {
+        "peak_rss_bytes": 25640960,
+        "process_ns": 731067250,
+        "tool": "open_spiel",
+        "trial": 8
+      },
+      {
+        "peak_rss_bytes": 3244032,
+        "process_ns": 151683375,
+        "tool": "paignia",
+        "trial": 8
+      },
+      {
+        "peak_rss_bytes": 25526272,
+        "process_ns": 779882292,
+        "tool": "open_spiel",
+        "trial": 9
+      },
+      {
+        "peak_rss_bytes": 3227648,
+        "process_ns": 147589084,
+        "tool": "paignia",
+        "trial": 9
+      }
+    ],
+    "warm_summary": {
+      "open_spiel": {
+        "peak_rss_bytes": {
+          "max": 25755648,
+          "median": 25640960,
+          "min": 25526272
+        },
+        "process_ns": {
+          "max": 878756167,
+          "median": 748548167,
+          "min": 652403542
+        }
+      },
+      "paignia": {
+        "peak_rss_bytes": {
+          "max": 3276800,
+          "median": 3244032,
+          "min": 3211264
+        },
+        "process_ns": {
+          "max": 168899875,
+          "median": 139442375,
+          "min": 114088500
+        }
+      }
+    }
+  },
+  "order_seed": 211,
+  "python": "3.15.2",
+  "release_commit": "a04a19da06cc50e310a172574ed66f62000b891a",
+  "replay_sha256": "5bc4ae46e8365d837bbd4b8ad567a791f1ba45776f95143fd4bbc7683b7e4599",
+  "system": "macOS-27.2.1-arm64-arm-64bit-Mach-O",
+  "workloads": {
+    "all-zero": {
+      "method": "mixed",
+      "samples": [
+        {
+          "conversion_ns": 2265708,
+          "peak_rss_bytes": 2719744,
+          "solve_process_ns": 9870750,
+          "tool": "gambit",
+          "total_ns": 12136458,
+          "trial": 0
+        },
+        {
+          "conversion_ns": 2461083,
+          "peak_rss_bytes": 2424832,
+          "solve_process_ns": 8850000,
+          "tool": "paignia",
+          "total_ns": 11311083,
+          "trial": 0
+        },
+        {
+          "conversion_ns": 2157666,
+          "peak_rss_bytes": 2457600,
+          "solve_process_ns": 9622709,
+          "tool": "paignia",
+          "total_ns": 11780375,
+          "trial": 1
+        },
+        {
+          "conversion_ns": 2618416,
+          "peak_rss_bytes": 2703360,
+          "solve_process_ns": 10186833,
+          "tool": "gambit",
+          "total_ns": 12805249,
+          "trial": 1
+        },
+        {
+          "conversion_ns": 2188542,
+          "peak_rss_bytes": 2703360,
+          "solve_process_ns": 11222083,
+          "tool": "gambit",
+          "total_ns": 13410625,
+          "trial": 2
+        },
+        {
+          "conversion_ns": 2758875,
+          "peak_rss_bytes": 2408448,
+          "solve_process_ns": 9858291,
+          "tool": "paignia",
+          "total_ns": 12617166,
+          "trial": 2
+        },
+        {
+          "conversion_ns": 2539666,
+          "peak_rss_bytes": 2703360,
+          "solve_process_ns": 11255708,
+          "tool": "gambit",
+          "total_ns": 13795374,
+          "trial": 3
+        },
+        {
+          "conversion_ns": 3162084,
+          "peak_rss_bytes": 2490368,
+          "solve_process_ns": 10139708,
+          "tool": "paignia",
+          "total_ns": 13301792,
+          "trial": 3
+        },
+        {
+          "conversion_ns": 2729459,
+          "peak_rss_bytes": 2441216,
+          "solve_process_ns": 10776292,
+          "tool": "paignia",
+          "total_ns": 13505751,
+          "trial": 4
+        },
+        {
+          "conversion_ns": 2481917,
+          "peak_rss_bytes": 2719744,
+          "solve_process_ns": 11089958,
+          "tool": "gambit",
+          "total_ns": 13571875,
+          "trial": 4
+        },
+        {
+          "conversion_ns": 2483583,
+          "peak_rss_bytes": 2719744,
+          "solve_process_ns": 14231833,
+          "tool": "gambit",
+          "total_ns": 16715416,
+          "trial": 5
+        },
+        {
+          "conversion_ns": 3225834,
+          "peak_rss_bytes": 2457600,
+          "solve_process_ns": 9880750,
+          "tool": "paignia",
+          "total_ns": 13106584,
+          "trial": 5
+        },
+        {
+          "conversion_ns": 2429208,
+          "peak_rss_bytes": 2424832,
+          "solve_process_ns": 9663000,
+          "tool": "paignia",
+          "total_ns": 12092208,
+          "trial": 6
+        },
+        {
+          "conversion_ns": 2486458,
+          "peak_rss_bytes": 2719744,
+          "solve_process_ns": 10146166,
+          "tool": "gambit",
+          "total_ns": 12632624,
+          "trial": 6
+        },
+        {
+          "conversion_ns": 2183875,
+          "peak_rss_bytes": 2703360,
+          "solve_process_ns": 10008041,
+          "tool": "gambit",
+          "total_ns": 12191916,
+          "trial": 7
+        },
+        {
+          "conversion_ns": 3025875,
+          "peak_rss_bytes": 2441216,
+          "solve_process_ns": 10723125,
+          "tool": "paignia",
+          "total_ns": 13749000,
+          "trial": 7
+        },
+        {
+          "conversion_ns": 2789458,
+          "peak_rss_bytes": 2424832,
+          "solve_process_ns": 10385000,
+          "tool": "paignia",
+          "total_ns": 13174458,
+          "trial": 8
+        },
+        {
+          "conversion_ns": 2747708,
+          "peak_rss_bytes": 2719744,
+          "solve_process_ns": 11818000,
+          "tool": "gambit",
+          "total_ns": 14565708,
+          "trial": 8
+        },
+        {
+          "conversion_ns": 2663375,
+          "peak_rss_bytes": 2424832,
+          "solve_process_ns": 10872417,
+          "tool": "paignia",
+          "total_ns": 13535792,
+          "trial": 9
+        },
+        {
+          "conversion_ns": 6087209,
+          "peak_rss_bytes": 2686976,
+          "solve_process_ns": 11349000,
+          "tool": "gambit",
+          "total_ns": 17436209,
+          "trial": 9
+        }
+      ],
+      "warm_summary": {
+        "gambit": {
+          "conversion_ns": {
+            "max": 6087209,
+            "median": 2486458,
+            "min": 2183875
+          },
+          "peak_rss_bytes": {
+            "max": 2719744,
+            "median": 2703360,
+            "min": 2686976
+          },
+          "solve_process_ns": {
+            "max": 14231833,
+            "median": 11222083,
+            "min": 10008041
+          },
+          "total_ns": {
+            "max": 17436209,
+            "median": 13571875,
+            "min": 12191916
+          }
+        },
+        "paignia": {
+          "conversion_ns": {
+            "max": 3225834,
+            "median": 2758875,
+            "min": 2157666
+          },
+          "peak_rss_bytes": {
+            "max": 2490368,
+            "median": 2441216,
+            "min": 2408448
+          },
+          "solve_process_ns": {
+            "max": 10872417,
+            "median": 10139708,
+            "min": 9622709
+          },
+          "total_ns": {
+            "max": 13749000,
+            "median": 13174458,
+            "min": 11780375
+          }
+        }
+      }
+    },
+    "asymmetric-coordination": {
+      "method": "mixed",
+      "samples": [
+        {
+          "conversion_ns": 5279791,
+          "peak_rss_bytes": 2441216,
+          "solve_process_ns": 13383166,
+          "tool": "paignia",
+          "total_ns": 18662957,
+          "trial": 0
+        },
+        {
+          "conversion_ns": 3109375,
+          "peak_rss_bytes": 2703360,
+          "solve_process_ns": 11585042,
+          "tool": "gambit",
+          "total_ns": 14694417,
+          "trial": 0
+        },
+        {
+          "conversion_ns": 2801833,
+          "peak_rss_bytes": 2441216,
+          "solve_process_ns": 11019333,
+          "tool": "paignia",
+          "total_ns": 13821166,
+          "trial": 1
+        },
+        {
+          "conversion_ns": 2491916,
+          "peak_rss_bytes": 2703360,
+          "solve_process_ns": 12248834,
+          "tool": "gambit",
+          "total_ns": 14740750,
+          "trial": 1
+        },
+        {
+          "conversion_ns": 2497458,
+          "peak_rss_bytes": 2719744,
+          "solve_process_ns": 11215792,
+          "tool": "gambit",
+          "total_ns": 13713250,
+          "trial": 2
+        },
+        {
+          "conversion_ns": 3383291,
+          "peak_rss_bytes": 2424832,
+          "solve_process_ns": 9966042,
+          "tool": "paignia",
+          "total_ns": 13349333,
+          "trial": 2
+        },
+        {
+          "conversion_ns": 2460125,
+          "peak_rss_bytes": 2703360,
+          "solve_process_ns": 10968042,
+          "tool": "gambit",
+          "total_ns": 13428167,
+          "trial": 3
+        },
+        {
+          "conversion_ns": 2750208,
+          "peak_rss_bytes": 2424832,
+          "solve_process_ns": 9561000,
+          "tool": "paignia",
+          "total_ns": 12311208,
+          "trial": 3
+        },
+        {
+          "conversion_ns": 2526875,
+          "peak_rss_bytes": 2719744,
+          "solve_process_ns": 12168542,
+          "tool": "gambit",
+          "total_ns": 14695417,
+          "trial": 4
+        },
+        {
+          "conversion_ns": 4850125,
+          "peak_rss_bytes": 2424832,
+          "solve_process_ns": 9551459,
+          "tool": "paignia",
+          "total_ns": 14401584,
+          "trial": 4
+        },
+        {
+          "conversion_ns": 2574375,
+          "peak_rss_bytes": 2441216,
+          "solve_process_ns": 9889333,
+          "tool": "paignia",
+          "total_ns": 12463708,
+          "trial": 5
+        },
+        {
+          "conversion_ns": 2837833,
+          "peak_rss_bytes": 2736128,
+          "solve_process_ns": 11749375,
+          "tool": "gambit",
+          "total_ns": 14587208,
+          "trial": 5
+        },
+        {
+          "conversion_ns": 2801625,
+          "peak_rss_bytes": 2441216,
+          "solve_process_ns": 10045917,
+          "tool": "paignia",
+          "total_ns": 12847542,
+          "trial": 6
+        },
+        {
+          "conversion_ns": 3143458,
+          "peak_rss_bytes": 2719744,
+          "solve_process_ns": 11112042,
+          "tool": "gambit",
+          "total_ns": 14255500,
+          "trial": 6
+        },
+        {
+          "conversion_ns": 2469167,
+          "peak_rss_bytes": 2424832,
+          "solve_process_ns": 9925750,
+          "tool": "paignia",
+          "total_ns": 12394917,
+          "trial": 7
+        },
+        {
+          "conversion_ns": 2682833,
+          "peak_rss_bytes": 2703360,
+          "solve_process_ns": 10616459,
+          "tool": "gambit",
+          "total_ns": 13299292,
+          "trial": 7
+        },
+        {
+          "conversion_ns": 2729708,
+          "peak_rss_bytes": 2703360,
+          "solve_process_ns": 13181167,
+          "tool": "gambit",
+          "total_ns": 15910875,
+          "trial": 8
+        },
+        {
+          "conversion_ns": 3590333,
+          "peak_rss_bytes": 2441216,
+          "solve_process_ns": 10561791,
+          "tool": "paignia",
+          "total_ns": 14152124,
+          "trial": 8
+        },
+        {
+          "conversion_ns": 2646958,
+          "peak_rss_bytes": 2473984,
+          "solve_process_ns": 10492708,
+          "tool": "paignia",
+          "total_ns": 13139666,
+          "trial": 9
+        },
+        {
+          "conversion_ns": 2525834,
+          "peak_rss_bytes": 2752512,
+          "solve_process_ns": 11253250,
+          "tool": "gambit",
+          "total_ns": 13779084,
+          "trial": 9
+        }
+      ],
+      "warm_summary": {
+        "gambit": {
+          "conversion_ns": {
+            "max": 3143458,
+            "median": 2526875,
+            "min": 2460125
+          },
+          "peak_rss_bytes": {
+            "max": 2752512,
+            "median": 2719744,
+            "min": 2703360
+          },
+          "solve_process_ns": {
+            "max": 13181167,
+            "median": 11253250,
+            "min": 10616459
+          },
+          "total_ns": {
+            "max": 15910875,
+            "median": 14255500,
+            "min": 13299292
+          }
+        },
+        "paignia": {
+          "conversion_ns": {
+            "max": 4850125,
+            "median": 2801625,
+            "min": 2469167
+          },
+          "peak_rss_bytes": {
+            "max": 2473984,
+            "median": 2441216,
+            "min": 2424832
+          },
+          "solve_process_ns": {
+            "max": 11019333,
+            "median": 9966042,
+            "min": 9551459
+          },
+          "total_ns": {
+            "max": 14401584,
+            "median": 13139666,
+            "min": 12311208
+          }
+        }
+      }
+    },
+    "binary-003": {
+      "method": "pure",
+      "samples": [
+        {
+          "conversion_ns": 5834667,
+          "peak_rss_bytes": 2441216,
+          "solve_process_ns": 12978750,
+          "tool": "paignia",
+          "total_ns": 18813417,
+          "trial": 0
+        },
+        {
+          "conversion_ns": 2514667,
+          "peak_rss_bytes": 2408448,
+          "solve_process_ns": 10599292,
+          "tool": "gambit",
+          "total_ns": 13113959,
+          "trial": 0
+        },
+        {
+          "conversion_ns": 2463042,
+          "peak_rss_bytes": 2424832,
+          "solve_process_ns": 9590250,
+          "tool": "gambit",
+          "total_ns": 12053292,
+          "trial": 1
+        },
+        {
+          "conversion_ns": 2698333,
+          "peak_rss_bytes": 2441216,
+          "solve_process_ns": 10261417,
+          "tool": "paignia",
+          "total_ns": 12959750,
+          "trial": 1
+        },
+        {
+          "conversion_ns": 3023541,
+          "peak_rss_bytes": 2408448,
+          "solve_process_ns": 10390666,
+          "tool": "gambit",
+          "total_ns": 13414207,
+          "trial": 2
+        },
+        {
+          "conversion_ns": 2577542,
+          "peak_rss_bytes": 2441216,
+          "solve_process_ns": 11468000,
+          "tool": "paignia",
+          "total_ns": 14045542,
+          "trial": 2
+        },
+        {
+          "conversion_ns": 2644500,
+          "peak_rss_bytes": 2441216,
+          "solve_process_ns": 11051250,
+          "tool": "paignia",
+          "total_ns": 13695750,
+          "trial": 3
+        },
+        {
+          "conversion_ns": 2749334,
+          "peak_rss_bytes": 2424832,
+          "solve_process_ns": 10805917,
+          "tool": "gambit",
+          "total_ns": 13555251,
+          "trial": 3
+        },
+        {
+          "conversion_ns": 3197375,
+          "peak_rss_bytes": 2441216,
+          "solve_process_ns": 10106875,
+          "tool": "paignia",
+          "total_ns": 13304250,
+          "trial": 4
+        },
+        {
+          "conversion_ns": 2481500,
+          "peak_rss_bytes": 2408448,
+          "solve_process_ns": 14091875,
+          "tool": "gambit",
+          "total_ns": 16573375,
+          "trial": 4
+        },
+        {
+          "conversion_ns": 2898833,
+          "peak_rss_bytes": 2408448,
+          "solve_process_ns": 12051583,
+          "tool": "gambit",
+          "total_ns": 14950416,
+          "trial": 5
+        },
+        {
+          "conversion_ns": 3691417,
+          "peak_rss_bytes": 2457600,
+          "solve_process_ns": 11686750,
+          "tool": "paignia",
+          "total_ns": 15378167,
+          "trial": 5
+        },
+        {
+          "conversion_ns": 3042875,
+          "peak_rss_bytes": 2424832,
+          "solve_process_ns": 16880333,
+          "tool": "paignia",
+          "total_ns": 19923208,
+          "trial": 6
+        },
+        {
+          "conversion_ns": 2800125,
+          "peak_rss_bytes": 2408448,
+          "solve_process_ns": 11953375,
+          "tool": "gambit",
+          "total_ns": 14753500,
+          "trial": 6
+        },
+        {
+          "conversion_ns": 3111583,
+          "peak_rss_bytes": 2441216,
+          "solve_process_ns": 10737834,
+          "tool": "paignia",
+          "total_ns": 13849417,
+          "trial": 7
+        },
+        {
+          "conversion_ns": 2562458,
+          "peak_rss_bytes": 2408448,
+          "solve_process_ns": 11454583,
+          "tool": "gambit",
+          "total_ns": 14017041,
+          "trial": 7
+        },
+        {
+          "conversion_ns": 3330833,
+          "peak_rss_bytes": 2408448,
+          "solve_process_ns": 11843084,
+          "tool": "gambit",
+          "total_ns": 15173917,
+          "trial": 8
+        },
+        {
+          "conversion_ns": 4626833,
+          "peak_rss_bytes": 2457600,
+          "solve_process_ns": 13887250,
+          "tool": "paignia",
+          "total_ns": 18514083,
+          "trial": 8
+        },
+        {
+          "conversion_ns": 4345375,
+          "peak_rss_bytes": 2441216,
+          "solve_process_ns": 13597417,
+          "tool": "paignia",
+          "total_ns": 17942792,
+          "trial": 9
+        },
+        {
+          "conversion_ns": 3221625,
+          "peak_rss_bytes": 2408448,
+          "solve_process_ns": 14401667,
+          "tool": "gambit",
+          "total_ns": 17623292,
+          "trial": 9
+        }
+      ],
+      "warm_summary": {
+        "gambit": {
+          "conversion_ns": {
+            "max": 3330833,
+            "median": 2800125,
+            "min": 2463042
+          },
+          "peak_rss_bytes": {
+            "max": 2424832,
+            "median": 2408448,
+            "min": 2408448
+          },
+          "solve_process_ns": {
+            "max": 14401667,
+            "median": 11843084,
+            "min": 9590250
+          },
+          "total_ns": {
+            "max": 17623292,
+            "median": 14753500,
+            "min": 12053292
+          }
+        },
+        "paignia": {
+          "conversion_ns": {
+            "max": 4626833,
+            "median": 3111583,
+            "min": 2577542
+          },
+          "peak_rss_bytes": {
+            "max": 2457600,
+            "median": 2441216,
+            "min": 2424832
+          },
+          "solve_process_ns": {
+            "max": 16880333,
+            "median": 11468000,
+            "min": 10106875
+          },
+          "total_ns": {
+            "max": 19923208,
+            "median": 14045542,
+            "min": 12959750
+          }
+        }
+      }
+    },
+    "matching-pennies": {
+      "method": "mixed",
+      "samples": [
+        {
+          "conversion_ns": 3411167,
+          "peak_rss_bytes": 2670592,
+          "solve_process_ns": 12862917,
+          "tool": "gambit",
+          "total_ns": 16274084,
+          "trial": 0
+        },
+        {
+          "conversion_ns": 3072250,
+          "peak_rss_bytes": 2424832,
+          "solve_process_ns": 10300167,
+          "tool": "paignia",
+          "total_ns": 13372417,
+          "trial": 0
+        },
+        {
+          "conversion_ns": 2646834,
+          "peak_rss_bytes": 2670592,
+          "solve_process_ns": 11885542,
+          "tool": "gambit",
+          "total_ns": 14532376,
+          "trial": 1
+        },
+        {
+          "conversion_ns": 2683208,
+          "peak_rss_bytes": 2441216,
+          "solve_process_ns": 10160792,
+          "tool": "paignia",
+          "total_ns": 12844000,
+          "trial": 1
+        },
+        {
+          "conversion_ns": 2385792,
+          "peak_rss_bytes": 2392064,
+          "solve_process_ns": 10376667,
+          "tool": "paignia",
+          "total_ns": 12762459,
+          "trial": 2
+        },
+        {
+          "conversion_ns": 3286625,
+          "peak_rss_bytes": 2670592,
+          "solve_process_ns": 11865083,
+          "tool": "gambit",
+          "total_ns": 15151708,
+          "trial": 2
+        },
+        {
+          "conversion_ns": 2417667,
+          "peak_rss_bytes": 2670592,
+          "solve_process_ns": 10379791,
+          "tool": "gambit",
+          "total_ns": 12797458,
+          "trial": 3
+        },
+        {
+          "conversion_ns": 2467791,
+          "peak_rss_bytes": 2441216,
+          "solve_process_ns": 9663458,
+          "tool": "paignia",
+          "total_ns": 12131249,
+          "trial": 3
+        },
+        {
+          "conversion_ns": 2461875,
+          "peak_rss_bytes": 2424832,
+          "solve_process_ns": 12210042,
+          "tool": "paignia",
+          "total_ns": 14671917,
+          "trial": 4
+        },
+        {
+          "conversion_ns": 2926834,
+          "peak_rss_bytes": 2670592,
+          "solve_process_ns": 10595041,
+          "tool": "gambit",
+          "total_ns": 13521875,
+          "trial": 4
+        },
+        {
+          "conversion_ns": 2335000,
+          "peak_rss_bytes": 2637824,
+          "solve_process_ns": 11086792,
+          "tool": "gambit",
+          "total_ns": 13421792,
+          "trial": 5
+        },
+        {
+          "conversion_ns": 2480000,
+          "peak_rss_bytes": 2424832,
+          "solve_process_ns": 9204417,
+          "tool": "paignia",
+          "total_ns": 11684417,
+          "trial": 5
+        },
+        {
+          "conversion_ns": 2279209,
+          "peak_rss_bytes": 2670592,
+          "solve_process_ns": 10427250,
+          "tool": "gambit",
+          "total_ns": 12706459,
+          "trial": 6
+        },
+        {
+          "conversion_ns": 2881417,
+          "peak_rss_bytes": 2441216,
+          "solve_process_ns": 10678125,
+          "tool": "paignia",
+          "total_ns": 13559542,
+          "trial": 6
+        },
+        {
+          "conversion_ns": 2412583,
+          "peak_rss_bytes": 2686976,
+          "solve_process_ns": 10712541,
+          "tool": "gambit",
+          "total_ns": 13125124,
+          "trial": 7
+        },
+        {
+          "conversion_ns": 2447834,
+          "peak_rss_bytes": 2457600,
+          "solve_process_ns": 9779708,
+          "tool": "paignia",
+          "total_ns": 12227542,
+          "trial": 7
+        },
+        {
+          "conversion_ns": 2675708,
+          "peak_rss_bytes": 2424832,
+          "solve_process_ns": 9153292,
+          "tool": "paignia",
+          "total_ns": 11829000,
+          "trial": 8
+        },
+        {
+          "conversion_ns": 2862125,
+          "peak_rss_bytes": 2654208,
+          "solve_process_ns": 13423541,
+          "tool": "gambit",
+          "total_ns": 16285666,
+          "trial": 8
+        },
+        {
+          "conversion_ns": 2552584,
+          "peak_rss_bytes": 2670592,
+          "solve_process_ns": 11765542,
+          "tool": "gambit",
+          "total_ns": 14318126,
+          "trial": 9
+        },
+        {
+          "conversion_ns": 2953916,
+          "peak_rss_bytes": 2441216,
+          "solve_process_ns": 12273333,
+          "tool": "paignia",
+          "total_ns": 15227249,
+          "trial": 9
+        }
+      ],
+      "warm_summary": {
+        "gambit": {
+          "conversion_ns": {
+            "max": 3286625,
+            "median": 2552584,
+            "min": 2279209
+          },
+          "peak_rss_bytes": {
+            "max": 2686976,
+            "median": 2670592,
+            "min": 2637824
+          },
+          "solve_process_ns": {
+            "max": 13423541,
+            "median": 11086792,
+            "min": 10379791
+          },
+          "total_ns": {
+            "max": 16285666,
+            "median": 13521875,
+            "min": 12706459
+          }
+        },
+        "paignia": {
+          "conversion_ns": {
+            "max": 2953916,
+            "median": 2480000,
+            "min": 2385792
+          },
+          "peak_rss_bytes": {
+            "max": 2457600,
+            "median": 2441216,
+            "min": 2392064
+          },
+          "solve_process_ns": {
+            "max": 12273333,
+            "median": 10160792,
+            "min": 9153292
+          },
+          "total_ns": {
+            "max": 15227249,
+            "median": 12762459,
+            "min": 11684417
+          }
+        }
+      }
+    },
+    "rectangular": {
+      "method": "mixed",
+      "samples": [
+        {
+          "conversion_ns": 3503583,
+          "peak_rss_bytes": 2752512,
+          "solve_process_ns": 12127333,
+          "tool": "gambit",
+          "total_ns": 15630916,
+          "trial": 0
+        },
+        {
+          "conversion_ns": 4410000,
+          "peak_rss_bytes": 2506752,
+          "solve_process_ns": 11341875,
+          "tool": "paignia",
+          "total_ns": 15751875,
+          "trial": 0
+        },
+        {
+          "conversion_ns": 3474750,
+          "peak_rss_bytes": 2785280,
+          "solve_process_ns": 18013750,
+          "tool": "gambit",
+          "total_ns": 21488500,
+          "trial": 1
+        },
+        {
+          "conversion_ns": 3885500,
+          "peak_rss_bytes": 2473984,
+          "solve_process_ns": 10675000,
+          "tool": "paignia",
+          "total_ns": 14560500,
+          "trial": 1
+        },
+        {
+          "conversion_ns": 4008708,
+          "peak_rss_bytes": 2473984,
+          "solve_process_ns": 10122875,
+          "tool": "paignia",
+          "total_ns": 14131583,
+          "trial": 2
+        },
+        {
+          "conversion_ns": 3380959,
+          "peak_rss_bytes": 2768896,
+          "solve_process_ns": 12487333,
+          "tool": "gambit",
+          "total_ns": 15868292,
+          "trial": 2
+        },
+        {
+          "conversion_ns": 3738917,
+          "peak_rss_bytes": 2736128,
+          "solve_process_ns": 13049042,
+          "tool": "gambit",
+          "total_ns": 16787959,
+          "trial": 3
+        },
+        {
+          "conversion_ns": 3494625,
+          "peak_rss_bytes": 2490368,
+          "solve_process_ns": 11029917,
+          "tool": "paignia",
+          "total_ns": 14524542,
+          "trial": 3
+        },
+        {
+          "conversion_ns": 3421833,
+          "peak_rss_bytes": 2473984,
+          "solve_process_ns": 9848250,
+          "tool": "paignia",
+          "total_ns": 13270083,
+          "trial": 4
+        },
+        {
+          "conversion_ns": 3788583,
+          "peak_rss_bytes": 2752512,
+          "solve_process_ns": 11721500,
+          "tool": "gambit",
+          "total_ns": 15510083,
+          "trial": 4
+        },
+        {
+          "conversion_ns": 3354208,
+          "peak_rss_bytes": 2768896,
+          "solve_process_ns": 12642542,
+          "tool": "gambit",
+          "total_ns": 15996750,
+          "trial": 5
+        },
+        {
+          "conversion_ns": 3391334,
+          "peak_rss_bytes": 2473984,
+          "solve_process_ns": 10978125,
+          "tool": "paignia",
+          "total_ns": 14369459,
+          "trial": 5
+        },
+        {
+          "conversion_ns": 4184833,
+          "peak_rss_bytes": 2490368,
+          "solve_process_ns": 11606083,
+          "tool": "paignia",
+          "total_ns": 15790916,
+          "trial": 6
+        },
+        {
+          "conversion_ns": 3498250,
+          "peak_rss_bytes": 2768896,
+          "solve_process_ns": 12209625,
+          "tool": "gambit",
+          "total_ns": 15707875,
+          "trial": 6
+        },
+        {
+          "conversion_ns": 3531416,
+          "peak_rss_bytes": 2473984,
+          "solve_process_ns": 10157875,
+          "tool": "paignia",
+          "total_ns": 13689291,
+          "trial": 7
+        },
+        {
+          "conversion_ns": 3788708,
+          "peak_rss_bytes": 2801664,
+          "solve_process_ns": 11437458,
+          "tool": "gambit",
+          "total_ns": 15226166,
+          "trial": 7
+        },
+        {
+          "conversion_ns": 4006875,
+          "peak_rss_bytes": 2801664,
+          "solve_process_ns": 11766750,
+          "tool": "gambit",
+          "total_ns": 15773625,
+          "trial": 8
+        },
+        {
+          "conversion_ns": 3521958,
+          "peak_rss_bytes": 2490368,
+          "solve_process_ns": 10513417,
+          "tool": "paignia",
+          "total_ns": 14035375,
+          "trial": 8
+        },
+        {
+          "conversion_ns": 3852042,
+          "peak_rss_bytes": 2457600,
+          "solve_process_ns": 10228875,
+          "tool": "paignia",
+          "total_ns": 14080917,
+          "trial": 9
+        },
+        {
+          "conversion_ns": 3669000,
+          "peak_rss_bytes": 2752512,
+          "solve_process_ns": 12775625,
+          "tool": "gambit",
+          "total_ns": 16444625,
+          "trial": 9
+        }
+      ],
+      "warm_summary": {
+        "gambit": {
+          "conversion_ns": {
+            "max": 4006875,
+            "median": 3669000,
+            "min": 3354208
+          },
+          "peak_rss_bytes": {
+            "max": 2801664,
+            "median": 2768896,
+            "min": 2736128
+          },
+          "solve_process_ns": {
+            "max": 18013750,
+            "median": 12487333,
+            "min": 11437458
+          },
+          "total_ns": {
+            "max": 21488500,
+            "median": 15868292,
+            "min": 15226166
+          }
+        },
+        "paignia": {
+          "conversion_ns": {
+            "max": 4184833,
+            "median": 3531416,
+            "min": 3391334
+          },
+          "peak_rss_bytes": {
+            "max": 2490368,
+            "median": 2473984,
+            "min": 2457600
+          },
+          "solve_process_ns": {
+            "max": 11606083,
+            "median": 10513417,
+            "min": 9848250
+          },
+          "total_ns": {
+            "max": 15790916,
+            "median": 14131583,
+            "min": 13270083
+          }
+        }
+      }
+    },
+    "rock-paper-scissors": {
+      "method": "mixed",
+      "samples": [
+        {
+          "conversion_ns": 5050917,
+          "peak_rss_bytes": 2473984,
+          "solve_process_ns": 10292750,
+          "tool": "paignia",
+          "total_ns": 15343667,
+          "trial": 0
+        },
+        {
+          "conversion_ns": 5044166,
+          "peak_rss_bytes": 2719744,
+          "solve_process_ns": 13012459,
+          "tool": "gambit",
+          "total_ns": 18056625,
+          "trial": 0
+        },
+        {
+          "conversion_ns": 4743375,
+          "peak_rss_bytes": 2473984,
+          "solve_process_ns": 10827208,
+          "tool": "paignia",
+          "total_ns": 15570583,
+          "trial": 1
+        },
+        {
+          "conversion_ns": 4698500,
+          "peak_rss_bytes": 2719744,
+          "solve_process_ns": 12756750,
+          "tool": "gambit",
+          "total_ns": 17455250,
+          "trial": 1
+        },
+        {
+          "conversion_ns": 4769792,
+          "peak_rss_bytes": 2473984,
+          "solve_process_ns": 10036541,
+          "tool": "paignia",
+          "total_ns": 14806333,
+          "trial": 2
+        },
+        {
+          "conversion_ns": 7096125,
+          "peak_rss_bytes": 2736128,
+          "solve_process_ns": 13383958,
+          "tool": "gambit",
+          "total_ns": 20480083,
+          "trial": 2
+        },
+        {
+          "conversion_ns": 4558375,
+          "peak_rss_bytes": 2703360,
+          "solve_process_ns": 12693792,
+          "tool": "gambit",
+          "total_ns": 17252167,
+          "trial": 3
+        },
+        {
+          "conversion_ns": 5086792,
+          "peak_rss_bytes": 2490368,
+          "solve_process_ns": 10112125,
+          "tool": "paignia",
+          "total_ns": 15198917,
+          "trial": 3
+        },
+        {
+          "conversion_ns": 4523166,
+          "peak_rss_bytes": 2490368,
+          "solve_process_ns": 11212125,
+          "tool": "paignia",
+          "total_ns": 15735291,
+          "trial": 4
+        },
+        {
+          "conversion_ns": 4934083,
+          "peak_rss_bytes": 2686976,
+          "solve_process_ns": 13755166,
+          "tool": "gambit",
+          "total_ns": 18689249,
+          "trial": 4
+        },
+        {
+          "conversion_ns": 4748500,
+          "peak_rss_bytes": 2473984,
+          "solve_process_ns": 10795000,
+          "tool": "paignia",
+          "total_ns": 15543500,
+          "trial": 5
+        },
+        {
+          "conversion_ns": 5203792,
+          "peak_rss_bytes": 2736128,
+          "solve_process_ns": 12779667,
+          "tool": "gambit",
+          "total_ns": 17983459,
+          "trial": 5
+        },
+        {
+          "conversion_ns": 4715833,
+          "peak_rss_bytes": 2736128,
+          "solve_process_ns": 12805167,
+          "tool": "gambit",
+          "total_ns": 17521000,
+          "trial": 6
+        },
+        {
+          "conversion_ns": 4746167,
+          "peak_rss_bytes": 2473984,
+          "solve_process_ns": 10446416,
+          "tool": "paignia",
+          "total_ns": 15192583,
+          "trial": 6
+        },
+        {
+          "conversion_ns": 4729667,
+          "peak_rss_bytes": 2473984,
+          "solve_process_ns": 10331333,
+          "tool": "paignia",
+          "total_ns": 15061000,
+          "trial": 7
+        },
+        {
+          "conversion_ns": 4989541,
+          "peak_rss_bytes": 2719744,
+          "solve_process_ns": 12574958,
+          "tool": "gambit",
+          "total_ns": 17564499,
+          "trial": 7
+        },
+        {
+          "conversion_ns": 4464708,
+          "peak_rss_bytes": 2490368,
+          "solve_process_ns": 10223416,
+          "tool": "paignia",
+          "total_ns": 14688124,
+          "trial": 8
+        },
+        {
+          "conversion_ns": 4581750,
+          "peak_rss_bytes": 2736128,
+          "solve_process_ns": 11842083,
+          "tool": "gambit",
+          "total_ns": 16423833,
+          "trial": 8
+        },
+        {
+          "conversion_ns": 3931750,
+          "peak_rss_bytes": 2473984,
+          "solve_process_ns": 9009875,
+          "tool": "paignia",
+          "total_ns": 12941625,
+          "trial": 9
+        },
+        {
+          "conversion_ns": 4247666,
+          "peak_rss_bytes": 2736128,
+          "solve_process_ns": 11276250,
+          "tool": "gambit",
+          "total_ns": 15523916,
+          "trial": 9
+        }
+      ],
+      "warm_summary": {
+        "gambit": {
+          "conversion_ns": {
+            "max": 7096125,
+            "median": 4715833,
+            "min": 4247666
+          },
+          "peak_rss_bytes": {
+            "max": 2736128,
+            "median": 2736128,
+            "min": 2686976
+          },
+          "solve_process_ns": {
+            "max": 13755166,
+            "median": 12756750,
+            "min": 11276250
+          },
+          "total_ns": {
+            "max": 20480083,
+            "median": 17521000,
+            "min": 15523916
+          }
+        },
+        "paignia": {
+          "conversion_ns": {
+            "max": 5086792,
+            "median": 4743375,
+            "min": 3931750
+          },
+          "peak_rss_bytes": {
+            "max": 2490368,
+            "median": 2473984,
+            "min": 2473984
+          },
+          "solve_process_ns": {
+            "max": 11212125,
+            "median": 10331333,
+            "min": 9009875
+          },
+          "total_ns": {
+            "max": 15735291,
+            "median": 15192583,
+            "min": 12941625
+          }
+        }
+      }
+    }
+  }
+}

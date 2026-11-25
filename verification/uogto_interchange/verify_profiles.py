@@ -236,14 +236,18 @@ def check_rejections(solver, perfect_recall, normal):
     wrong_recipient = deepcopy(normal)
     wrong_recipient["game"]["payoffs"][0][0]["payoffs"].reverse()
     wrong_profile = dict(normal, semantic_profile=perfect_recall["semantic_profile"])
+    wrong_recall_version = dict(perfect_recall, version="2.0.0")
+    wrong_normal_version = dict(normal, version="2.0.0")
     for request, error in (
+        (wrong_recall_version, "Version"), (wrong_normal_version, "Version"),
         (incomplete, "UnassignedDecisionNode"), (reordered, "ActionMismatch"),
         (incomplete_table, "PayoffTable"), (wrong_recipient, "PayoffTable"), (wrong_profile, "Profile"),
     ):
         result = run_solver(solver, encode(request))
         require(result.returncode and not result.stdout and error in result.stderr.decode(),
                 f"Native profile did not reject {error}")
-    return ["UnassignedDecisionNode", "ActionMismatch", "PayoffTable", "PayoffRecipientOrder", "Profile"]
+    return ["UnassignedDecisionNode", "ActionMismatch", "PayoffTable", "PayoffRecipientOrder", "Profile",
+            "PerfectRecallVersion", "NormalFormVersion"]
 
 
 def replay(bundle, solver, destination):

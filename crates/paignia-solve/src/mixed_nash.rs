@@ -155,6 +155,29 @@ pub struct Candidate {
     pub support_equation_residual: Option<f64>,
 }
 
+impl Candidate {
+    /// Project the stored, original-unit diagnostics to the common report.
+    #[must_use]
+    pub fn deviation_report(&self) -> crate::NashDeviationReport<Player> {
+        let diagnostics = &self.diagnostics;
+        let players = [Player::Row, Player::Column]
+            .into_iter()
+            .zip(diagnostics.expected_payoffs)
+            .zip(diagnostics.best_response_gains)
+            .map(|((player, expected_payoff), gain)| crate::PlayerDeviation {
+                player,
+                expected_payoff,
+                gain,
+            })
+            .collect();
+        crate::NashDeviationReport {
+            players,
+            max_gain: diagnostics.max_gain,
+            nash_conv: diagnostics.sum_gain,
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct ResultRecord {
     pub algorithm: Algorithm,

@@ -15,8 +15,8 @@ use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
 use paignia_solve::{
-    cfr_best_response_value, cfr_nash_conv, cfr_profile_values, train_counterfactual_regret,
-    CfrConfig, CfrError, CfrStrategy, CfrVariant,
+    cfr_best_response_value, cfr_deviation_report, cfr_nash_conv, cfr_profile_values,
+    train_counterfactual_regret, CfrConfig, CfrError, CfrStrategy, CfrVariant,
 };
 
 #[test]
@@ -56,7 +56,13 @@ fn rejects_imperfect_recall_before_any_strategy_is_returned() {
 
 #[test]
 fn chance_weights_a_one_action_game_exactly() {
-    let (source, declaration) = one_action_chance_game();
+    let (mut source, declaration) = one_action_chance_game();
+    let observer = player("observer");
+    for node in source.game.nodes.values_mut() {
+        if let Node::Terminal { payoffs } = node {
+            payoffs.insert(observer.clone(), 2.0);
+        }
+    }
     let trained = train_counterfactual_regret(
         &source,
         &declaration,
@@ -69,6 +75,18 @@ fn chance_weights_a_one_action_game_exactly() {
     let alice = player("alice");
 
     assert!((trained.root_values[&alice] - 1.0).abs() < 1e-12);
+    let graph = build_information_set_graph(&source, &declaration).unwrap();
+    let report = cfr_deviation_report(&source, &graph, &trained.average_strategy).unwrap();
+    assert_eq!(report.players.len(), 2);
+    assert_eq!(report.players[0].player, alice);
+    assert_eq!(report.players[1].player, observer);
+    let passive = report
+        .players
+        .iter()
+        .find(|row| row.player == observer)
+        .unwrap();
+    assert!((passive.expected_payoff - 2.0).abs() <= f64::EPSILON);
+    assert!(passive.gain.abs() <= f64::EPSILON);
     for probabilities in trained.average_strategy.probabilities.values() {
         assert!((probabilities.iter().sum::<f64>() - 1.0).abs() < 1e-12);
     }
@@ -136,9 +154,33 @@ fn kuhn_average_value_and_nash_conv_match_the_independent_reference() {
         let probabilities = kuhn_probabilities(&trained.average_strategy);
         let independent_value = kuhn_value(&probabilities);
         let library_value = trained.root_values[&player("one")];
-        let independent_nash_conv = kuhn_best_responses(&probabilities).iter().sum::<f64>();
+        let responses = kuhn_best_responses(&probabilities);
+        let independent_gains = [
+            responses[0] - independent_value,
+            responses[1] + independent_value,
+        ];
+        let independent_nash_conv = responses.iter().sum::<f64>();
         let library_nash_conv =
             cfr_nash_conv(&source, &graph, &trained.average_strategy).expect("nash conv");
+        let report = cfr_deviation_report(&source, &graph, &trained.average_strategy)
+            .expect("deviation report");
+        assert_eq!(report.players.len(), 2);
+        let independent_seats = [
+            (player("one"), independent_value, independent_gains[0]),
+            (player("two"), -independent_value, independent_gains[1]),
+        ];
+        for (seat, payoff, gain) in independent_seats {
+            let row = report
+                .players
+                .iter()
+                .find(|row| row.player == seat)
+                .unwrap();
+            assert!((row.expected_payoff - payoff).abs() < 1e-9);
+            assert!((row.gain - gain).abs() < 1e-8);
+        }
+        assert!((report.nash_conv - library_nash_conv).abs() <= f64::EPSILON);
+        let max_independent_gain = independent_gains.into_iter().fold(0.0, f64::max);
+        assert!((report.max_gain - max_independent_gain).abs() < 1e-8);
 
         assert!(
             (library_value - independent_value).abs() < 1e-9,
@@ -1400,6 +1442,9 @@ fn unilateral_gain_survives_rounding_of_the_two_root_values() {
     // Both f64 root payoffs round to base+8. Switching the 1/4 played
     // on the left to the right earns 1/4 * 8 = 2 in the original units.
     assert!((cfr_nash_conv(&source, &graph, &strategy).unwrap() - 2.0).abs() < f64::EPSILON);
+    let report = cfr_deviation_report(&source, &graph, &strategy).unwrap();
+    assert!((report.players[0].gain - 2.0).abs() < f64::EPSILON);
+    assert!((report.nash_conv - 2.0).abs() < f64::EPSILON);
 }
 
 #[test]

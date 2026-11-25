@@ -133,6 +133,8 @@ jobs:
             --output target/uogto-interchange/profiles
           python3 -I verification/uogto_interchange/verify_consumer.py \
             --output target/uogto-interchange/installed-consumer.json
+          CARGO_TARGET_DIR=target cargo build --locked --manifest-path crates/paignia-io/Cargo.toml --example solve
+          python3 -I scripts/check_doc_diagrams.py --solver target/debug/examples/solve
           REPLAY
       - name: Cargo artifacts with provider source unavailable
         run: python3 scripts/validate_game_packages.py --receipt target/cargo-artifact-qualification.json --artifact-dir target/qualified-packages

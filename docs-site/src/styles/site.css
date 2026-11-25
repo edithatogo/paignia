@@ -1,0 +1,15 @@
+:root {
+  --sl-color-accent-low: #142d35;
+  --sl-color-accent: #42b3bd;
+  --sl-color-accent-high: #c5f2f2;
+  --sl-text-h1: clamp(2.1rem, 4.2vw, 3.3rem);
+}
+:root[data-theme='light'] {
+  --sl-color-accent-low: #d6f1f3;
+  --sl-color-accent: #17646e;
+  --sl-color-accent-high: #153c46;
+}
+.hero h1 { letter-spacing: -0.035em; }
+.diagram { margin-inline: 0; }
+.diagram svg { width: 100%; height: auto; }
+.diagram figcaption { color: var(--sl-color-gray-3); font-size: var(--sl-text-sm); }

@@ -257,6 +257,11 @@ archive set. Each advertised numerical method has its own independent controls.
 core and model evaluation, model interchange, diagram generation, downstream
 adoption, and documentation.
 
+[UOGTO–Paignia RDF/JSON profile](docs/architecture/interchange-profile-v1.md) ·
+[External game catalogues](https://github.com/edithatogo/UOGTO/blob/d93dfffe192fed2f833bd9b0681694113f663b9c/docs/contracts/external-game-catalogues-v1.md) ·
+[Game-theory library roles](docs/architecture/game-theory-library-roles.md) ·
+[Documentation source](docs-site/src/content/docs/index.md).
+
 ## Citation
 
 Mordaunt, D. A. (2026). *Paignia* (Version 0.1.0). Zenodo.
