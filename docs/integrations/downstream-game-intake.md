@@ -144,10 +144,25 @@ UOGTO's successful declaration check separately retains
 `native_execution_qualified=false`; it does not certify this Rust graph.
 
 This records a verified use of an existing method and a reusable known-answer
-case. No new solver or mandatory provider dependency is needed. Admission of a
-public upstream fixture, full RDF mapping and hosted tutorial execution remain
-pending. T17/T18 acceptance and the authoritative consumer receipts are unchanged;
-the synthetic example is not empirical policy validation.
+case. The invented utilities support method verification. Empirical policy
+validation requires separate evidence.
+
+### Tutorial coordination, edition 0.3
+
+On 26 November 2026 the tutorial ran the same game through the RDF bridge
+from signed Paignia 0.1.0 at `a04a19da06cc50e310a172574ed66f62000b891a`.
+The bridge validated the pinned UOGTO bundle and preserved the full game
+identity, root, controllers, ordered edges, targets and payoffs before Rust
+performed the solve. The baseline and changed-payoff case reproduced the
+earlier results. The result RDF preserved the specification link. The gate
+rejected duplicate action order, and independent review checked rejection of
+reordered actions, a changed off-path payoff and an invalid node inventory.
+[Tutorial receiving PR](https://github.com/edithatogo/tutorial_health_gt/pull/15)
+
+Both original jobs passed on receiving revision
+`eec4d60558bd8b8e0f999d6ee0188a7bc6bdb40d`. Edition 0.2 remains the tested
+rollback. [Lesson check](https://github.com/edithatogo/tutorial_health_gt/actions/runs/45641146686) ·
+[Privacy check](https://github.com/edithatogo/tutorial_health_gt/actions/runs/45641146572)
 
 ## Reuse the relevant upstream repositories
 
