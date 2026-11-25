@@ -80,8 +80,8 @@ def verified_bytes(path, expected, data):
     return data
 
 
-def stage(directory):
-    lock = json.loads(LOCK.read_bytes())
+def stage(directory, lock_path=LOCK):
+    lock = json.loads(lock_path.read_bytes())
 
     def fetch(entry):
         path, expected = entry["path"], entry["sha256"]

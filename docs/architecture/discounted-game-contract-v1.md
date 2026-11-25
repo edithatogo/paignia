@@ -66,6 +66,18 @@ The response preserves the envelope, the player and action identifiers,
 the policy weights and the applicable numerical bounds.
 
 The caller validates asserted RDF and binds its hash and ontology
-revision before invoking the native entry point. The two-by-two profile
-covers expected values. A realised trajectory with a clock or random
-stream remains a separate Kairos integration.
+revision before invoking the native entry point. Use the replay below
+to validate the source graph and record the exact request and response
+for both methods. The locked bundle includes the UOGTO owner shapes and
+projector. The new fixture exercises both classes and all eleven properties
+declared by the discounted Markov extension.
+
+```sh
+target/dev-python/bin/python -I verification/uogto_interchange/verify_discounted.py stage \
+  --bundle target/uogto-discounted
+target/dev-python/bin/python -I verification/uogto_interchange/verify_discounted.py replay \
+  --bundle target/uogto-discounted --output target/uogto-interchange/discounted
+```
+
+The two-by-two profile covers expected values. A realised trajectory
+with a clock or random stream remains a separate Kairos integration.

@@ -1,0 +1,31 @@
+{
+  "classes": [
+    "https://w3id.org/uogto/extensions#DiscountedZeroSumMarkovRepresentation",
+    "https://w3id.org/uogto/extensions#MarkovStageDecision"
+  ],
+  "executions": {
+    "evaluate": {
+      "request_sha256": "895e5a3b418b66a03522bcae487d95d3270524ee0c91b345deb5a5ab23b41d5c",
+      "response_sha256": "ca71e09c626197f67bfc92eb6e8352ec9d27664395fb670006e6f0f0cfd99897"
+    },
+    "minimax": {
+      "request_sha256": "448b4b4eeae832b8d93e0581478fe49d9c7457efa7b52977e52c7ae7cce6acaa",
+      "response_sha256": "217248e11348a739742e3aefe5f86075ca3aa7071401aaae078483e0d117a9cd"
+    }
+  },
+  "ontology_revision": "b3f1de0119ee1c1e49913d9c1f9284e053e43433",
+  "properties": [
+    "https://w3id.org/uogto/extensions#actionOrder",
+    "https://w3id.org/uogto/extensions#atState",
+    "https://w3id.org/uogto/extensions#hasActionWeight",
+    "https://w3id.org/uogto/extensions#hasInitialWeight",
+    "https://w3id.org/uogto/extensions#hasPolicyRow",
+    "https://w3id.org/uogto/extensions#hasStageDecision",
+    "https://w3id.org/uogto/extensions#hasStationaryProfile",
+    "https://w3id.org/uogto/extensions#modelDiscountFactor",
+    "https://w3id.org/uogto/extensions#playerOrder",
+    "https://w3id.org/uogto/extensions#stageReward",
+    "https://w3id.org/uogto/extensions#stateOrder"
+  ],
+  "rdf_sha256": "2502af2adff68ff9b41e11c68f28ba93a9c452baa0b0f74831fec5ac768f8552"
+}
