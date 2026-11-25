@@ -190,6 +190,7 @@ def compare_normal(bundle, executables, evidence):
 def emit_efg(request, seats):
     nodes = {record["id"]: record["node"] for record in request["nodes"]}
     lines = ['EFG 2 R "Finite Paignia fixture" { "buyer" "seller" }']
+    information_sets = dict.fromkeys(seats, 0)
 
     def emit(node_id):
         node = nodes[node_id]
@@ -207,7 +208,9 @@ def emit_efg(request, seats):
         else:
             edges = node["actions"]
             options = " ".join(f'"edge{i}"' for i in range(len(edges)))
-            lines.append(f'p "" {seats.index(node["player"]) + 1} {serial} "" {{ {options} }} 0')
+            seat = node["player"]
+            information_sets[seat] += 1
+            lines.append(f'p "" {seats.index(seat) + 1} {information_sets[seat]} "" {{ {options} }} 0')
             for edge in edges:
                 emit(edge["target"])
 
