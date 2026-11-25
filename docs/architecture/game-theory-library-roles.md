@@ -16,10 +16,12 @@ entries describe external game definitions. [Evaluation protocol](../validation/
 
 ## Shared Nash diagnostics
 
-For a candidate profile σ, let Vᵢ(σ) be player i's expected payoff. The
+For an exactly normalized candidate profile σ, let Vᵢ(σ) be player i's expected payoff. The
 gain gᵢ is its best feasible unilateral-deviation payoff minus Vᵢ(σ).
 Each method defines the feasible deviations and computes the payoff
-difference in the player's original units. A pure finite profile can use
+difference in the player's original units. For a probability row admitted within its mass
+tolerance, the diagnostics retain the method's own weighting convention.
+A pure finite profile can use
 payoff table lookups. A mixed profile needs expectations against its
 opponents' distributions. A behavioural policy needs a best response that
 respects information sets.
@@ -31,4 +33,8 @@ interpret the per-player values and gains in their own units. Solver
 guarantees, support completeness and refinement conditions stay with the
 method. Correlated equilibrium uses conditional deviations after a
 recommendation, and Stackelberg and cooperative solutions have their own
-solution criteria. The existing wire profile and solver settings are unchanged.
+solution criteria. The pure gain uses payoff subtraction. Near a floating-point rounding
+boundary it can differ from the solver's legacy comparison of the
+alternative payoff with the current payoff plus tolerance. The new report
+uses compensated addition. The original CFR scalar and JSON retain their
+existing summation and rounding.

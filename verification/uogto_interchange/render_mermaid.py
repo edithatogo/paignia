@@ -60,6 +60,7 @@ def diagram(request):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--solver", required=True, type=Path)
+    parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("request", type=Path)
     args = parser.parse_args()
     with args.request.open("rb") as stream:
@@ -67,7 +68,7 @@ def main():
     subprocess.run(
         [args.solver.resolve()], input=request, stdout=subprocess.DEVNULL, timeout=30, check=True,
     )
-    print(diagram(json.loads(request)), end="")
+    args.output.write_text(diagram(json.loads(request)), encoding="utf-8")
 
 
 if __name__ == "__main__":

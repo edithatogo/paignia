@@ -78,6 +78,8 @@ fn chance_weights_a_one_action_game_exactly() {
     let graph = build_information_set_graph(&source, &declaration).unwrap();
     let report = cfr_deviation_report(&source, &graph, &trained.average_strategy).unwrap();
     assert_eq!(report.players.len(), 2);
+    assert_eq!(report.players[0].player, alice);
+    assert_eq!(report.players[1].player, observer);
     let passive = report
         .players
         .iter()
@@ -1440,6 +1442,9 @@ fn unilateral_gain_survives_rounding_of_the_two_root_values() {
     // Both f64 root payoffs round to base+8. Switching the 1/4 played
     // on the left to the right earns 1/4 * 8 = 2 in the original units.
     assert!((cfr_nash_conv(&source, &graph, &strategy).unwrap() - 2.0).abs() < f64::EPSILON);
+    let report = cfr_deviation_report(&source, &graph, &strategy).unwrap();
+    assert!((report.players[0].gain - 2.0).abs() < f64::EPSILON);
+    assert!((report.nash_conv - 2.0).abs() < f64::EPSILON);
 }
 
 #[test]

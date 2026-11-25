@@ -31,7 +31,7 @@ the tie lexicographically and chooses pass.
 CARGO_TARGET_DIR="$PWD/target" cargo build --locked --release \
   --manifest-path crates/paignia-io/Cargo.toml --example solve
 target/dev-python/bin/python verification/uogto_interchange/render_mermaid.py \
-  --solver target/release/examples/solve \
+  --solver target/release/examples/solve --output target/buyer-seller.mmd \
   verification/uogto_interchange/frozen-static-v1/request.json
 target/dev-python/bin/python scripts/check_doc_diagrams.py
 ```

@@ -1,7 +1,7 @@
 use paignia_core::{ActionId, PlayerId};
 use paignia_solve::{
-    evaluate_mixed_nash_candidate, evaluate_pure_nash_candidate, MixedNashConfig, NormalFormGame,
-    PureNashEvaluationError, StrategyProfile,
+    evaluate_mixed_nash_candidate, evaluate_pure_nash_candidate, pure_nash_equilibria,
+    MixedNashConfig, NormalFormGame, PureNashEvaluationError, SolverConfig, StrategyProfile,
 };
 
 fn normal_form(payoff: [[f64; 2]; 2]) -> (NormalFormGame, StrategyProfile) {
@@ -51,6 +51,12 @@ fn pure_and_one_hot_mixed_profiles_report_the_same_deviations() {
     .deviation_report();
 
     assert_eq!(pure.players.len(), 2);
+    assert_eq!(mixed.players.len(), 2);
+    assert_eq!(mixed.players[0].player, paignia_solve::MixedNashPlayer::Row);
+    assert_eq!(
+        mixed.players[1].player,
+        paignia_solve::MixedNashPlayer::Column
+    );
     for (index, (payoff, gain)) in [(1.0, 0.0), (-1.0, 2.0)].into_iter().enumerate() {
         let row = &pure.players[index];
         assert_eq!(row.player, game.players[index]);
@@ -77,4 +83,18 @@ fn pure_diagnostics_reject_out_of_domain_strategies_and_overflow() {
         evaluate_pure_nash_candidate(&game, &profile),
         Err(PureNashEvaluationError::InvalidProfile)
     );
+}
+
+#[test]
+fn payoff_subtraction_preserves_a_gain_at_the_legacy_tie_boundary() {
+    let base = 8192.0;
+    let next = base + 2.0_f64.powi(-39);
+    let (game, profile) = normal_form([[base, base], [next, base]]);
+    let config = SolverConfig::default();
+    let report = evaluate_pure_nash_candidate(&game, &profile).unwrap();
+
+    assert!(report.max_gain > config.tolerance);
+    assert!(pure_nash_equilibria(&game, config)
+        .unwrap()
+        .contains(&profile));
 }
