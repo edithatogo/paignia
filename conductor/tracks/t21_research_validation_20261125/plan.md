@@ -9,7 +9,8 @@
 ## Phase 2 Core and per-model evaluation
 
 - [x] Task: Record the staged [evaluation protocol](../../../docs/validation/evaluation-plan.md) and its required independent oracles, admission and benchmark measures.
-- [ ] Task: Freeze admitted fixture families and comparison versions. Run correctness and reproducibility checks for each profile before comparative timing.
+- [x] Task: Freeze and replay the 0.1.0 correctness fixtures for Gambit pure and bounded mixed Nash and OpenSpiel backward induction and Kuhn CFR/CFR+. [Protocol](../../../verification/comparators/README.md) · [Two-run results](../../../docs/validation/receipts/t21-core/README.md)
+- [ ] Task: Extend correctness and reproducibility to the remaining admitted profiles before comparative timing.
 - [ ] Task: Execute the equivalent-game comparison and record benchmark data, unsupported cases, errors and independent review.
 - [ ] Task: Freeze and run the baseline and stress tests for each downstream model using its own decision and payoff meaning.
 

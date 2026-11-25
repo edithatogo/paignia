@@ -1,0 +1,209 @@
+{
+  "findings": {
+    "kuhn_poker": {
+      "cfr": [
+        {
+          "iterations": 100,
+          "open_spiel": {
+            "nash_conv": 0.016451954631830523,
+            "values": [
+              -0.05614724147718679,
+              0.05614724147718679
+            ]
+          },
+          "paignia": {
+            "nash_conv": 0.051349471693896115,
+            "values": [
+              -0.05598721160991636,
+              0.05598721160991636
+            ]
+          }
+        },
+        {
+          "iterations": 1000,
+          "open_spiel": {
+            "nash_conv": 0.0018752332939856592,
+            "values": [
+              -0.05562503158224917,
+              0.05562503158224917
+            ]
+          },
+          "paignia": {
+            "nash_conv": 0.014538212817128623,
+            "values": [
+              -0.05555721950490665,
+              0.05555721950490665
+            ]
+          }
+        },
+        {
+          "iterations": 12000,
+          "open_spiel": {
+            "nash_conv": 0.00024315139698220106,
+            "values": [
+              -0.05556215830392669,
+              0.05556215830392669
+            ]
+          },
+          "paignia": {
+            "nash_conv": 0.004186941146566481,
+            "values": [
+              -0.055549270522168424,
+              0.055549270522168424
+            ]
+          }
+        }
+      ],
+      "cfr_plus": [
+        {
+          "iterations": 100,
+          "open_spiel": {
+            "nash_conv": 0.002388808202223293,
+            "values": [
+              -0.05558400654926937,
+              0.05558400654926937
+            ]
+          },
+          "paignia": {
+            "nash_conv": 0.008693532510577369,
+            "values": [
+              -0.0549495738860857,
+              0.0549495738860857
+            ]
+          }
+        },
+        {
+          "iterations": 1000,
+          "open_spiel": {
+            "nash_conv": 0.0001747306450415112,
+            "values": [
+              -0.055555917582651826,
+              0.055555917582651826
+            ]
+          },
+          "paignia": {
+            "nash_conv": 0.000959954723930824,
+            "values": [
+              -0.05550598211168641,
+              0.05550598211168641
+            ]
+          }
+        },
+        {
+          "iterations": 12000,
+          "open_spiel": {
+            "nash_conv": 1.647235798190455e-05,
+            "values": [
+              -0.055555557615960094,
+              0.055555557615960094
+            ]
+          },
+          "paignia": {
+            "nash_conv": 0.00010841333836165978,
+            "values": [
+              -0.055551747713880995,
+              0.055551747713880995
+            ]
+          }
+        }
+      ]
+    },
+    "normal_form": {
+      "games_without_pure_witness": 2,
+      "mixed": {
+        "all-zero": {
+          "max_native_gain": 0.0,
+          "max_payoff_error": 0.0,
+          "max_probability_error": 0.0,
+          "status": "unresolved_supports",
+          "unresolved_support_pairs": 1,
+          "witnesses": 4
+        },
+        "asymmetric-coordination": {
+          "max_native_gain": 8.881784197001253e-17,
+          "max_payoff_error": 0.0,
+          "max_probability_error": 1.1102230246251565e-16,
+          "status": "completed_within_scope",
+          "unresolved_support_pairs": 0,
+          "witnesses": 3
+        },
+        "matching-pennies": {
+          "max_native_gain": 0.0,
+          "max_payoff_error": 0.0,
+          "max_probability_error": 0.0,
+          "status": "completed_within_scope",
+          "unresolved_support_pairs": 0,
+          "witnesses": 1
+        },
+        "prisoners-dilemma": {
+          "max_native_gain": 0.0,
+          "max_payoff_error": 0.0,
+          "max_probability_error": 0.0,
+          "status": "completed_within_scope",
+          "unresolved_support_pairs": 0,
+          "witnesses": 1
+        },
+        "rectangular": {
+          "max_native_gain": 8.881784197001253e-17,
+          "max_payoff_error": 0.0,
+          "max_probability_error": 1.1102230246251565e-16,
+          "status": "completed_within_scope",
+          "unresolved_support_pairs": 0,
+          "witnesses": 3
+        },
+        "rock-paper-scissors": {
+          "max_native_gain": 5.551115123125783e-17,
+          "max_payoff_error": 0.0,
+          "max_probability_error": 5.551115123125783e-17,
+          "status": "unresolved_supports",
+          "unresolved_support_pairs": 3,
+          "witnesses": 1
+        }
+      },
+      "pure_games": 256,
+      "pure_witnesses": 576
+    },
+    "perfect_information": {
+      "buyer-seller": {
+        "native_nodes": 7,
+        "root_values": [
+          2.0,
+          4.0
+        ],
+        "tree_states": {
+          "chance": 1,
+          "decision": 2,
+          "terminal": 4
+        }
+      },
+      "buyer-seller-shared": {
+        "native_nodes": 7,
+        "root_values": [
+          3.0,
+          0.0
+        ],
+        "tree_states": {
+          "chance": 1,
+          "decision": 3,
+          "terminal": 6
+        }
+      }
+    }
+  },
+  "harness_commit": "fd45e21c6ef91dbbe3936085c180c030ce0e08d1",
+  "machine": "arm64",
+  "ontology_commit": "cc0c84201929996580bb4af98774cf2145b224ae",
+  "ontology_lock_sha256": "8674989d260256a0e128ffa8f84d3c02d371b97c7aec11b2b83ff911927d3ca2",
+  "paired_files": 1340,
+  "paired_receipt_sha256": "5bc4ae46e8365d837bbd4b8ad567a791f1ba45776f95143fd4bbc7683b7e4599",
+  "python": "3.15.2",
+  "release_commit": "a04a19da06cc50e310a172574ed66f62000b891a",
+  "system": "Darwin",
+  "tools_sha256": {
+    "mixed": "2fce9b3093e8bea66b9191145b144100f324513f98dd330aa12fd1ea28b3f2f3",
+    "profile": "f59fd1ac7d11efc6bd67d3a0b3ade112e3750f220ca9d465923c00e0517eabb2",
+    "pure": "d3317c852d7fa6e953f03a3025d97c56aeb291164544ea802a9e77e6961bb3e1",
+    "pyspiel": "615bb363f39ad70276adf18b032d131079faecf094734107477ae06948797286",
+    "static": "eb985181ee75992c1595c241b41c22b2b605ba9c72d40ff74527286b0233ee1e"
+  }
+}
