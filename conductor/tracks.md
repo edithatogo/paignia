@@ -18,5 +18,5 @@
 - [~] **Track: T21 Research validation and downstream adoption**
   [Comparison, interchange, diagrams, validation, adoption and documentation](tracks/t21_research_validation_20261125/index.md).
 
-- [ ] **Track: T22 Stateful and continuous game simulation**
+- [~] **Track: T22 Stateful and continuous game simulation**
   [Research strategy, library boundaries and first stochastic-game slice](tracks/t22_dynamic_game_simulation_20261125/index.md).
