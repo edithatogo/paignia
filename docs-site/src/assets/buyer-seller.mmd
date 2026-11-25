@@ -1,0 +1,16 @@
+flowchart TD
+  accTitle: Finite decision game
+  accDescr: Decision and chance branches with labeled actions and terminal payoffs.
+  n0fccc9e5f25783b81d97427c88c5e8bd1a8cf3f8bb7c265755acdfab1fd9a5f7["offer/accept: offer/acheteur = 0.0, offer/décideur = 6.0"]
+  ne9fd31371e38b92d20d7191971261c0ed0fd281f0fddcb904f9bdcc61e772181["offer/decline: offer/acheteur = 1.0, offer/décideur = 3.0"]
+  n84a9e5b84563c28bb98102111015dced92b5c193c50641da98ebb3818e9c9848(("offer/draw: chance"))
+  n84a9e5b84563c28bb98102111015dced92b5c193c50641da98ebb3818e9c9848 e5c316e099ad65d5a4fe3b9a88e7e669fdb43662e59947ca4edd42dc1d1aad875@-->|"0.25"| n1c5859f3d2574e5817f23c076c80bae40e95c3d87c364514c71358b4abcdda37
+  n84a9e5b84563c28bb98102111015dced92b5c193c50641da98ebb3818e9c9848 e5fd3a34861b86cb608c167049c2efc9e7a7e568a458e63d2fd80afe549f31236@-->|"0.75"| n0e5dbdfc5507c2b496de4d590b183c4aca67d2adb9be63d2bd4ab6887f4c712c
+  nc19cd9c891a351c8241e8cceb83700f35aa4ed89ceda59dc53a4633f8cd11797["offer/guarantee: offer/acheteur = 1.0, offer/décideur = 0.0"]
+  n1c5859f3d2574e5817f23c076c80bae40e95c3d87c364514c71358b4abcdda37["offer/high: offer/acheteur = 8.0, offer/décideur = -2.0"]
+  n0e5dbdfc5507c2b496de4d590b183c4aca67d2adb9be63d2bd4ab6887f4c712c{"offer/respond: offer/décideur"}
+  n0e5dbdfc5507c2b496de4d590b183c4aca67d2adb9be63d2bd4ab6887f4c712c e36fb5a9636644cb769efbaf5cc0cbbc1e4d4ca885424e82fb80bf2f4a199e624@-->|"offer/take"| n0fccc9e5f25783b81d97427c88c5e8bd1a8cf3f8bb7c265755acdfab1fd9a5f7
+  n0e5dbdfc5507c2b496de4d590b183c4aca67d2adb9be63d2bd4ab6887f4c712c eb59055621062a0ee0fdad01bebddfd188806442bce91715d80d42af5ef3d74ed@-->|"offer/pass"| ne9fd31371e38b92d20d7191971261c0ed0fd281f0fddcb904f9bdcc61e772181
+  n561a41d3e058befe0d0ee2b820c90deb43bff91b3ecd8fb81c5653aa6454cc4d{"offer/start: offer/acheteur"}
+  n561a41d3e058befe0d0ee2b820c90deb43bff91b3ecd8fb81c5653aa6454cc4d e80404429de10f242099ba979d418678cd296e3399f4311cd24e76dddce919f04@-->|"lottery/choice"| n84a9e5b84563c28bb98102111015dced92b5c193c50641da98ebb3818e9c9848
+  n561a41d3e058befe0d0ee2b820c90deb43bff91b3ecd8fb81c5653aa6454cc4d e320ea926a8806a471ec3dd2a4bd68f03287f6243b9013c1eb44e1e04b5ccb436@-->|"safe/choice"| nc19cd9c891a351c8241e8cceb83700f35aa4ed89ceda59dc53a4633f8cd11797

@@ -1,0 +1,41 @@
+---
+title: Static games and chance
+description: Read a decision graph, inspect its payoffs, and regenerate the diagram.
+---
+
+import Diagram from '../../components/Diagram.astro';
+import buyerSeller from '../../assets/buyer-seller.mmd?raw';
+import shared from '../../assets/shared-seller.mmd?raw';
+
+## Follow the choices
+
+The buyer either takes the safe option or enters a lottery. The lottery
+pays 8 and −2 with probability 0.25. With probability 0.75 the seller
+chooses to take or pass. The seller chooses take, which pays 0 and 6.
+The lottery's expected payoffs are 2 and 4.
+
+<Diagram chart={buyerSeller} caption="Buyer and seller payoffs are identified by name. The lottery leads to a chance node and the seller’s response." />
+
+## Preserve shared successors
+
+The stress case points a second, zero-probability branch to the same
+seller decision. The buyer chooses its safe option for payoff 3. The
+off-path seller has equal utility from take and pass. Paignia resolves
+the tie lexicographically and chooses pass.
+
+<Diagram chart={shared} caption="The two chance edges to the seller share one node. The zero-weight edge remains in the admitted graph." />
+
+## Regenerate the source
+
+```sh
+CARGO_TARGET_DIR="$PWD/target" cargo build --locked --release \
+  --manifest-path crates/paignia-io/Cargo.toml --example solve
+target/dev-python/bin/python verification/uogto_interchange/render_mermaid.py \
+  --solver target/release/examples/solve \
+  verification/uogto_interchange/frozen-static-v1/request.json
+target/dev-python/bin/python scripts/check_doc_diagrams.py
+```
+
+The exporter runs the static solver to admit the input. Mermaid node
+and edge identifiers use a digest of the exact source identifier. The
+diagram labels follow the source and list terminal payoffs by player.

@@ -6,14 +6,20 @@ mod correlated_equilibrium;
 mod credal_nash;
 mod leader_follower;
 mod mixed_nash;
+mod nash_diagnostics;
 mod replicator;
 mod result;
 
 pub use cfr::{
-    best_response_value as cfr_best_response_value, nash_conv as cfr_nash_conv,
-    profile_values as cfr_profile_values, train as train_counterfactual_regret,
-    Config as CfrConfig, Error as CfrError, Strategy as CfrStrategy, Training as CfrTraining,
-    Variant as CfrVariant, MAX_ITERATIONS as MAX_CFR_ITERATIONS, VERSION as CFR_VERSION,
+    best_response_value as cfr_best_response_value, deviation_report as cfr_deviation_report,
+    nash_conv as cfr_nash_conv, profile_values as cfr_profile_values,
+    train as train_counterfactual_regret, Config as CfrConfig, Error as CfrError,
+    Strategy as CfrStrategy, Training as CfrTraining, Variant as CfrVariant,
+    MAX_ITERATIONS as MAX_CFR_ITERATIONS, VERSION as CFR_VERSION,
+};
+
+pub use nash_diagnostics::{
+    evaluate_pure_nash_candidate, NashDeviationReport, PlayerDeviation, PureNashEvaluationError,
 };
 
 #[cfg(feature = "correlated-equilibrium")]

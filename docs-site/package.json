@@ -1,0 +1,16 @@
+{
+  "name": "paignia-docs",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=26.13.1"
+  },
+  "scripts": {
+    "build": "astro build"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "0.43.1",
+    "astro": "7.4.13",
+    "mermaid": "12.3.0"
+  }
+}

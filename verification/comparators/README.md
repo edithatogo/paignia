@@ -96,3 +96,23 @@ The two comparators are verification tools outside Paignia's packages.
    the harness commit, five built executables/modules, UOGTO lock and the
    SHA-256 digest of each input and output. Preserve the build log with the
    compiler, runtime and platform versions.
+
+## Timing pilot
+
+After the two correctness replays match, use either verified paired directory
+with the same binaries, Python and ontology bundle on Darwin:
+
+```sh
+PYTHONPATH="$OPEN_SPIEL_LIBRARY_DIR" target/dev-python/bin/python verification/comparators/benchmark.py \
+  --replay "$EVIDENCE_DIR" --paignia-bin target/release/examples \
+  --gambit-bin "$GAMBIT_BIN_DIR" --ontology-dir target/uogto-bundle \
+  --output target/comparator-timings.json
+```
+
+The harness times one cold process and nine subsequent runs per tool and
+fixture, randomly interleaving tools with seed 211. Host page caches are
+retained. It reports conversion, process elapsed time and peak process RSS.
+The expected inputs and outputs must match the correctness manifest on every
+trial. Kuhn CFR+ uses the checked JSON and the native OpenSpiel registration. It
+compares process elapsed time at 12,000 iterations with the same observed
+utilities and NashConv as the corresponding correctness run.
