@@ -109,9 +109,9 @@ PYTHONPATH="$OPEN_SPIEL_LIBRARY_DIR" target/dev-python/bin/python verification/c
   --output target/comparator-timings.json
 ```
 
-The harness times one cold process and nine subsequent runs per tool and
-fixture, randomly interleaving tools with seed 211. Host page caches are
-retained. It reports conversion, process elapsed time and peak process RSS.
+The harness records the first launch and nine subsequent runs per tool and
+fixture, randomly interleaving tools with seed 211. Each trial launches a
+fresh process with host caches retained. It reports conversion, process elapsed time and peak process RSS.
 The expected inputs and outputs must match the correctness manifest on every
 trial. Kuhn CFR+ uses the checked JSON and the native OpenSpiel registration. It
 compares process elapsed time at 12,000 iterations with the same observed

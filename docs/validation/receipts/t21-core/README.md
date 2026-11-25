@@ -14,7 +14,7 @@ UOGTO lock and exact replay commit.
 | Comparison | Result |
 | --- | --- |
 | Exact Gambit pure Nash | Identical sets on all 256 ordered binary-payoff 2×2 games. 576 equilibrium profiles and two games with no pure equilibrium. |
-| Exact Gambit mixed Nash | All 13 fixture witnesses matched across six games. Maximum probability error was `1.12e-16` rounded up, maximum payoff error was zero, and maximum Paignia deviation gain was below `9e-17`. |
+| Exact Gambit mixed Nash | All 13 fixture witnesses matched across six games. Maximum probability error was `1.12e-16` rounded up, maximum payoff error was zero at binary64 comparison precision, and maximum Paignia deviation gain was below `9e-17`. |
 | OpenSpiel backward-induction policy evaluation | Buyer–seller root returns matched exactly at `(2, 4)` and the shared-successor variant at `(3, 0)`. Every decision was optimal under its continuation, including the off-path tie in the unfolded tree. |
 | OpenSpiel independent Kuhn policy evaluation | Returned Paignia payoffs and NashConv agreed within `1e-9` for CFR and CFR+ at 100, 1,000 and 12,000 iterations. All trained policies met the stated value bound and both trainers' NashConv decreased at each budget. |
 
@@ -30,8 +30,7 @@ at fixed iteration budgets. Rock–paper–scissors reported three unresolved
 support pairs. The all-zero game reported one and yielded the four Gambit
 vertices of its continuum.
 
-The comparative timing and memory study, broader method coverage and
-independent review remain tracked under the
+The broader scaling and time-to-accuracy study remains tracked under the
 [T21 evaluation plan](../../evaluation-plan.md).
 
 ## Additional signed-source checks
@@ -55,7 +54,7 @@ projection, so its cost reflects this verifier.
 | --- | --- | ---: | ---: | ---: | ---: |
 | all-zero | Gambit | 2.486 | 11.222 | 13.572 | 2.703 |
 | all-zero | Paignia | 2.759 | 10.140 | 13.174 | 2.441 |
-| asymmetric-coordination | Gambit | 2.527 | 11.253 | 14.255 | 2.720 |
+| asymmetric-coordination | Gambit | 2.527 | 11.253 | 14.256 | 2.720 |
 | asymmetric-coordination | Paignia | 2.802 | 9.966 | 13.140 | 2.441 |
 | binary-003 | Gambit | 2.800 | 11.843 | 14.754 | 2.408 |
 | binary-003 | Paignia | 3.112 | 11.468 | 14.046 | 2.441 |
@@ -82,3 +81,21 @@ receipt digest. These are small correctness-bound measurements on one
 Darwin arm64 host with no system cache purge. A performance ranking,
 scaling and platform portability require their own results.
 [Reproduction command](../../../../verification/comparators/README.md#timing-pilot)
+
+## Independent pilot review
+
+The specialist review verified all 1,340 paired files in each replay, the
+five built tools, both comparator source archives and the 101 pinned UOGTO
+files. It independently reproduced the strategy witnesses, both static
+game trees, all twelve saved Kuhn policy evaluations and all 156 timing
+summary statistics from the saved trials. The largest independent Kuhn
+diagnostic difference was `1.32e-16` at binary64 comparison precision.
+
+| Reviewed artifact | SHA-256 |
+| --- | --- |
+| Timing program | `8812ac1c8c115e802082e66965bea14eb051722fdaf22234c748c156387ab4af` |
+| Timing JSON | `86a926c849ee622354fc6ad8d4e6206241513f2e72a0fd7c1aec3507830d3c81` |
+
+The matched Kuhn workflows had different final residuals. Their fixed-budget
+times include different averaging and startup costs. A common-accuracy
+comparison and larger workloads remain open in T21.

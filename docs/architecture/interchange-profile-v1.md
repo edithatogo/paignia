@@ -11,7 +11,7 @@ identifies a compatible source and provider profile. [UOGTO declaration](https:/
 
 | Tool | Model loading | Persistence |
 | --- | --- | --- |
-| Gambit | `read_nfg` loads a finite strategic payoff table and `read_efg` loads a finite game tree with chance and information sets. Gambit also supports AGG, BAGG, GBT and named catalogue models. | NFG and EFG encode the model. Use the format-specific writers and retain exact rational inputs when required. Gambit can materialize compatible OpenSpiel games through its optional adapter. |
+| Gambit | `read_nfg` loads a finite strategic payoff table and `read_efg` loads a finite game tree with chance and information sets. Gambit also supports AGG, BAGG, GBT and named catalogue models. | NFG and EFG encode the model. Use `to_nfg` and `to_efg` to save these formats. Gambit interprets integers, decimals and fractions exactly. Gambit can materialize compatible OpenSpiel games through its optional adapter. |
 | OpenSpiel | `load_game(short_name, parameters)` creates a game registered by the build or by an imported Python module. Some registrations need required parameters or an input game. | `serialize_game_and_state` carries the game description and the serializer's state encoding. The default state encoding records action history. Replay uses the matching game implementation. EFG/NFG export applies to the matching finite subset. |
 | UOGTO and Paignia | The source is an asserted RDF graph with the pinned UOGTO and bridge terms. The projection emits the one versioned JSON shape needed by the admitted method. | Retain the asserted source, its SHA-256, the request and result, the executable revision and the mapping version. The checked result-to-RDF projection preserves the source binding. |
 
