@@ -260,6 +260,11 @@ archive set. Each advertised numerical method has its own independent controls.
 core and model evaluation, model interchange, diagram generation, downstream
 adoption, and documentation.
 
+[T22](conductor/tracks/t22_dynamic_game_simulation_20261125/index.md) starts
+with [discounted zero-sum games](docs/architecture/discounted-game-contract-v1.md).
+The [release maturity criteria](docs/validation/research-software-readiness.md#from-010-to-a-stable-release)
+link the technical and downstream evidence needed for a stable release.
+
 [UOGTO–Paignia RDF/JSON profile](docs/architecture/interchange-profile-v1.md) ·
 [External game catalogues](https://github.com/edithatogo/UOGTO/blob/d93dfffe192fed2f833bd9b0681694113f663b9c/docs/contracts/external-game-catalogues-v1.md) ·
 [Game-theory library roles](docs/architecture/game-theory-library-roles.md) ·

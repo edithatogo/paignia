@@ -4,6 +4,8 @@ mod cfr;
 #[cfg(feature = "correlated-equilibrium")]
 mod correlated_equilibrium;
 mod credal_nash;
+pub mod discounted;
+mod interval;
 mod leader_follower;
 mod mixed_nash;
 mod nash_diagnostics;
@@ -506,6 +508,84 @@ pub fn pure_nash_equilibria(
     game: &NormalFormGame,
     config: SolverConfig,
 ) -> Result<Vec<StrategyProfile>, SolveError> {
+    enumerate_pure_nash(game, config, |_, incumbent, alternative| {
+        alternative > incumbent + config.tolerance
+    })
+}
+
+/// Floating-point evaluation order for a pure unilateral-improvement test.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum PureNashComparison {
+    #[default]
+    IncumbentPlus,
+    AlternativeMinusBinary64,
+    AlternativeMinusBinary32,
+}
+
+impl PureNashComparison {
+    #[allow(clippy::cast_possible_truncation)]
+    fn improves(self, incumbent: f64, alternative: f64, tolerance: f64) -> bool {
+        match self {
+            Self::IncumbentPlus => alternative > incumbent + tolerance,
+            Self::AlternativeMinusBinary64 => alternative - tolerance > incumbent,
+            // The caller deliberately selects binary32 arithmetic for both the
+            // payoffs and the rounded threshold.
+            Self::AlternativeMinusBinary32 => {
+                alternative as f32 - tolerance as f32 > incumbent as f32
+            }
+        }
+    }
+}
+
+/// Enumerate pure equilibria with an explicit floating-point comparison per
+/// player. Players absent from the map use the ordinary incumbent-plus rule.
+/// The subtraction variants preserve applications that calculate an inclusive
+/// best-response threshold as maximum payoff minus tolerance. The binary32
+/// option rounds the payoffs and tolerance to binary32 before comparison.
+///
+/// # Errors
+///
+/// Returns a validation error for incomplete payoff tables or invalid solver
+/// tolerances. Binary32 comparison requires finite payoffs and a tolerance
+/// within the finite binary32 range.
+pub fn pure_nash_equilibria_with_comparisons(
+    game: &NormalFormGame,
+    config: SolverConfig,
+    comparisons: &BTreeMap<PlayerId, PureNashComparison>,
+) -> Result<Vec<StrategyProfile>, SolveError> {
+    let binary32_max = f64::from(f32::MAX);
+    for player in game.players.iter().filter(|player| {
+        comparisons.get(*player) == Some(&PureNashComparison::AlternativeMinusBinary32)
+    }) {
+        if config.tolerance > binary32_max {
+            return Err(SolveError::InvalidTolerance(config.tolerance));
+        }
+        for (profile, payoffs) in &game.payoffs {
+            if payoffs
+                .get(player)
+                .is_some_and(|payoff| payoff.abs() > binary32_max)
+            {
+                return Err(SolveError::InvalidNormalFormPayoff {
+                    profile: profile.clone(),
+                    player: player.clone(),
+                });
+            }
+        }
+    }
+    enumerate_pure_nash(game, config, |player, incumbent, alternative| {
+        comparisons
+            .get(player)
+            .copied()
+            .unwrap_or_default()
+            .improves(incumbent, alternative, config.tolerance)
+    })
+}
+
+fn enumerate_pure_nash(
+    game: &NormalFormGame,
+    config: SolverConfig,
+    improves: impl Fn(&PlayerId, f64, f64) -> bool,
+) -> Result<Vec<StrategyProfile>, SolveError> {
     if !config.tolerance.is_finite() || config.tolerance < 0.0 {
         return Err(SolveError::InvalidTolerance(config.tolerance));
     }
@@ -522,7 +602,7 @@ pub fn pure_nash_equilibria(
                 }
                 let mut deviation = profile.clone();
                 deviation.insert(player.clone(), strategy.clone());
-                if game.payoffs[&deviation][player] > current_payoff + config.tolerance {
+                if improves(player, current_payoff, game.payoffs[&deviation][player]) {
                     stable = false;
                     break;
                 }
@@ -889,6 +969,52 @@ mod tests {
         let equilibria = pure_nash_equilibria(&game, SolverConfig::default()).unwrap();
 
         assert_eq!(equilibria, vec![profile(&defect, &defect)]);
+    }
+
+    #[test]
+    fn preserves_rounded_subtraction_without_changing_default_equilibria() {
+        let player = PlayerId("decision-maker".into());
+        let actions = [ActionId("first".into()), ActionId("second".into())];
+        let profiles = actions
+            .clone()
+            .map(|action| BTreeMap::from([(player.clone(), action)]));
+        let config = SolverConfig {
+            tolerance: 1e-9,
+            ..SolverConfig::default()
+        };
+        for (rule, payoffs) in [
+            (
+                PureNashComparison::AlternativeMinusBinary64,
+                [4.729_372_449_219_227e-12, 1.004_729_372_449_219_3e-9],
+            ),
+            (
+                PureNashComparison::AlternativeMinusBinary32,
+                [4.0e-13_f32, 1.0004e-9_f32].map(f64::from),
+            ),
+        ] {
+            let game = NormalFormGame {
+                players: vec![player.clone()],
+                strategies: BTreeMap::from([(player.clone(), actions.to_vec())]),
+                payoffs: profiles
+                    .iter()
+                    .cloned()
+                    .zip(payoffs.map(|value| BTreeMap::from([(player.clone(), value)])))
+                    .collect(),
+            };
+            assert_eq!(
+                pure_nash_equilibria(&game, config).unwrap(),
+                profiles.to_vec()
+            );
+            assert_eq!(
+                pure_nash_equilibria_with_comparisons(
+                    &game,
+                    config,
+                    &BTreeMap::from([(player.clone(), rule)]),
+                )
+                .unwrap(),
+                vec![profiles[1].clone()]
+            );
+        }
     }
 
     #[test]

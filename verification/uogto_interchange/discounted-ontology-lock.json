@@ -1,0 +1,33 @@
+{
+  "revision": "b3f1de0119ee1c1e49913d9c1f9284e053e43433",
+  "files": [
+    {
+      "path": "examples/recurring-funding-discounted-markov-v1.ttl",
+      "sha256": "2502af2adff68ff9b41e11c68f28ba93a9c452baa0b0f74831fec5ac768f8552"
+    },
+    {
+      "path": "ontologies/extensions/discounted-markov.ttl",
+      "sha256": "10a9f6bfa5dc401c8f7f1f09adc61ab603ee91c9e55ca136efb8a9b7e7a922d8"
+    },
+    {
+      "path": "uogto/__init__.py",
+      "sha256": "7fecd2d01c47341bf41f16d64fb2f03a3b7014e2ad013bce7902d0c9b5aa7001"
+    },
+    {
+      "path": "uogto/interchange/__init__.py",
+      "sha256": "2ac9e81dd33b678bb9e8d3dbff9c0269af7b09f298fa05ff9d34dc0653b94220"
+    },
+    {
+      "path": "uogto/interchange/discounted-markov-profile-v1.ttl",
+      "sha256": "ea5006ea4db90674c922876711d48899be89dc2a8b78c71deb0f9e833ee11213"
+    },
+    {
+      "path": "uogto/interchange/discounted_markov.py",
+      "sha256": "4e514f7fd5503be3a205ffb3d4bbb948731290baf74af48de1c999882ce9bcbb"
+    },
+    {
+      "path": "uogto/interchange/game_contract.py",
+      "sha256": "af5add7adddbf6b9b4e9d9079efc5db50c75882ceab4fadc36fe8e00f7657718"
+    }
+  ]
+}

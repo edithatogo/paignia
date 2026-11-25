@@ -115,6 +115,7 @@ jobs:
           cargo clippy --locked --manifest-path crates/paignia-io/Cargo.toml --all-targets -- -D warnings
           python3 -m pip install --require-hashes --only-binary :all: -r verification/uogto_interchange/requirements.txt
           python3 -I verification/uogto_interchange/interchange.py stage --ontology-dir target/uogto-bundle
+          python3 -I verification/uogto_interchange/verify_discounted.py stage --bundle target/uogto-discounted
           cargo fetch --locked --manifest-path crates/paignia-io/Cargo.toml
           bwrap --die-with-parent --unshare-net --dev-bind / / -- bash -euo pipefail <<'REPLAY'
           export UOGTO_BUNDLE=target/uogto-bundle CARGO_NET_OFFLINE=true
@@ -131,6 +132,10 @@ jobs:
             --output target/uogto-interchange/term-coverage.json
           python3 -I verification/uogto_interchange/verify_profiles.py --ontology-dir "$UOGTO_BUNDLE" \
             --output target/uogto-interchange/profiles
+          python3 -I verification/uogto_interchange/verify_discounted.py replay \
+            --bundle target/uogto-discounted --output target/uogto-interchange/discounted
+          cmp docs/validation/receipts/t22-discounted/receipt.json \
+            target/uogto-interchange/discounted/receipt.json
           python3 -I verification/uogto_interchange/verify_consumer.py \
             --output target/uogto-interchange/installed-consumer.json
           CARGO_TARGET_DIR=target cargo build --locked --manifest-path crates/paignia-io/Cargo.toml --example solve
