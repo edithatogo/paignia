@@ -21,7 +21,8 @@
 receiving owner for each application.
 
 - [x] Task: Open the [parity parent and seven repository issues](https://github.com/edithatogo/paignia/issues/97).
-- [ ] Task: Reconcile all model and caller inventories. Qualify and switch each compatible production path to the provider, recording current native adoption separately from remaining gaps.
+- [x] Task: Record Innovate's verified receiving-main adoption, locked provider and rollback anchor. [Receiving evidence](adoption.md#innovate-receiving-evidence)
+- [~] Task: Reconcile all model and caller inventories. Qualify and switch each compatible production path to the provider, recording current native adoption separately from remaining gaps.
 - [ ] Task: Remove duplicate production code after parity and hosted checks. Record an immutable rollback pin and refer missing generic capabilities and ontology gaps to their owners.
 
 ## Phase 4 Documentation
