@@ -71,13 +71,15 @@ payoff ties. Across 24 synchronized warm batches, the compiled JAX median was
 times were 493.96 and 59.56 ms respectively. Retain the compiled path for warm
 batched execution. The eager migration continues through its receiving checks.
 
-The three platform jobs at `3d8a3a619672b654c304962cfba05cc3582a5e7e` passed
-the focused application controls and Ruff. Full CI stopped at parameter
-grounding. The registry reports 64 grounding failures, including two inventory
-mismatches with 236 missing parameters and 14 obsolete entries. Retain the
-public sources, substantive justifications and sensitivity bounds required by
-the application check. The application PR remains open.
-[Receiving CI](https://github.com/edithatogo/nhra_game/actions/runs/45785078243)
+The three platform jobs at `bc0d34b8b92f9c3ce3b339af48e24a44cbdfecb1` passed
+the focused application controls, Ruff and type checks. Restoring the four
+outreach validators passed their 11 focused tests and brought full collection
+to 290 tests. Hosted CI stopped at parameter grounding. It reported 64
+diagnostics, including inventory mismatches with 234 missing parameters and
+14 entries outside the current public parameter schema. Public sources,
+substantive justifications and sensitivity bounds are still required.
+The application PR remains open.
+[Receiving CI](https://github.com/edithatogo/nhra_game/actions/runs/45788252438)
 
 ## Runner qualification
 
