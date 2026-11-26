@@ -15,7 +15,7 @@ retentions with the same source and oracle discipline.
 | Health tutorial | The signed Paignia 0.1.0 lesson matches the existing Rust game through the UOGTO RDF bridge. The original lesson and privacy gates passed on the exact receiving commit on official Actions runners in Apple Container. Edition 0.2 remains the rollback. Later lessons have their own intake. [Tutorial #12](https://github.com/edithatogo/tutorial_health_gt/issues/12) · [Receiving PR](https://github.com/edithatogo/tutorial_health_gt/pull/15) · [Public archives](https://github.com/edithatogo/tutorial-health-gt-archives/releases/tag/lesson-archives-2026-11-26) |
 | Innovate | The sequential pricing adapter is integrated and qualified on main. The receiving commit retains the approved `bd880dd` source pin for the bounded pricing paths. [Receiving evidence](#innovate-receiving-evidence) · [Innovate #723](https://github.com/edithatogo/innovate/issues/723) |
 | Reimbursement | The signed Paignia 0.1.0 pin is integrated for the finite Chapter 8 menu. The exact receiving tree passed six native controls and 16 Python tests for Chapters 7 and 8. The wider Python grid still needs its own policy and payoff comparison for zero offers, indifference and manufacturing cost. [Receiving PR #124](https://github.com/edithatogo/new-drug-reimbursement-game/pull/124) · [Reimbursement #100](https://github.com/edithatogo/new-drug-reimbursement-game/issues/100) |
-| NHRA Game | The eager pure Nash candidate passed its focused three-platform controls. On the latest draft head `7b05724d96f9`, full Ubuntu CI stopped at 731 Ruff findings. The trajectory test imports `archive/intermediate_engine.py`, which is absent from the receiving tree. Eager adoption still needs the full receiving checks and the compiled JAX replacement still needs performance qualification. [NHRA Game #39](https://github.com/edithatogo/nhra_game/issues/39) · [Receiving PR #41](https://github.com/edithatogo/nhra_game/pull/41) · [Exact CI](https://github.com/edithatogo/nhra_game/actions/runs/45640771390) |
+| NHRA Game | The frozen trajectory and eager pure Nash controls passed on three platforms. The compiled JAX path is retained after a matched-output performance comparison. Full receiving CI still requires parameter grounding. [Receiving evidence](#nhra-receiving-evidence) · [NHRA Game #39](https://github.com/edithatogo/nhra_game/issues/39) |
 | GINSIM | The parity audit closed with continuous premium screening, calibrated compliance and proxy metrics retained in GINSIM. The installed binary64 candidate matched six screening and three compliance oracles at the original tolerance and passed 46 application tests in the isolated candidate environment. The application owns the runtime and precision rollout. [GINSIM #62](https://github.com/edithatogo/ginsim/issues/62) · [Runtime and precision #63](https://github.com/edithatogo/ginsim/issues/63) |
 | GTPCNZ | The parity audit closed after Paignia and Gambit matched the finite teaching game and independent stress checks supported retaining the smoothed adjustment trace and continuous funding benchmark. The application owns the receiving Python lock and checks. [GTPCNZ #222](https://github.com/edithatogo/gtpcnz/issues/222) · [Receiving checks #223](https://github.com/edithatogo/gtpcnz/issues/223) |
 | Tobac | The application owner retains the inspection and commitment work in the existing workspace. Its receiving PR is open and the signed-lineage acceptance remains with that lane. [Tobac #203](https://github.com/edithatogo/tobac/issues/203) · [Receiving PR #178](https://github.com/edithatogo/tobac/pull/178) |
@@ -52,6 +52,32 @@ continues to block publication on 38 outstanding scientific obligations.
 [Signed-pin candidate](https://github.com/edithatogo/innovate/commit/74a2a05f28c9a3875d1ccbce0e9f1831074abfa8)
 [UOGTO intake](https://github.com/edithatogo/innovate/blob/05750f4e30445712f66d9ee9f6ce9393305ddde5/conductor/tracks/kairos_runtime_boundary_20261107/strategic-information-integration.md#pricing-commitment-intake)
 [Release Readiness](https://github.com/edithatogo/innovate/actions/runs/45755042137)
+
+## NHRA receiving evidence
+
+The application replaced its missing trajectory fixture source with a historical
+scalar engine pinned at `ab65315de2d6be438f0655302f48cc568e0f851f`.
+An independent regeneration matched the tracked fixture byte for byte. Its
+SHA-256 is `492bc043d5da35c53c05242d80f8f19238c2344e2fc0943c1f00766937a95a83`.
+The checks retain the original one-step tolerances and compare 72 months of
+hospital-pressure outputs for baseline and stress cases.
+[Receiving PR #41](https://github.com/edithatogo/nhra_game/pull/41)
+
+The comparison used NHRA revision `b634e97c7fe8312ffd142badb10a4aac55715159`
+with CPython 3.15.2 and JAX/JAXlib 0.12.1 on an arm64 macOS CPU. Both paths
+matched an independent enumeration on all 256 synthetic 2-by-2 games, including
+payoff ties. Across 24 synchronized warm batches, the compiled JAX median was
+0.109 ms and the sequential Paignia callback median was 20.82 ms. First-call
+times were 493.96 and 59.56 ms respectively. Retain the compiled path for warm
+batched execution. The eager migration continues through its receiving checks.
+
+The three platform jobs at `3d8a3a619672b654c304962cfba05cc3582a5e7e` passed
+the focused application controls and Ruff. Full CI stopped at parameter
+grounding. The registry reports 64 grounding failures, including two inventory
+mismatches with 236 missing parameters and 14 obsolete entries. Retain the
+public sources, substantive justifications and sensitivity bounds required by
+the application check. The application PR remains open.
+[Receiving CI](https://github.com/edithatogo/nhra_game/actions/runs/45785078243)
 
 ## Runner qualification
 
