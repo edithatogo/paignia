@@ -62,6 +62,10 @@ repository root. [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov)
 
 ### Repository lint and health
 
+The pre-commit hooks use ShellCheck for shell scripts and ESLint for
+JavaScript. Install ShellCheck and use the Node version in
+`docs-site/.node-version` when running the hooks.
+
 The **Repository Health** workflow runs on pull requests, pushes to `main`
 and merge groups. It can also run on demand from the Actions tab.
 
