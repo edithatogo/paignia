@@ -107,6 +107,25 @@ jobs:
           PY
       - name: Build the reproducible segment benchmark
         run: cargo build --release --locked --manifest-path verification/credal_segment_benchmark/Cargo.toml
+      - name: Check out the pinned Dapane receiver
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: edithatogo/dapane
+          ref: 7b530293dd5575c38c7daa008c0b0e1d51673d82
+          path: target/dapane-d2-receiver
+          persist-credentials: false
+      - name: Replay the Dapane D2 receiving contract
+        shell: bash
+        env:
+          CARGO_TARGET_DIR: target/dapane-d2
+        run: |
+          set -euo pipefail
+          cargo fmt --manifest-path verification/dapane_d2/Cargo.toml -- --check
+          cargo clippy --locked --manifest-path verification/dapane_d2/Cargo.toml -- -D warnings
+          cargo build --locked --manifest-path verification/dapane_d2/Cargo.toml
+          python3 -B verification/dapane_d2/verify.py \
+            target/dapane-d2-receiver target/dapane-d2/debug/paignia-dapane-d2-replay \
+            | tee target/dapane-d2-receipt.json
       - name: Build and replay the UOGTO interchange case
         shell: bash
         run: |
@@ -153,6 +172,7 @@ jobs:
           path: |
             target/static-dependency-boundary.json
             target/cargo-artifact-qualification.json
+            target/dapane-d2-receipt.json
             target/qualified-packages/*.crate
             target/uogto-interchange/
             target/all-features.log

@@ -86,6 +86,11 @@ IRIs, Rust profile IDs or another release-acceptance ledger. Current T17/T18
 statuses and [consumer receipts](../validation/game-consumers.json) retain their
 existing authority.
 
+Dapane's bounded D2 decision reuses the native finite perfect-information
+profile. The receiving contract records the utility ownership, UOGTO mapping,
+immutable provider and replay procedure.
+[Dapane D2 receiving contract](../../verification/dapane_d2/README.md)
+
 ## Initial provider intake
 
 This is a coverage-review snapshot from 22 November 2026. Existing method

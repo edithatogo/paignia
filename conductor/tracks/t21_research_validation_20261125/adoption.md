@@ -15,7 +15,7 @@ retentions with the same source and oracle discipline.
 | Health tutorial | The signed Paignia 0.1.0 lesson matches the existing Rust game through the UOGTO RDF bridge. The original lesson and privacy gates passed on the exact receiving commit on official Actions runners in Apple Container. Edition 0.2 remains the rollback. Later lessons have their own intake. [Tutorial #12](https://github.com/edithatogo/tutorial_health_gt/issues/12) · [Receiving PR](https://github.com/edithatogo/tutorial_health_gt/pull/15) · [Public archives](https://github.com/edithatogo/tutorial-health-gt-archives/releases/tag/lesson-archives-2026-11-26) |
 | Innovate | The sequential pricing adapter is integrated and qualified on main. The receiving commit retains the approved `bd880dd` source pin for the bounded pricing paths. [Receiving evidence](#innovate-receiving-evidence) · [Innovate #723](https://github.com/edithatogo/innovate/issues/723) |
 | Reimbursement | The signed Paignia 0.1.0 pin is integrated for the finite Chapter 8 menu. The exact receiving tree passed six native controls and 16 Python tests for Chapters 7 and 8. The wider Python grid still needs its own policy and payoff comparison for zero offers, indifference and manufacturing cost. [Receiving PR #124](https://github.com/edithatogo/new-drug-reimbursement-game/pull/124) · [Reimbursement #100](https://github.com/edithatogo/new-drug-reimbursement-game/issues/100) |
-| NHRA Game | The frozen trajectory and eager pure Nash controls passed on three platforms. The compiled JAX path is retained after a matched-output performance comparison. Full receiving CI still requires parameter grounding. [Receiving evidence](#nhra-receiving-evidence) · [NHRA Game #39](https://github.com/edithatogo/nhra_game/issues/39) |
+| NHRA Game | The eager pure Nash migration merged after the parameter trace, frozen trajectory and full receiving CI passed. NHRA retains compiled JAX for warm batches after the matched-output performance comparison. [Receiving evidence](#nhra-receiving-evidence) · [NHRA Game #39](https://github.com/edithatogo/nhra_game/issues/39) |
 | GINSIM | The parity audit closed with continuous premium screening, calibrated compliance and proxy metrics retained in GINSIM. The installed binary64 candidate matched six screening and three compliance oracles at the original tolerance and passed 46 application tests in the isolated candidate environment. The application owns the runtime and precision rollout. [GINSIM #62](https://github.com/edithatogo/ginsim/issues/62) · [Runtime and precision #63](https://github.com/edithatogo/ginsim/issues/63) |
 | GTPCNZ | The parity audit closed after Paignia and Gambit matched the finite teaching game and independent stress checks supported retaining the smoothed adjustment trace and continuous funding benchmark. The application owns the receiving Python lock and checks. [GTPCNZ #222](https://github.com/edithatogo/gtpcnz/issues/222) · [Receiving checks #223](https://github.com/edithatogo/gtpcnz/issues/223) |
 | Tobac | The application owner retains the inspection and commitment work in the existing workspace. Its receiving PR is open and the signed-lineage acceptance remains with that lane. [Tobac #203](https://github.com/edithatogo/tobac/issues/203) · [Receiving PR #178](https://github.com/edithatogo/tobac/pull/178) |
@@ -69,17 +69,16 @@ matched an independent enumeration on all 256 synthetic 2-by-2 games, including
 payoff ties. Across 24 synchronized warm batches, the compiled JAX median was
 0.109 ms and the sequential Paignia callback median was 20.82 ms. First-call
 times were 493.96 and 59.56 ms respectively. Retain the compiled path for warm
-batched execution. The eager migration continues through its receiving checks.
+batched execution. The eager path uses the qualified Paignia provider.
 
-The three platform jobs at `bc0d34b8b92f9c3ce3b339af48e24a44cbdfecb1` passed
-the focused application controls, Ruff and type checks. Restoring the four
-outreach validators passed their 11 focused tests and brought full collection
-to 290 tests. Hosted CI stopped at parameter grounding. It reported 64
-diagnostics, including inventory mismatches with 234 missing parameters and
-14 entries outside the current public parameter schema. Public sources,
-substantive justifications and sensitivity bounds are still required.
-The application PR remains open.
-[Receiving CI](https://github.com/edithatogo/nhra_game/actions/runs/45788252438)
+NHRA recorded provenance and justification for all 293 parameter slots,
+including the limits of the source evidence and model assumptions. The full
+Ubuntu, macOS, Windows and Link Checker jobs passed on the exact receiving
+merge tree. The PR was squash-merged as
+`177cc85cbceda2b93e6533e9b31267152e837621`. The trajectory fixture exercises
+a synthetic input pack. An empirical backtest still requires matching
+observed occupancy data.
+[Receiving CI](https://github.com/edithatogo/nhra_game/actions/runs/45828916414)
 
 ## Runner qualification
 
