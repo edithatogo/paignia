@@ -13,6 +13,7 @@
 - [x] Task: Freeze and replay the 0.1.0 correctness fixtures for Gambit pure and bounded mixed Nash and OpenSpiel backward induction and Kuhn CFR/CFR+. [Protocol](../../../verification/comparators/README.md) · [Two-run results](../../../docs/validation/receipts/t21-core/README.md)
 - [x] Task: Extend correctness and reproducibility to the remaining admitted profiles. [Signed-source checks](../../../docs/validation/receipts/t21-core/README.md#additional-signed-source-checks)
 - [x] Task: Execute the equivalent-game comparison and record benchmark data, unsupported cases, errors and independent review. [Reviewed two-host results](../../../docs/validation/receipts/t21-core/benchmark-study.md).
+- [x] Task: Reconcile NHRA's historical trajectory reference and compare its compiled JAX and eager provider paths on the same games. [Receiving evidence](adoption.md#nhra-receiving-evidence)
 - [~] Task: Freeze and run the baseline and stress tests for each downstream model using its own decision and payoff meaning. [Per-repository dispositions](https://github.com/edithatogo/paignia/issues/97)
 
 ## Phase 3 Consumer adoption
