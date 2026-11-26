@@ -1,0 +1,18 @@
+[package]
+name = "paignia-dapane-d2-replay"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+license = "Apache-2.0"
+publish = false
+
+[workspace]
+
+[dependencies]
+paignia-core = { git = "https://github.com/edithatogo/paignia.git", rev = "a04a19da06cc50e310a172574ed66f62000b891a" }
+paignia-solve = { git = "https://github.com/edithatogo/paignia.git", rev = "a04a19da06cc50e310a172574ed66f62000b891a" }
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = { version = "=1.0.154", features = ["float_roundtrip"] }
+
+[lints.rust]
+unsafe_code = "forbid"
