@@ -7,8 +7,9 @@ mkdir "$1"
 build="$(cd "$1" && pwd)"
 python="$repo/target/dev-python/bin/python"
 provider=a04a19da06cc50e310a172574ed66f62000b891a
-export CC="$(command -v cc)"
-export CXX="$(command -v c++)"
+CC="$(command -v cc)"
+CXX="$(command -v c++)"
+export CC CXX
 
 {
   uname -ms
