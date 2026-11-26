@@ -80,6 +80,42 @@ a synthetic input pack. An empirical backtest still requires matching
 observed occupancy data.
 [Receiving CI](https://github.com/edithatogo/nhra_game/actions/runs/45828916414)
 
+## NHRA unique coupled QRE control
+
+The three binary seats have action-1 probabilities `a`, `b` and `c`. Action
+0 pays zero. Action 1 pays seat A `7/20 - B`, seat B `C - 9/20` and seat C
+`A - 13/20`, where `A`, `B` and `C` denote the corresponding action bits.
+Each seat applies the logistic function to its expected payoff difference
+multiplied by rationality `λ`. The resulting response maps `f`, `g` and `h`
+take `b`, `c` and `a` respectively.
+
+For each positive rationality, `f(g(h(a))) - a` is strictly decreasing and
+changes sign between 0 and 1. Its unique root determines `c = h(a)` and
+`b = g(c)`. The oracle bisected the scalar residual at 75 decimal digits.
+A separate 170- and 230-digit calculation reproduced the roots and applied
+the synchronous updates independently from `(0.5, 0.5, 0.5)`.
+
+The compiled `qre_3player_jax` at NHRA commit
+`5d7e30925d57bb0cd88f49bde3b6995ba6437588` ran on an arm64 macOS CPU with
+CPython 3.15.2, JAX/JAXlib 0.12.1 and binary64. The comparison used a
+`1e-10` bound on both the largest coordinate error against the unique root
+and the sum of the three seatwise maximum response errors.
+
+| Rationality | Updates | Returned action-1 probabilities | Largest coordinate error | Response error sum |
+| --- | --- | --- | ---: | ---: |
+| 0.5 | 99 and 100 | (0.480808446225, 0.503607894800, 0.478863659364) | 5.55e-17 | 0 in binary64 |
+| 8 | 99 | (0.929394130837, 0.027822546504, 0.005788545526) | 0.355837588712 | 0.897573605177 |
+| 8 | 100 | (0.929394130837, 0.027822546504, 0.903362150703) | 0.551655914751 | 0.946268021318 |
+
+The unique root at rationality 8 is
+`(0.573556542125, 0.312952907839, 0.351706235952)`. Both tested budgets miss
+it. The reported diagnostic agrees with the independently recomputed
+response error to `1e-12`. NHRA still needs an explicit caller disposition
+for finite-budget nonconvergence and qualification of any replacement method.
+The signed-consumer and external-validation gates still apply. The historical
+backtest requires matched observed occupancy.
+[NHRA source](https://github.com/edithatogo/nhra_game/blob/5d7e30925d57bb0cd88f49bde3b6995ba6437588/src/nhra_gt/solvers_jax.py) · [Receiving audit](https://github.com/edithatogo/nhra_game/issues/39)
+
 ## Runner qualification
 
 Prefer an official GitHub Actions just-in-time runner in a single-use Apple
